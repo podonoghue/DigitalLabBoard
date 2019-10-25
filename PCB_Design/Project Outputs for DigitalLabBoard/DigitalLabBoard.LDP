@@ -1,0 +1,3 @@
+Layer Pairs Export File for PCB: C:\Users\podonoghue\Documents\Development\DigitalLabBoard\DigitalLabBoard.PcbDoc
+LayersSetName=Top_Bot_Thru_Holes|DrillFile=digitallabboard-roundholes.txt|DrillLayers=gtl,gbl
+LayersSetName=Top_Bot_Slot_Holes|DrillFile=digitallabboard-slotholes.txt|DrillLayers=gtl,gbl
