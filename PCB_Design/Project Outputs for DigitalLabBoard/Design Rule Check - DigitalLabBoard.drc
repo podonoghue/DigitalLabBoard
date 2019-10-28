@@ -1,7 +1,7 @@
 Protel Design System Design Rule Check
 PCB File : C:\Users\podonoghue\Documents\Development\DigitalLabBoard\PCB_Design\DigitalLabBoard.PcbDoc
 Date     : 28/10/2019
-Time     : 12:41:03 AM
+Time     : 11:55:21 PM
 
 Processing Rule : Clearance Constraint (Gap=5mil) (All),(All)
 Rule Violations :0
@@ -42,16 +42,13 @@ Rule Violations :0
 Processing Rule : Net Antennae (Tolerance=0mil) (All)
 Rule Violations :0
 
-Processing Rule : Room DigitalLabBoard_LEDs (Bounding Region = (910mil, 910mil, 7310mil, 5320mil) (InComponentClass('DigitalLabBoard_LEDs'))
+Processing Rule : Board Clearance Constraint (Gap=0mil) (All)
+Rule Violations :0
+
+Processing Rule : Board Clearance Constraint (Gap=0mil) (OnLayer('Top Overlay'))
 Rule Violations :0
 
 Processing Rule : Room DigitalLabBoard_Traffic (Bounding Region = (925mil, 890mil, 7315mil, 5295mil) (InComponentClass('DigitalLabBoard_Traffic'))
-Rule Violations :0
-
-Processing Rule : Room DigitalLabBoard_Stepper (Bounding Region = (925mil, 930mil, 7310mil, 5310mil) (InComponentClass('DigitalLabBoard_Stepper'))
-Rule Violations :0
-
-Processing Rule : Room DigitalLabBoard_Die (Bounding Region = (940mil, 920mil, 7315mil, 5320mil) (InComponentClass('DigitalLabBoard_Die'))
 Rule Violations :0
 
 Processing Rule : Room DigitalLabBoard_Processor (Bounding Region = (920mil, 920mil, 7325mil, 5290mil) (InComponentClass('DigitalLabBoard_Processor'))
@@ -60,10 +57,19 @@ Rule Violations :0
 Processing Rule : Room DigitalLabBoard_Switches (Bounding Region = (925mil, 905mil, 7320mil, 5295mil) (InComponentClass('DigitalLabBoard_Switches'))
 Rule Violations :0
 
+Processing Rule : Room DigitalLabBoard_Die (Bounding Region = (940mil, 920mil, 7315mil, 5320mil) (InComponentClass('DigitalLabBoard_Die'))
+Rule Violations :0
+
+Processing Rule : Room DigitalLabBoard_Stepper (Bounding Region = (925mil, 930mil, 7310mil, 5310mil) (InComponentClass('DigitalLabBoard_Stepper'))
+Rule Violations :0
+
+Processing Rule : Room DigitalLabBoard_LEDs (Bounding Region = (910mil, 910mil, 7310mil, 5320mil) (InComponentClass('DigitalLabBoard_LEDs'))
+Rule Violations :0
+
 Processing Rule : Height Constraint (Min=0mil) (Max=1000mil) (Prefered=500mil) (All)
 Rule Violations :0
 
 
 Violations Detected : 0
 Waived Violations : 0
-Time Elapsed        : 00:00:01
+Time Elapsed        : 00:00:02
