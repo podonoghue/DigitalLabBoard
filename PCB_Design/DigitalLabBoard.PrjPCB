@@ -210,46 +210,38 @@ DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBO
 DItemRevisionGUID=
 
 [GeneratedDocument10]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBP
-DItemRevisionGUID=
-
-[GeneratedDocument11]
 DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBS
 DItemRevisionGUID=
 
-[GeneratedDocument12]
+[GeneratedDocument11]
 DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GKO
 DItemRevisionGUID=
 
-[GeneratedDocument13]
+[GeneratedDocument12]
 DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTL
 DItemRevisionGUID=
 
-[GeneratedDocument14]
+[GeneratedDocument13]
 DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTO
 DItemRevisionGUID=
 
-[GeneratedDocument15]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTP
-DItemRevisionGUID=
-
-[GeneratedDocument16]
+[GeneratedDocument14]
 DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTS
 DItemRevisionGUID=
 
-[GeneratedDocument17]
+[GeneratedDocument15]
 DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.LDP
 DItemRevisionGUID=
 
-[GeneratedDocument18]
+[GeneratedDocument16]
 DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.REP
 DItemRevisionGUID=
 
-[GeneratedDocument19]
+[GeneratedDocument17]
 DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.RUL
 DItemRevisionGUID=
 
-[GeneratedDocument20]
+[GeneratedDocument18]
 DocumentPath=Project Outputs for DigitalLabBoard\Pick Place for DigitalLabBoard.csv
 DItemRevisionGUID=
 
@@ -824,6 +816,11 @@ OutputName6=Footprint Comparison Report
 OutputDocumentPath6=
 OutputVariantName6=
 OutputDefault6=0
+OutputType7=BOM_Violations
+OutputName7=BOM Checks Report
+OutputDocumentPath7=
+OutputVariantName7=
+OutputDefault7=0
 
 [OutputGroup9]
 Name=Export Outputs
@@ -875,6 +872,16 @@ OutputName9=Specctra Design PCB
 OutputDocumentPath9=
 OutputVariantName9=
 OutputDefault9=0
+OutputType10=MBAExportPARASOLID
+OutputName10=Export PARASOLID
+OutputDocumentPath10=
+OutputVariantName10=
+OutputDefault10=0
+OutputType11=MBAExportSTEP
+OutputName11=Export STEP
+OutputDocumentPath11=
+OutputVariantName11=
+OutputDefault11=0
 
 [OutputGroup10]
 Name=PostProcess Outputs
@@ -1004,6 +1011,7 @@ Type113=1
 Type114=1
 Type115=1
 Type116=1
+Type117=1
 
 [Difference Levels]
 Type1=1
@@ -1071,6 +1079,7 @@ Type62=1
 Type63=1
 Type64=1
 Type65=1
+Type66=1
 
 [Electrical Rules Check]
 Type1=1

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------------------
-Gerber File Extension Report For: DigitalLabBoard.GBR   25/10/2019  6:57:32 PM
+Gerber File Extension Report For: DigitalLabBoard.GBR   2/11/2019  10:41:35 AM
 ------------------------------------------------------------------------------------------
 
 
@@ -7,13 +7,10 @@ Gerber File Extension Report For: DigitalLabBoard.GBR   25/10/2019  6:57:32 PM
 Layer Extension     Layer Description                      
 ------------------------------------------------------------------------------------------
 .GTO                Top Overlay                             
-.GTP                Top Paste                               
 .GTS                Top Solder                              
 .GTL                Top Layer                               
 .GBL                Bottom Layer                            
 .GBS                Bottom Solder                           
-.GBP                Bottom Paste                            
 .GBO                Bottom Overlay                          
-.GM1                Mechanical 1                            
 .GKO                Keep-Out Layer                          
 ------------------------------------------------------------------------------------------
