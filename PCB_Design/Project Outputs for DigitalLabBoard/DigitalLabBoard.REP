@@ -2,8 +2,35 @@
 FileName = DigitalLabBoard.GBR
 AutoAperture = True
 *************************************************************
-Generating : Bottom Layer
-      File : DigitalLabBoard.GBL
+Generating : Keep-Out Layer
+      File : DigitalLabBoard.GKO
+
+    Adding Layer      : Keep-Out Layer
+
+
+Used DCodes :
+    D12
+*************************************************************
+
+*************************************************************
+Generating : Bottom Overlay
+      File : DigitalLabBoard.GBO
+
+    Adding Layer      : Bottom Overlay
+
+
+Used DCodes :
+    D12
+    D15
+    D22
+    D90
+*************************************************************
+
+*************************************************************
+Generating : Bottom Solder
+      File : DigitalLabBoard.GBS
+
+    Adding Layer      : Bottom Solder
 
     Adding Layer      : Bottom Layer
 
@@ -11,22 +38,18 @@ Generating : Bottom Layer
 
 
 Used DCodes :
-    D12
-    D13
-    D15
-    D57
-    D79
-    D80
-    D81
-    D82
-    D83
-    D84
-    D85
-    D86
-    D87
-    D88
-    D89
-    D90
+    D23
+    D46
+    D47
+    D48
+    D49
+    D50
+    D51
+    D52
+    D53
+    D54
+    D55
+    D56
 *************************************************************
 
 *************************************************************
@@ -77,79 +100,6 @@ Used DCodes :
     D87
     D88
     D89
-    D90
-*************************************************************
-
-*************************************************************
-Generating : Bottom Overlay
-      File : DigitalLabBoard.GBO
-
-    Adding Layer      : Bottom Overlay
-
-
-Used DCodes :
-    D12
-    D91
-*************************************************************
-
-*************************************************************
-Generating : Top Overlay
-      File : DigitalLabBoard.GTO
-
-    Adding Layer      : Top Overlay
-
-
-Used DCodes :
-    D10
-    D11
-    D12
-    D13
-    D14
-    D15
-    D16
-    D17
-    D18
-    D19
-    D20
-    D21
-    D22
-*************************************************************
-
-*************************************************************
-Generating : Bottom Solder
-      File : DigitalLabBoard.GBS
-
-    Adding Layer      : Bottom Solder
-
-    Adding Layer      : Bottom Layer
-
-    Adding Layer      : Multi-Layer
-
-
-Used DCodes :
-    D23
-    D46
-    D47
-    D48
-    D49
-    D50
-    D51
-    D52
-    D53
-    D54
-    D55
-    D56
-*************************************************************
-
-*************************************************************
-Generating : Keep-Out Layer
-      File : DigitalLabBoard.GKO
-
-    Adding Layer      : Keep-Out Layer
-
-
-Used DCodes :
-    D12
 *************************************************************
 
 *************************************************************
@@ -198,5 +148,55 @@ Used DCodes :
     D54
     D55
     D56
+*************************************************************
+
+*************************************************************
+Generating : Top Overlay
+      File : DigitalLabBoard.GTO
+
+    Adding Layer      : Top Overlay
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
+    D14
+    D15
+    D16
+    D17
+    D18
+    D19
+    D20
+    D21
+    D22
+*************************************************************
+
+*************************************************************
+Generating : Bottom Layer
+      File : DigitalLabBoard.GBL
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D12
+    D13
+    D15
+    D78
+    D79
+    D80
+    D81
+    D82
+    D83
+    D84
+    D85
+    D86
+    D87
+    D88
+    D89
 *************************************************************
 
