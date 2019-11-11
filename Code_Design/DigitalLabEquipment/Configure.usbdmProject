@@ -38,7 +38,6 @@
    <item key="$signal$PTC1_descriptionSetting"             value="C_PLEX1" />
    <item key="$signal$PTC1_muxSetting"                     value="mux1" />
    <item key="$signal$PTC2_descriptionSetting"             value="C_PLEX2" />
-   <item key="$signal$PTC2_muxSetting"                     value="mux1" />
    <item key="$signal$PTC3_descriptionSetting"             value="C_PLEX3" />
    <item key="$signal$PTC3_muxSetting"                     value="mux1" />
    <item key="$signal$PTC4_descriptionSetting"             value="PH0" />
@@ -52,12 +51,12 @@
    <item key="$signal$PTD0_descriptionSetting"             value="PED_NS_BTN" />
    <item key="$signal$PTD0_muxSetting"                     value="mux1" />
    <item key="$signal$PTD1_descriptionSetting"             value="CAR_NS_BTN" />
-   <item key="$signal$PTD1_muxSetting"                     value="mux1" />
    <item key="$signal$PTD2_descriptionSetting"             value="PED_EW_BTN" />
    <item key="$signal$PTD2_muxSetting"                     value="mux1" />
    <item key="$signal$PTD3_descriptionSetting"             value="CAR_EW_BTN" />
    <item key="$signal$PTD3_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD4_descriptionSetting"             value="Spare2" />
+   <item key="$signal$PTD4_descriptionSetting"             value="GPIO_IRQ" />
+   <item key="$signal$PTD4_muxSetting"                     value="mux1" />
    <item key="$signal$PTD5_descriptionSetting"             value="Spare3" />
    <item key="$signal$PTD6_descriptionSetting"             value="CLOCK1" />
    <item key="$signal$PTD6_muxSetting"                     value="mux4" />

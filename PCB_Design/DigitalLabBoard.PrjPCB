@@ -178,72 +178,80 @@ DocumentPath=Project Outputs for DigitalLabBoard\Bill of Materials-DigitalLabBoa
 DItemRevisionGUID=
 
 [GeneratedDocument2]
-DocumentPath=DigitalLabBoard 21-10-2019 9-24-44 PM.WAS
+DocumentPath=Project Outputs for DigitalLabBoard\Design Rule Check - DigitalLabBoard.html
 DItemRevisionGUID=
 
 [GeneratedDocument3]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard-RoundHoles.TXT
+DocumentPath=DigitalLabBoard 21-10-2019 9-24-44 PM.WAS
 DItemRevisionGUID=
 
 [GeneratedDocument4]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard-SlotHoles.TXT
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard-RoundHoles.TXT
 DItemRevisionGUID=
 
 [GeneratedDocument5]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.DRR
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard-SlotHoles.TXT
 DItemRevisionGUID=
 
 [GeneratedDocument6]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.EXTREP
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.DRR
 DItemRevisionGUID=
 
 [GeneratedDocument7]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBL
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.EXTREP
 DItemRevisionGUID=
 
 [GeneratedDocument8]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBO
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBL
 DItemRevisionGUID=
 
 [GeneratedDocument9]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBS
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBO
 DItemRevisionGUID=
 
 [GeneratedDocument10]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GKO
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GBS
 DItemRevisionGUID=
 
 [GeneratedDocument11]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTL
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GKO
 DItemRevisionGUID=
 
 [GeneratedDocument12]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTO
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTL
 DItemRevisionGUID=
 
 [GeneratedDocument13]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTS
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTO
 DItemRevisionGUID=
 
 [GeneratedDocument14]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.LDP
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.GTS
 DItemRevisionGUID=
 
 [GeneratedDocument15]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.REP
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.LDP
 DItemRevisionGUID=
 
 [GeneratedDocument16]
-DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.RUL
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.REP
 DItemRevisionGUID=
 
 [GeneratedDocument17]
+DocumentPath=Project Outputs for DigitalLabBoard\DigitalLabBoard.RUL
+DItemRevisionGUID=
+
+[GeneratedDocument18]
 DocumentPath=Project Outputs for DigitalLabBoard\Pick Place for DigitalLabBoard.csv
 DItemRevisionGUID=
 
 [Parameter1]
+Name=
+Value=
+
+[Parameter2]
 Name=Version
-Value=0.1
+Value=0.2
 
 [Configuration1]
 Name=Sources
