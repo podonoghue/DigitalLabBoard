@@ -68,8 +68,8 @@ static inline void unlock(volatile uint32_t *lockVar) {
 }
 #else
 // Not available on Cortex M0
-static inline void lock(uint32_t * dummy) {(void)dummy;}
-static inline void unlock(uint32_t * dummy) {(void)dummy;}
+static inline void lock(volatile uint32_t * dummy) {(void)dummy;}
+static inline void unlock(volatile uint32_t * dummy) {(void)dummy;}
 #endif
 
 #ifndef __cplusplus

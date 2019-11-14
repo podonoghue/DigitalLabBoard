@@ -10,9 +10,6 @@
 
 using namespace USBDM;
 
-// LED for debug checks
-using Led = Spare1;
-
 /**
  * Interrupt handler for FrequencyGeneratorTimer interrupts
  * This sets the next interrupt/pin toggle for a half-period from the last event
@@ -40,7 +37,7 @@ static void ftmCallback(uint8_t status) {
 }
 
 void FrequencyGenerator::initialiseWaveform() {
-   Led::setOutput();
+   FrequencyButtons::setInput(PinPull_Up, PinAction_None, PinFilter_None);
 
    /**
     * FTM channel set as Output compare with pin Toggle mode and using a callback function
@@ -116,8 +113,6 @@ void FrequencyGenerator::setFrequency(unsigned frequency) {
       // Trigger pin action when counter crosses 1 tick
       FrequencyGeneratorTimerChannel::setEventTime(1);
    }
-
-   displayFrequency(currentFrequency);
 }
 
 /**
@@ -157,29 +152,87 @@ void FrequencyGenerator::displayFrequency(unsigned frequency) {
       }
       oled.setWidth(4).setPadding(Padding_LeadingSpaces).write(frequency).write(units).write(" ");
    }
-   oled.refreshImage();
    oled.resetFormat();
+
+   static auto f = []() {
+      This->oled.refreshImage();
+   };
+
+   functionQueue.enQueueDiscardOnFull(f);
+}
+
+static float freqs[] = {
+      0,
+      1,2,5,
+      10,20,50,
+      100,200,500,
+      1*kHz,2*kHz,5*kHz,
+      10*kHz,20*kHz,50*kHz,
+      100*kHz,200*kHz,500*kHz,
+      1*MHz,2*MHz,5*MHz,
+};
+
+void FrequencyGenerator::pollButtons() {
+   static unsigned lastButtonValue = 0;
+   static unsigned stableCount = 0;
+   static unsigned frequencyIndex = 0;
+   unsigned currentButtonValue = FrequencyButtons::read();
+
+   if (lastButtonValue != currentButtonValue) {
+      stableCount     = 0;
+      lastButtonValue = currentButtonValue;
+      return;
+   }
+   if (stableCount < DEBOUNCE_INTERVAL_COUNT+1) {
+      stableCount++;
+   }
+   if (stableCount == DEBOUNCE_INTERVAL_COUNT) {
+      switch(currentButtonValue) {
+         case 0b10:
+            frequencyIndex++;
+            if (frequencyIndex>= (sizeof(freqs)/sizeof(freqs[0]))) {
+               frequencyIndex = 0;
+            }
+            setFrequency(freqs[frequencyIndex]);
+            displayFrequency(currentFrequency);
+            break;
+         case 0b01:
+            frequencyIndex--;
+            if (frequencyIndex >= (sizeof(freqs)/sizeof(freqs[0]))) {
+               frequencyIndex = (sizeof(freqs)/sizeof(freqs[0]) - 1);
+            }
+            setFrequency(freqs[frequencyIndex]);
+            displayFrequency(currentFrequency);
+            break;
+         default:
+            break;
+      }
+   }
+}
+
+void FrequencyGenerator::softPowerOn() {
+   oled.initialise();
+   setFrequency(savedFrequency);
+   displayFrequency(currentFrequency);
+}
+
+void FrequencyGenerator::softPowerOff() {
+   savedFrequency = getFrequency();
+   setFrequency(Frequency_Off);
 }
 
 /**
  * Test loop for debug
  */
 void FrequencyGenerator::testLoop() {
-   float freqs[] = {
-         0,
-         1,2,5,
-         10,20,50,
-         100,200,500,
-         1*kHz,2*kHz,5*kHz,
-         10*kHz,20*kHz,50*kHz,
-         100*kHz,200*kHz,500*kHz,
-         1*MHz,2*MHz,5*MHz,
-   };
    for(;;) {
       for (unsigned index=0; index<sizeof(freqs)/sizeof(freqs[0]); index++) {
          setFrequency(freqs[index]);
+         displayFrequency(currentFrequency);
          waitMS(2000);
       }
    }
-
 }
+
+FrequencyGenerator *FrequencyGenerator::This = nullptr;
+

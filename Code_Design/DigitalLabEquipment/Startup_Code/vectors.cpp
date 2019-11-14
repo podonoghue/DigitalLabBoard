@@ -17,7 +17,9 @@
 
 /*********** $start(VectorsIncludeFiles) *** Do not edit after this comment ****************/
 #include "ftm.h"
+#include "llwu.h"
 #include "pit.h"
+#include "adc.h"
 /*********** $end(VectorsIncludeFiles)   *** Do not edit above this comment ***************/
 
 /*
@@ -177,7 +179,6 @@ void DMA_Error_IRQHandler(void)               WEAK_DEFAULT_HANDLER;
 void FTF_Command_IRQHandler(void)             WEAK_DEFAULT_HANDLER;
 void FTF_ReadCollision_IRQHandler(void)       WEAK_DEFAULT_HANDLER;
 void PMC_IRQHandler(void)                     WEAK_DEFAULT_HANDLER;
-void LLWU_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
 void WDOG_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
 void I2C0_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
 void SPI0_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
@@ -190,7 +191,6 @@ void UART1_RxTx_IRQHandler(void)              WEAK_DEFAULT_HANDLER;
 void UART1_Error_IRQHandler(void)             WEAK_DEFAULT_HANDLER;
 void UART2_RxTx_IRQHandler(void)              WEAK_DEFAULT_HANDLER;
 void UART2_Error_IRQHandler(void)             WEAK_DEFAULT_HANDLER;
-void ADC0_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
 void CMP0_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
 void CMP1_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
 void FTM1_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
@@ -248,7 +248,7 @@ VectorTable const __vector_table = {
       FTF_Command_IRQHandler,                  /*   22,    6  Flash Memory Interface                                                           */
       FTF_ReadCollision_IRQHandler,            /*   23,    7  Flash Memory Interface                                                           */
       PMC_IRQHandler,                          /*   24,    8  Power Management Controller                                                      */
-      LLWU_IRQHandler,                         /*   25,    9  Low Leakage Wakeup                                                               */
+      USBDM::Llwu::irqHandler,                 /*   25,    9  Low Leakage Wakeup                                                               */
       WDOG_IRQHandler,                         /*   26,   10  External Watchdog Monitor                                                        */
       I2C0_IRQHandler,                         /*   27,   11  Inter-Integrated Circuit                                                         */
       SPI0_IRQHandler,                         /*   28,   12  Serial Peripheral Interface                                                      */
@@ -261,7 +261,7 @@ VectorTable const __vector_table = {
       UART1_Error_IRQHandler,                  /*   35,   19  Serial Communication Interface                                                   */
       UART2_RxTx_IRQHandler,                   /*   36,   20  Serial Communication Interface                                                   */
       UART2_Error_IRQHandler,                  /*   37,   21  Serial Communication Interface                                                   */
-      ADC0_IRQHandler,                         /*   38,   22  Analogue to Digital Converter                                                    */
+      USBDM::Adc0::irqHandler,                 /*   38,   22  Analogue to Digital Converter                                                    */
       CMP0_IRQHandler,                         /*   39,   23  High-Speed Comparator                                                            */
       CMP1_IRQHandler,                         /*   40,   24  High-Speed Comparator                                                            */
       USBDM::Ftm0::irqHandler,                 /*   41,   25  FlexTimer Module                                                                 */

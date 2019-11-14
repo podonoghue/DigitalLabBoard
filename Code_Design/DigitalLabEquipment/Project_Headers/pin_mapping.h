@@ -57,51 +57,51 @@ namespace USBDM {
 #if defined(PCC)
 
 /** Dummy port information for pins without an associated PCR */
-constexpr PortInfo  __attribute__((unused)) NoPortInfo {0, 0, (IRQn_Type)-1};
+constexpr PortInfo  __attribute__((unused)) NoPortInfo {0, 0, static_cast<IRQn_Type>(-1)};
 
 #if defined(PCC_PCC_PORTA_CGC_MASK)
 /** Port information for PORTA*/
-constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, (uint32_t)(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTA)), PORTA_IRQn};
+constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTA)), PORTA_IRQn};
 #endif
 
 #if defined(PCC_PCC_PORTB_CGC_MASK)
 /** Port information for PORTB*/
-constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, (uint32_t)(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTB)), PORTB_IRQn};
+constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTB)), PORTB_IRQn};
 #endif
 
 #if defined(PCC_PCC_PORTC_CGC_MASK)
 /** Port information for PORTC*/
-constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, (uint32_t)(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTC)), PORTC_IRQn};
+constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTC)), PORTC_IRQn};
 #endif
 
 #if defined(PCC_PCC_PORTD_CGC_MASK)
 /** Port information for PORTD*/
-constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, (uint32_t)(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTD)), PORTD_IRQn};
+constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTD)), PORTD_IRQn};
 #endif
 
 #if defined(PCC_PCC_PORTE_CGC_MASK)
 /** Port information for PORTE*/
-constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, (uint32_t)(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTE)), PORTE_IRQn};
+constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTE)), PORTE_IRQn};
 #endif
 
 #if defined(PCC_PCC_PORTF_CGC_MASK)
 /** Port information for PORTF*/
-constexpr PortInfo  __attribute__((unused)) PortFInfo {PORTF_BasePtr, (uint32_t)(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTF)), PORTF_IRQn};
+constexpr PortInfo  __attribute__((unused)) PortFInfo {PORTF_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTF)), PORTF_IRQn};
 #endif
 
 #if defined(PCC_PCC_PORTG_CGC_MASK)
 /** Port information for PORTG*/
-constexpr PortInfo  __attribute__((unused)) PortGInfo {PORTG_BasePtr, (uint32_t)(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTG)), PORTG_IRQn};
+constexpr PortInfo  __attribute__((unused)) PortGInfo {PORTG_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTG)), PORTG_IRQn};
 #endif
 
 #else // defined(PCC)
 /** Dummy port information for pins without an associated PCR */
-constexpr PortInfo  __attribute__((unused)) NoPortInfo {0, 0, (IRQn_Type)-1};
+constexpr PortInfo  __attribute__((unused)) NoPortInfo {0, 0, static_cast<IRQn_Type>(-1)};
 
 #ifdef SIM_SCGC5_PORTA_MASK
 /** Port information for PORTA */
 #ifndef PORTA_IRQS
-constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, SIM_SCGC5_PORTA_MASK, ((IRQn_Type)-1)};
+constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, SIM_SCGC5_PORTA_MASK, (static_cast<IRQn_Type>(-1))};
 #else
 constexpr IRQn_Type PORTA_IRQS_AR[] = PORTA_IRQS;
 constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, SIM_SCGC5_PORTA_MASK, PORTA_IRQS_AR[0]};
@@ -111,7 +111,7 @@ constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, SIM_SCGC5_
 #ifdef SIM_SCGC5_PORTB_MASK
 /** Port information for PORTB */
 #ifndef PORTB_IRQS
-constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, SIM_SCGC5_PORTB_MASK, ((IRQn_Type)-1)};
+constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, SIM_SCGC5_PORTB_MASK, (static_cast<IRQn_Type>(-1))};
 #else
 constexpr IRQn_Type PORTB_IRQS_AR[] = PORTB_IRQS;
 constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, SIM_SCGC5_PORTB_MASK, PORTB_IRQS_AR[0]};
@@ -121,7 +121,7 @@ constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, SIM_SCGC5_
 #ifdef SIM_SCGC5_PORTC_MASK
 /** Port information for PORTC */
 #ifndef PORTC_IRQS
-constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, SIM_SCGC5_PORTC_MASK, ((IRQn_Type)-1)};
+constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, SIM_SCGC5_PORTC_MASK, (static_cast<IRQn_Type>(-1))};
 #else
 constexpr IRQn_Type PORTC_IRQS_AR[] = PORTC_IRQS;
 constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, SIM_SCGC5_PORTC_MASK, PORTC_IRQS_AR[0]};
@@ -131,7 +131,7 @@ constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, SIM_SCGC5_
 #ifdef SIM_SCGC5_PORTD_MASK
 /** Port information for PORTD */
 #ifndef PORTD_IRQS
-constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, SIM_SCGC5_PORTD_MASK, ((IRQn_Type)-1)};
+constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, SIM_SCGC5_PORTD_MASK, (static_cast<IRQn_Type>(-1))};
 #else
 constexpr IRQn_Type PORTD_IRQS_AR[] = PORTD_IRQS;
 constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, SIM_SCGC5_PORTD_MASK, PORTD_IRQS_AR[0]};
@@ -141,7 +141,7 @@ constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, SIM_SCGC5_
 #ifdef SIM_SCGC5_PORTE_MASK
 /** Port information for PORTE */
 #ifndef PORTE_IRQS
-constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, SIM_SCGC5_PORTE_MASK, ((IRQn_Type)-1)};
+constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, SIM_SCGC5_PORTE_MASK, (static_cast<IRQn_Type>(-1))};
 #else
 constexpr IRQn_Type PORTE_IRQS_AR[] = PORTE_IRQS;
 constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, SIM_SCGC5_PORTE_MASK, PORTE_IRQS_AR[0]};
@@ -190,7 +190,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile OSC_Type &osc() {
-      return *(OSC_Type *)baseAddress;
+      return *reinterpret_cast<OSC_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -304,7 +304,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile RTC_Type &rtc() {
-      return *(RTC_Type *)baseAddress;
+      return *reinterpret_cast<RTC_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -484,7 +484,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile MCG_Type &mcg() {
-      return *(MCG_Type *)baseAddress;
+      return *reinterpret_cast<MCG_Type *>(baseAddress);
    }
 
    //! IRQ numbers for hardware
@@ -869,7 +869,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile SIM_Type &sim() {
-      return *(SIM_Type *)baseAddress;
+      return *reinterpret_cast<SIM_Type *>(baseAddress);
    }
 
    /**
@@ -1302,7 +1302,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile ADC_Type &adc() {
-      return *(ADC_Type *)baseAddress;
+      return *reinterpret_cast<ADC_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -1318,7 +1318,7 @@ public:
    static constexpr uint32_t irqCount  = sizeof(irqNums)/sizeof(irqNums[0]);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = 1;
 
    //! Default IRQ level
    static constexpr uint32_t irqLevel =  8;
@@ -1352,8 +1352,11 @@ public:
     *  @return Frequency in Hz
     */
    static unsigned getInputClockFrequency() {
-      return getInputClockFrequency((AdcClockSource)(adc().CFG1 & ADC_CFG1_ADICLK_MASK));
+      return getInputClockFrequency(static_cast<AdcClockSource>(adc().CFG1 & ADC_CFG1_ADICLK_MASK));
    }
+
+   //! Default resolution
+   static constexpr uint32_t defaultAdcResolution = ADC_CFG1_MODE(2);
 
    //! Default value for ADCx_CFG1 register
    static constexpr uint32_t cfg1  = 
@@ -1548,7 +1551,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile CMP_Type &cmp() {
-      return *(CMP_Type *)baseAddress;
+      return *reinterpret_cast<CMP_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -1685,7 +1688,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile CMP_Type &cmp() {
-      return *(CMP_Type *)baseAddress;
+      return *reinterpret_cast<CMP_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -1831,7 +1834,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile CMT_Type &cmt() {
-      return *(CMT_Type *)baseAddress;
+      return *reinterpret_cast<CMT_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -2002,7 +2005,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile CRC_Type &crc() {
-      return *(CRC_Type *)baseAddress;
+      return *reinterpret_cast<CRC_Type *>(baseAddress);
    }
 
    static constexpr uint32_t gpoly =  0;
@@ -2065,7 +2068,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile DMA_Type &dma() {
-      return *(DMA_Type *)baseAddress;
+      return *reinterpret_cast<DMA_Type *>(baseAddress);
    }
 
    /** 
@@ -2135,7 +2138,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile DMAMUX_Type &dmamux() {
-      return *(DMAMUX_Type *)baseAddress;
+      return *reinterpret_cast<DMAMUX_Type *>(baseAddress);
    }
 
    /** 
@@ -2194,7 +2197,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile EWM_Type &ewm() {
-      return *(EWM_Type *)baseAddress;
+      return *reinterpret_cast<EWM_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -2296,7 +2299,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile FTFL_Type &ftfl() {
-      return *(FTFL_Type *)baseAddress;
+      return *reinterpret_cast<FTFL_Type *>(baseAddress);
    }
 
    struct EepromSizes {
@@ -2491,7 +2494,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile FTM_Type &ftm() {
-      return *(FTM_Type *)baseAddress;
+      return *reinterpret_cast<FTM_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -2680,7 +2683,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile FTM_Type &ftm() {
-      return *(FTM_Type *)baseAddress;
+      return *reinterpret_cast<FTM_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -2999,7 +3002,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile I2C_Type &i2c() {
-      return *(I2C_Type *)baseAddress;
+      return *reinterpret_cast<I2C_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -3115,7 +3118,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile I2S_Type &i2s() {
-      return *(I2S_Type *)baseAddress;
+      return *reinterpret_cast<I2S_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -3225,7 +3228,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile LLWU_Type &llwu() {
-      return *(LLWU_Type *)baseAddress;
+      return *reinterpret_cast<LLWU_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -3287,7 +3290,7 @@ public:
    static constexpr uint32_t irqCount  = sizeof(irqNums)/sizeof(irqNums[0]);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = 1;
 
    //! Default IRQ level
    static constexpr uint32_t irqLevel =  8;
@@ -3313,7 +3316,7 @@ public:
          /*  11: LLWU_P11             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*  12: LLWU_P12             = PTD0 (p41)                     */  { PortDInfo,  GPIOD_BasePtr,  0,       PORT_PCR_MUX(1)|defaultPcrValue  },
          /*  13: LLWU_P13             = PTD2 (p43)                     */  { PortDInfo,  GPIOD_BasePtr,  2,       PORT_PCR_MUX(1)|defaultPcrValue  },
-         /*  14: LLWU_P14             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
+         /*  14: LLWU_P14             = PTD4 (p45)                     */  { PortDInfo,  GPIOD_BasePtr,  4,       PORT_PCR_MUX(1)|defaultPcrValue  },
          /*  15: LLWU_P15             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
    };
 
@@ -3332,7 +3335,7 @@ public:
 #endif
       PORTA->GPCLR = pcrValue|PORT_PCR_MUX(1)|PORT_GPCLR_GPWE(0x0010UL);
       PORTC->GPCLR = pcrValue|PORT_PCR_MUX(1)|PORT_GPCLR_GPWE(0x007AUL);
-      PORTD->GPCLR = pcrValue|PORT_PCR_MUX(1)|PORT_GPCLR_GPWE(0x0005UL);
+      PORTD->GPCLR = pcrValue|PORT_PCR_MUX(1)|PORT_GPCLR_GPWE(0x0015UL);
    }
 
    /**
@@ -3348,7 +3351,7 @@ public:
 #endif
       PORTA->GPCLR = PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x10U);
       PORTC->GPCLR = PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x7AU);
-      PORTD->GPCLR = PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x5U);
+      PORTD->GPCLR = PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x15U);
    }
 
 };
@@ -3378,7 +3381,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile LPTMR_Type &lptmr() {
-      return *(LPTMR_Type *)baseAddress;
+      return *reinterpret_cast<LPTMR_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -3542,7 +3545,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile MCM_Type &mcm() {
-      return *(MCM_Type *)baseAddress;
+      return *reinterpret_cast<MCM_Type *>(baseAddress);
    }
 
 };
@@ -3572,7 +3575,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile PDB_Type &pdb() {
-      return *(PDB_Type *)baseAddress;
+      return *reinterpret_cast<PDB_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -3740,7 +3743,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile PIT_Type &pit() {
-      return *(PIT_Type *)baseAddress;
+      return *reinterpret_cast<PIT_Type *>(baseAddress);
    }
 
    //! IRQ numbers for hardware
@@ -3821,7 +3824,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile PMC_Type &pmc() {
-      return *(PMC_Type *)baseAddress;
+      return *reinterpret_cast<PMC_Type *>(baseAddress);
    }
 
    //! Default value for Low Voltage Detect Status And Control 1 register
@@ -3929,7 +3932,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile RCM_Type &rcm() {
-      return *(RCM_Type *)baseAddress;
+      return *reinterpret_cast<RCM_Type *>(baseAddress);
    }
 
    //! Reset Pin Filter Control Register
@@ -3968,7 +3971,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile SMC_Type &smc() {
-      return *(SMC_Type *)baseAddress;
+      return *reinterpret_cast<SMC_Type *>(baseAddress);
    }
 
    // Power Mode Protection Register
@@ -4027,7 +4030,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile SPI_Type &spi() {
-      return *(SPI_Type *)baseAddress;
+      return *reinterpret_cast<SPI_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -4151,7 +4154,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile TSI_Type &tsi() {
-      return *(TSI_Type *)baseAddress;
+      return *reinterpret_cast<TSI_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -4314,7 +4317,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile UART_Type &uart() {
-      return *(UART_Type *)baseAddress;
+      return *reinterpret_cast<UART_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -4442,7 +4445,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile UART_Type &uart() {
-      return *(UART_Type *)baseAddress;
+      return *reinterpret_cast<UART_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -4558,7 +4561,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile UART_Type &uart() {
-      return *(UART_Type *)baseAddress;
+      return *reinterpret_cast<UART_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -4683,7 +4686,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile USB_Type &usb() {
-      return *(USB_Type *)baseAddress;
+      return *reinterpret_cast<USB_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -4780,7 +4783,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile USBDCD_Type &usbdcd() {
-      return *(USBDCD_Type *)baseAddress;
+      return *reinterpret_cast<USBDCD_Type *>(baseAddress);
    }
 
    //! IRQ numbers for hardware
@@ -4844,7 +4847,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile VREF_Type &vref() {
-      return *(VREF_Type *)baseAddress;
+      return *reinterpret_cast<VREF_Type *>(baseAddress);
    }
 
    //! Base value for PCR (excluding MUX value)
@@ -4937,7 +4940,7 @@ public:
 
    //! Hardware base pointer
    __attribute__((always_inline)) static volatile WDOG_Type &wdog() {
-      return *(WDOG_Type *)baseAddress;
+      return *reinterpret_cast<WDOG_Type *>(baseAddress);
    }
 
    //! IRQ numbers for hardware
@@ -5027,7 +5030,6 @@ using Gpio_p31             = const USBDM::GpioB<16>;
 using Gpio_p32             = const USBDM::GpioB<17>;
 using Gpio_p33             = const USBDM::GpioC<0>;
 using Gpio_p34             = const USBDM::GpioC<1>;
-using Gpio_p35             = const USBDM::GpioC<2>;
 using Gpio_p36             = const USBDM::GpioC<3>;
 using Gpio_p37             = const USBDM::GpioC<4>;
 using Gpio_p38             = const USBDM::GpioC<5>;
@@ -5037,6 +5039,7 @@ using Gpio_p41             = const USBDM::GpioD<0>;
 using Gpio_p42             = const USBDM::GpioD<1>;
 using Gpio_p43             = const USBDM::GpioD<2>;
 using Gpio_p44             = const USBDM::GpioD<3>;
+using Gpio_p45             = const USBDM::GpioD<4>;
 /** 
  * End group GPIO_Group
  * @}
@@ -5074,7 +5077,7 @@ using Gpio_p44             = const USBDM::GpioD<3>;
  *  PTB17                    | GPIOB_17                                    | p32                       | FREQ_UP_BTN       
  *  PTC0                     | GPIOC_0                                     | p33                       | C_PLEX0       
  *  PTC1                     | GPIOC_1/LLWU_P6                             | p34                       | C_PLEX1       
- *  PTC2                     | GPIOC_2                                     | p35                       | C_PLEX2       
+ *  PTC2                     | -                                           | p35                       | C_PLEX2       
  *  PTC3                     | GPIOC_3/LLWU_P7                             | p36                       | C_PLEX3       
  *  PTC4                     | GPIOC_4/LLWU_P8                             | p37                       | PH0       
  *  PTC5                     | GPIOC_5/LLWU_P9                             | p38                       | PH1       
@@ -5084,7 +5087,7 @@ using Gpio_p44             = const USBDM::GpioD<3>;
  *  PTD1                     | GPIOD_1                                     | p42                       | CAR_NS_BTN       
  *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_EW_BTN       
  *  PTD3                     | GPIOD_3                                     | p44                       | CAR_EW_BTN       
- *  PTD4                     | -                                           | p45                       | Spare2       
+ *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | GPIO_IRQ       
  *  PTD5                     | -                                           | p46                       | Spare3       
  *  PTD6                     | FTM0_CH6                                    | p47                       | CLOCK1       
  *  PTD7                     | FTM0_CH7                                    | p48                       | CLOCK2       
@@ -5144,7 +5147,7 @@ using Gpio_p44             = const USBDM::GpioD<3>;
  *  PTB17                    | GPIOB_17                                    | p32                       | FREQ_UP_BTN       
  *  PTC0                     | GPIOC_0                                     | p33                       | C_PLEX0       
  *  PTC1                     | GPIOC_1/LLWU_P6                             | p34                       | C_PLEX1       
- *  PTC2                     | GPIOC_2                                     | p35                       | C_PLEX2       
+ *  PTC2                     | -                                           | p35                       | C_PLEX2       
  *  PTC3                     | GPIOC_3/LLWU_P7                             | p36                       | C_PLEX3       
  *  PTC4                     | GPIOC_4/LLWU_P8                             | p37                       | PH0       
  *  PTC5                     | GPIOC_5/LLWU_P9                             | p38                       | PH1       
@@ -5154,7 +5157,7 @@ using Gpio_p44             = const USBDM::GpioD<3>;
  *  PTD1                     | GPIOD_1                                     | p42                       | CAR_NS_BTN       
  *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_EW_BTN       
  *  PTD3                     | GPIOD_3                                     | p44                       | CAR_EW_BTN       
- *  PTD4                     | -                                           | p45                       | Spare2       
+ *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | GPIO_IRQ       
  *  PTD5                     | -                                           | p46                       | Spare3       
  *  PTD6                     | FTM0_CH6                                    | p47                       | CLOCK1       
  *  PTD7                     | FTM0_CH7                                    | p48                       | CLOCK2       
@@ -5177,7 +5180,6 @@ using Gpio_p44             = const USBDM::GpioD<3>;
  *  PTB17                    | GPIOB_17                                    | p32                       | FREQ_UP_BTN       
  *  PTC0                     | GPIOC_0                                     | p33                       | C_PLEX0       
  *  PTC1                     | GPIOC_1/LLWU_P6                             | p34                       | C_PLEX1       
- *  PTC2                     | GPIOC_2                                     | p35                       | C_PLEX2       
  *  PTC3                     | GPIOC_3/LLWU_P7                             | p36                       | C_PLEX3       
  *  PTC4                     | GPIOC_4/LLWU_P8                             | p37                       | PH0       
  *  PTC5                     | GPIOC_5/LLWU_P9                             | p38                       | PH1       
@@ -5187,6 +5189,7 @@ using Gpio_p44             = const USBDM::GpioD<3>;
  *  PTD1                     | GPIOD_1                                     | p42                       | CAR_NS_BTN       
  *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_EW_BTN       
  *  PTD3                     | GPIOD_3                                     | p44                       | CAR_EW_BTN       
+ *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | GPIO_IRQ       
  *  PTB0                     | I2C0_SCL                                    | p27                       | I2C_SCL       
  *  PTB1                     | I2C0_SDA                                    | p28                       | I2C_SDA       
  *  PTA0                     | JTAG_TCLK/SWD_CLK                           | p17                       | SWD_CLK       

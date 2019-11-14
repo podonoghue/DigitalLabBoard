@@ -51,6 +51,7 @@
    <item key="$signal$PTD0_descriptionSetting"             value="PED_NS_BTN" />
    <item key="$signal$PTD0_muxSetting"                     value="mux1" />
    <item key="$signal$PTD1_descriptionSetting"             value="CAR_NS_BTN" />
+   <item key="$signal$PTD1_muxSetting"                     value="mux1" />
    <item key="$signal$PTD2_descriptionSetting"             value="PED_EW_BTN" />
    <item key="$signal$PTD2_muxSetting"                     value="mux1" />
    <item key="$signal$PTD3_descriptionSetting"             value="CAR_EW_BTN" />
@@ -62,9 +63,11 @@
    <item key="$signal$PTD6_muxSetting"                     value="mux4" />
    <item key="$signal$PTD7_descriptionSetting"             value="CLOCK2" />
    <item key="$signal$PTD7_muxSetting"                     value="mux4" />
+   <item key="/ADC0/irqHandlingMethod"                     value="$ClassMethod" />
    <item key="/FTFL/peripheral_file"                       value="ftfl_32k_flexrom" />
    <item key="/FTM0/check_minimums"                        value="false" />
    <item key="/FTM0/irqHandlingMethod"                     value="$ClassMethod" />
+   <item key="/LLWU/irqHandlingMethod"                     value="$ClassMethod" />
    <item key="/MCG/ClockConfig[0]"                         value="ClockConfig_PEE_48MHz" />
    <item key="/MCG/ClockConfig[1]"                         value="ClockConfig_BLPE_4MHz" />
    <item key="/MCG/ClockConfig[2]"                         value="ClockConfig_FEE_42MHz" />

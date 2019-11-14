@@ -11,20 +11,40 @@
 #include "hardware.h"
 #include "Oled.h"
 #include "Configure.h"
+#include "FunctionQueue.h"
 
 class FrequencyGenerator {
 
 private:
+   static FrequencyGenerator *This;
+
    USBDM::Oled &oled;
-   unsigned currentFrequency = 100 * USBDM::Hz;
+   unsigned savedFrequency   = Frequency_Off;
+   unsigned currentFrequency = Frequency_Off;
+   FunctionQueue &functionQueue;
 
    /**
-    * Display Frequency on LCD
+    * Display Frequency on OLED
     *
     * @param frequency
     */
    void displayFrequency(unsigned frequency);
    void initialiseWaveform();
+   /**
+    * Set frequency of generator
+    *
+    * @param frequency
+    *
+    * @note Range: Frequency_Off, [Frequency_Min, Frequency_Max]
+    */
+   void setFrequency(unsigned frequency);
+
+   /**
+    * Get the current waveform frequency
+    *
+    * @return Frequency in Hz
+    */
+   unsigned getFrequency();
 
 public:
    /// Used to indicate generator off
@@ -41,26 +61,19 @@ public:
     *
     * @param oled  OLED display to use to display frequency
     */
-   FrequencyGenerator(USBDM::Oled &oled) : oled(oled) {
+   FrequencyGenerator(USBDM::Oled &oled, FunctionQueue &functionQueue) : oled(oled), functionQueue(functionQueue) {
+      usbdm_assert((This == nullptr), "Only single instance of FrequencyGenerator allowed");
+      This = this;
       initialiseWaveform();
+      setFrequency(Frequency_Off);
+      displayFrequency(currentFrequency);
    }
 
-   /**
-    * Set frequency of generator
-    * This will also update the OLED display
-    *
-    * @param frequency
-    *
-    * @note Range: Frequency_Off, [Frequency_Min, Frequency_Max]
-    */
-   void setFrequency(unsigned frequency);
+   void pollButtons();
 
-   /**
-    * Get the current waveform frequency
-    *
-    * @return Frequency in Hz
-    */
-   unsigned getFrequency();
+   void softPowerOn();
+
+   void softPowerOff();
 
    /**
     * Test loop for debug

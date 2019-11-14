@@ -392,6 +392,7 @@ public:
     *                        nullptr to indicate none
     */
    static INLINE_RELEASE void setTimerOverflowCallback(FtmCallbackFunction theCallback) {
+      static_assert(Info::irqHandlerInstalled, "FTM not configure for interrupts");
       if (theCallback == nullptr) {
          sToiCallback = unhandledCallback;
          return;
@@ -426,7 +427,7 @@ public:
     * Disables peripheral including clocks
     */
    static INLINE_RELEASE void disable() {
-      // Disable FTM (clock source disabled)
+      // Disable (clock source disabled)
       tmr().SC = 0;
 
       // Disable clock to peripheral interface
@@ -1244,7 +1245,7 @@ public:
     * @param[in] dutyCycle  Duty-cycle as percentage (float)
     * @param[in] channel    Timer channel
     *
-    * @note The actual CnV register update may be delayed by the FTM register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
     */
    static void setDutyCycle(float dutyCycle, int channel) {
       if (tmr().SC&FTM_SC_CPWMS_MASK) {
@@ -1261,9 +1262,9 @@ public:
     * @param[in] dutyCycle  Duty-cycle as percentage
     * @param[in] channel    Timer channel
     *
-    * @note The actual CnV register update may be delayed by the FTM register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
     */
-   static void setDutyCycle(unsigned dutyCycle, int channel) {
+   static void setDutyCycle(int dutyCycle, int channel) {
       if (tmr().SC&FTM_SC_CPWMS_MASK) {
          tmr().CONTROLS[channel].CnV  = (dutyCycle*tmr().MOD)/100;
       }
@@ -1282,7 +1283,7 @@ public:
     * @return E_NO_ERROR on success
     * @return E_TOO_LARGE on success
     *
-    * @note The actual CnV register update may be delayed by the FTM register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
     */
    static ErrorCode setHighTime(uint32_t highTime, int channel) {
 
@@ -1558,7 +1559,7 @@ public:
        *
        * @return E_NO_ERROR on success
        *
-       * @note The actual CnV register update will be delayed by the FTM register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
        */
       static INLINE_RELEASE ErrorCode setHighTimeInTicks(uint32_t highTime) {
          return Ftm::setHighTime(highTime, channel);
@@ -1572,7 +1573,7 @@ public:
        *
        * @return E_NO_ERROR on success
        *
-       * @note The actual CnV register update will be delayed by the FTM register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
        */
       static INLINE_RELEASE ErrorCode setHighTime(float highTime) {
          return Ftm::setHighTime(highTime, channel);
@@ -1582,9 +1583,9 @@ public:
        *
        * @param[in] dutyCycle  Duty-cycle as percentage
        *
-       * @note The actual CnV register update will be delayed by the FTM register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
        */
-      static INLINE_RELEASE void setDutyCycle(unsigned dutyCycle) {
+      static INLINE_RELEASE void setDutyCycle(int dutyCycle) {
          Ftm::setDutyCycle(dutyCycle, channel);
       }
 
@@ -1593,7 +1594,7 @@ public:
        *
        * @param[in] dutyCycle  Duty-cycle as percentage
        *
-       * @note The actual CnV register update will be delayed by the FTM register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
        */
       static INLINE_RELEASE void setDutyCycle(float dutyCycle) {
          Ftm::setDutyCycle(dutyCycle, channel);
@@ -1604,7 +1605,7 @@ public:
        *
        * @param[in] offset  Event time in ticks relative to current event time (i.e. Timer channel CnV value)
        *
-       * @note The actual CnV register update will be delayed by the FTM register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
        */
       static INLINE_RELEASE void setDeltaEventTime(uint16_t offset) {
          Ftm::setDeltaEventTime(offset, channel);
@@ -1615,7 +1616,7 @@ public:
        *
        * @param[in] offset  Event time in ticks relative to current time (i.e. Timer CNT value)
        *
-       * @note The actual CnV register update will be delayed by the FTM register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
        */
       static INLINE_RELEASE void setRelativeEventTime(uint16_t offset) {
          Ftm::setRelativeEventTime(offset, channel);
@@ -1626,7 +1627,7 @@ public:
        *
        * @param[in] eventTime  Absolute event time in ticks i.e. value to use as timer comparison value
        *
-       * @note The actual CnV register update will be delayed by the FTM register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
        */
       static INLINE_RELEASE void setEventTime(uint16_t eventTime) {
          Ftm::setEventTime(eventTime, channel);
@@ -1762,7 +1763,7 @@ public:
        */
       static void enablePinNvicInterrupts() {
          FtmBase::CheckPinMapping<Info, channel>::check();
-         Pcr::enableNvicInterrupt();
+         Pcr::enableNvicInterrupts();
       }
 
       /**
@@ -1774,7 +1775,7 @@ public:
        */
       static void enablePinNvicInterrupts(uint32_t nvicPriority) {
          FtmBase::CheckPinMapping<Info, channel>::check();
-         Pcr::enableNvicInterrupt(nvicPriority);
+         Pcr::enableNvicInterrupts(nvicPriority);
       }
 
       /**
@@ -2090,7 +2091,7 @@ public:
 
    /**
     * Set Pin Control Register (PCR) values for PHA and PHB inputs.
-    * This will map the pin to the FTM Quadrature function (mux value) \n
+    * This will map the pin to the Quadrature function (mux value) \n
     * The clock to the port will be enabled before changing the PCR
     *
     * @param[in] pinPull          One of PinPull_None, PinPull_Up, PinPull_Down
@@ -2211,7 +2212,6 @@ public:
     * Disables peripheral including clocks
     */
    static INLINE_RELEASE void disable() {
-      // Disable FTM (clock source disabled)
       tmr().QDCTRL = 0;
 
       // Disable clock to peripheral interface
