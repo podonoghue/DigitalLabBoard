@@ -246,10 +246,6 @@ DocumentPath=Project Outputs for DigitalLabBoard\Pick Place for DigitalLabBoard.
 DItemRevisionGUID=
 
 [Parameter1]
-Name=
-Value=
-
-[Parameter2]
 Name=Version
 Value=0.2
 
