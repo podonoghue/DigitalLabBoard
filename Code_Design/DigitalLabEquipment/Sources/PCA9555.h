@@ -103,7 +103,7 @@ public:
          USBDM::I2c        &i2cInterface,
          uint8_t            i2cAddress        = 0b000
          ) :
-            pca95555Address((0b0100000|(i2cAddress&0b111))<<1),
+            pca95555Address((0b010'0000|(i2cAddress&0b111))<<1),
             i2c(i2cInterface) {
    }
 

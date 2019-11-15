@@ -14,16 +14,6 @@
 // Access to USBDM name-space
 using namespace USBDM;
 
-void FrequencyDisplay::drawDigit(int value, bool &suppress) {
-   suppress = suppress && (value == 0);
-   if (suppress) {
-      oled.write(' ');
-   }
-   else {
-      oled.write(value);
-   }
-}
-
 /**
  * Display Frequency on LCD
  *
@@ -43,14 +33,24 @@ void FrequencyDisplay::displayFrequency(unsigned frequency) {
    else if (frequency != 0) {
       units = "  Hz";
    }
-   bool suppressZeroes = true;
 
    oled.clearDisplay();
    oled.setFont(fontVeryLarge);
 
-   drawDigit(frequency/100,      suppressZeroes);
-   drawDigit((frequency/10)%10,  suppressZeroes);
-   drawDigit(frequency%10,       suppressZeroes);
+   bool suppressZeroes = true;
+   auto drawDigit = [&](int value) {
+      suppressZeroes = suppressZeroes && (value == 0);
+      if (suppressZeroes) {
+         oled.write(' ');
+      }
+      else {
+         oled.write(value);
+      }
+   };
+
+   drawDigit(frequency/100);
+   drawDigit((frequency/10)%10);
+   drawDigit(frequency%10);
 
    oled.write(units).write(" ");
 

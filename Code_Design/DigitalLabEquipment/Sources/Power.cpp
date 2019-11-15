@@ -9,6 +9,9 @@
 
 using namespace USBDM;
 
+/**
+ * Initialise Power object
+ */
 void Power::powerInitialise() {
    PowerButton::setInput(PinPull_Up, PinAction_None, PinFilter_None);
    PowerEnableControl::setOutput(PinDriveStrength_High, PinDriveMode_PushPull, PinSlewRate_Slow);
@@ -16,21 +19,6 @@ void Power::powerInitialise() {
    Adc0::setAveraging(AdcAveraging_8);
    Adc0::setCallback(callback);
    Adc0::enableNvicInterrupts(NvicPriority_Normal);
-}
-
-/**
- * Does recovery after soft power-on
- * This routine is called after a delay to notify devices
- */
-void Power::powerOnRecovery() {
-   frequencyGenerator.softPowerOn();
-}
-
-/**
- * Called to notify off all devices before soft power-off
- */
-void Power::powerOff() {
-   frequencyGenerator.softPowerOff();
 }
 
 /**
@@ -57,13 +45,13 @@ void Power::pollPower() {
             powerOnRecoveryCount = POWER_ON_DELAY_COUNT;
          }
          else {
-            powerOff();
+            powerOffNotify();
          }
          PowerEnableControl::write(powerOn);
       }
    }
    if (powerOnRecoveryCount == 1) {
-      powerOnRecovery();
+      powerOnNotify();
    }
    if ((powerOnRecoveryCount == 0) && powerOn) {
       VddSample::startConversion(AdcInterrupt_Enabled);
@@ -77,16 +65,11 @@ void Power::pollPower() {
  * @param channel
  */
 void Power::vddSampleCallback(uint32_t result, int) {
-   if (powerOn &&(result<(Adc0::getSingleEndedMaximum(AdcResolution_8bit_se)*0.9))) {
-//      powerOff();
-//      PowerEnableControl::off();
-//      powerOn = false;
-      __asm__("nop");
+   if (powerOn &&(result<(Adc0::getSingleEndedMaximum(AdcResolution_8bit_se)*0.8))) {
+      powerOffNotify();
+      PowerEnableControl::off();
+      powerOn = false;
    }
 }
 
 Power *Power::This    = nullptr;
-
-
-
-

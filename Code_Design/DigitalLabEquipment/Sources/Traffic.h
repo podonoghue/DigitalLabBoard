@@ -1,33 +1,25 @@
 /*
- * SwitchDebouncer.h
+ * Traffic.h
  *
- *  Created on: 30 Oct 2019
+ *  Created on: 15 Nov 2019
  *      Author: podonoghue
  */
 
-#ifndef SOURCES_SWITCHES_H_
-#define SOURCES_SWITCHES_H_
-
-#include "hardware.h"
-#include "i2c.h"
-#include "PCA9555.h"
+#ifndef SOURCES_TRAFFIC_H_
+#define SOURCES_TRAFFIC_H_
+#include "Configure.h"
 #include "Power.h"
+#include "PCA9555.h"
 #include "FunctionQueue.h"
 
-class Switches : PowerSubscriber {
-
+class Traffic : PowerSubscriber {
 private:
+
    /// Self pointer for static methods e.g. call-backs
-   static Switches *This;
+   static Traffic *This;
 
-   /// Current state of non-latched user outputs
-   uint8_t  currentOutputValues  = 0;
-
-   /// Current state of latched user outputs
-   uint8_t  latchedOutputValues  = 0;
-
-   /// GPIO used for shared LEDs/buttons pins and user outputs
-   USBDM::Pca9555 switchGpio;
+   /// GPIO used for LEDs and user I/O
+   USBDM::Pca9555 trafficGpio;
 
    /// Power object
    Power          &power;
@@ -35,9 +27,12 @@ private:
    /// Queue for serialised function execution
    FunctionQueue  &functionQueue;
 
+   // Indicates if module is enabled
+   bool enabled = false;
+
    /**
     * Serialised call-back function
-    * - Polls switches
+    * - Polls switches and user inputs
     * - Updates LEDs and user outputs
     */
    void updateSwitches();
@@ -54,21 +49,24 @@ private:
 
 public:
    /**
-    * Switch module
+    * Traffic module
     *
     * @param i2c              I2C interface for GPIO port expander
     * @param functionQueue    Serialised call-back function queue
     * @param power            Power object
     */
-   Switches(USBDM::I2c &i2c, FunctionQueue &functionQueue, Power &power) :
-      switchGpio(USBDM::Pca9555(i2c,  BUTTON_I2C_ADDRESS)), power(power), functionQueue(functionQueue) {
-      usbdm_assert((This == nullptr), "Only single instance of Switches allowed");
+   Traffic(USBDM::I2c &i2c, FunctionQueue &functionQueue, Power &power) :
+      trafficGpio(USBDM::Pca9555(i2c,  TRAFFIC_I2C_ADDRESS)), power(power), functionQueue(functionQueue) {
+
+      usbdm_assert((This == nullptr), "Only single instance of Traffic allowed");
       This = this;
 
       power.addPowerSubscriber(this);
+      TrafficButtons::setInput(
+            USBDM::PinPull_None,
+            USBDM::PinAction_None,
+            USBDM::PinFilter_None);
    }
-
-   void runTests();
 
    /**
     * Schedules all polling operations
@@ -79,6 +77,7 @@ public:
       };
       functionQueue.enQueueDiscardOnFull(f);
    }
+
 };
 
-#endif /* SOURCES_SWITCHES_H_ */
+#endif /* SOURCES_TRAFFIC_H_ */

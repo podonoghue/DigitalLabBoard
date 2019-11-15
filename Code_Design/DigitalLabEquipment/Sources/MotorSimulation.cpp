@@ -11,12 +11,18 @@
 
 using namespace USBDM;
 
+/**
+ * Data for 1 Charlie-plexed LED
+ */
 struct CharlieData {
    uint8_t highLed;
    uint8_t lowLed;
 };
 
-static CharlieData charlieData[] = {
+/**
+ * Data for Charlie-plexed LEDs
+ */
+static const CharlieData charlieData[] = {
 //       3210    3210
       {0b0000, 0b0000}, // Off
 
@@ -36,6 +42,7 @@ static CharlieData charlieData[] = {
 };
 
 /**
+ * Turn on given LED
  *
  * @param ledNum
  */
@@ -45,24 +52,34 @@ void MotorSimulator::writeLed(unsigned ledNum) {
    CharliePlexing::setDirection(charlieData[index].highLed|charlieData[index].lowLed);
 }
 
+/**
+ * Motor phases
+ */
 enum Phase {
-   Phase0 = 0b00,
-   Phase1 = 0b01,
-   Phase2 = 0b10,
-   Phase3 = 0b11,
+   Phase0 = 0b00,//!< Phase0
+   Phase1 = 0b01,//!< Phase1
+   Phase2 = 0b10,//!< Phase2
+   Phase3 = 0b11,//!< Phase3
 };
 
+/**
+ * Called when an illegal motor input sequence has been detected
+ */
 void MotorSimulator::motorAbort() {
-
 }
 
-/*
+/**
+ * FTM call-back
+ * Polls motor inputs and implements a simple state-machine
+ *
  * Sequence
  *
- * 0: 0b1000 0b0010 0b0001
- * 1: 0b0010 0b0100 0b1000
- * 2: 0b0100 0b0001 0b0010
- * 3: 0b0001 0b1000 0b0100
+ *         Expected Input
+ * Phase   Hold   CW     CCW
+ *   0:    0b1000 0b0010 0b0001
+ *   1:    0b0010 0b0100 0b1000
+ *   2:    0b0100 0b0001 0b0010
+ *   3:    0b0001 0b1000 0b0100
  */
 void MotorSimulator::timerCallback() {
 
@@ -146,6 +163,7 @@ void MotorSimulator::timerCallback() {
       position = 1;
    }
    if (position != lastPosition) {
+      // Update on change
       writeLed(position);
    }
 }
@@ -169,6 +187,9 @@ void MotorSimulator::initialiseMotorSimulation() {
    MotorPitChannel::configure(1*ms, PitChannelIrq_Enabled);
 }
 
+/**
+ * Test motor LEDs
+ */
 void MotorSimulator::testMotorLeds() {
    CharliePlexing::setInOut(
          PinPull_None,
@@ -189,4 +210,5 @@ void MotorSimulator::testMotorLeds() {
    }
 }
 
+/// Self pointer for static methods e.g. call-backs
 MotorSimulator *MotorSimulator::This = nullptr;

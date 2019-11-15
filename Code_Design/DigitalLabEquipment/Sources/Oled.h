@@ -115,8 +115,8 @@ public:
    }
 
    // Address (LSB = R/W bit = 0)
-   static constexpr unsigned       I2C_ADDRESS   = 0b01111000;
-   static constexpr unsigned       I2C_SPEED     = 400*kHz;
+   static constexpr unsigned   I2C_ADDRESS   = 0b01111000;
+   static constexpr unsigned   I2C_SPEED     = 400*kHz;
 
    static const int            WIDTH         = 128;
    static const int            HEIGHT        =  32;
@@ -152,7 +152,7 @@ public:
 
 public:
    Oled(USBDM::I2c &i2c) : i2c(i2c) {
-      initialise();
+//      initialise();
    }
 
    /**

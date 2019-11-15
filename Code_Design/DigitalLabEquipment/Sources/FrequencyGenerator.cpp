@@ -10,6 +10,8 @@
 
 using namespace USBDM;
 
+static constexpr unsigned LOW_FREQ_DIVISION_FACTOR = 100;
+
 /**
  * Interrupt handler for FrequencyGeneratorTimer interrupts
  * This sets the next interrupt/pin toggle for a half-period from the last event
@@ -22,12 +24,12 @@ static void ftmCallback(uint8_t status) {
    // Check channel
    if (status & FrequencyGeneratorTimerChannel::CHANNEL_MASK) {
       iterationCounter++;
-      if (iterationCounter >= 100) {
+      if (iterationCounter >= LOW_FREQ_DIVISION_FACTOR) {
          iterationCounter = 0;
          // Set on next edge
          FrequencyGeneratorTimerChannel::setMode(FtmChMode_OutputCompareSet);
       }
-      else if (iterationCounter == 50) {
+      else if (iterationCounter == (LOW_FREQ_DIVISION_FACTOR/2)) {
          // Clear on next edge
          FrequencyGeneratorTimerChannel::setMode(FtmChMode_OutputCompareClear);
       }
@@ -36,6 +38,9 @@ static void ftmCallback(uint8_t status) {
    }
 }
 
+/**
+ * Initialise Clock generator
+ */
 void FrequencyGenerator::initialiseWaveform() {
    FrequencyButtons::setInput(PinPull_Up, PinAction_None, PinFilter_None);
 
@@ -88,18 +93,16 @@ void FrequencyGenerator::setFrequency(unsigned frequency) {
        * Low frequency strategy
        *
        * Interrupts
-       * Event time is manipulated by call=back.
+       * Event time is manipulated by call-back.
        * Output pin action manipulated by call-back
        * Set x50, Clear x50 so effectively /100 of event frequency
        */
-      FrequencyGeneratorTimer::setPeriod(1/(100.0*frequency));
+      FrequencyGeneratorTimer::setPeriod(1/((float)LOW_FREQ_DIVISION_FACTOR*frequency));
       FrequencyGeneratorTimerChannel::configure(FtmChMode_OutputCompareClear, FtmChannelAction_Irq);
    }
    else {
       /*
        * High frequency strategy
-       * This method is not commonly used as it monopolised the FTM i.e. it makes it difficult to
-       * use different channels for independent uses.
        *
        * No interrupts
        * Output pin action is toggle on all events
@@ -118,7 +121,7 @@ void FrequencyGenerator::setFrequency(unsigned frequency) {
 /**
  * Get the current waveform frequency
  *
- * @return
+ * @return Frequency in Hz
  */
 unsigned FrequencyGenerator::getFrequency() {
    return currentFrequency;
@@ -161,7 +164,10 @@ void FrequencyGenerator::displayFrequency(unsigned frequency) {
    functionQueue.enQueueDiscardOnFull(f);
 }
 
-static float freqs[] = {
+/**
+ * Table of available frequencies
+ */
+const float FrequencyGenerator::freqs[] = {
       0,
       1,2,5,
       10,20,50,
@@ -172,6 +178,9 @@ static float freqs[] = {
       1*MHz,2*MHz,5*MHz,
 };
 
+/**
+ * Do all polling operations
+ */
 void FrequencyGenerator::pollButtons() {
    static unsigned lastButtonValue = 0;
    static unsigned stableCount = 0;
@@ -210,12 +219,18 @@ void FrequencyGenerator::pollButtons() {
    }
 }
 
+/**
+ * Notification that soft power-on has occurred
+ */
 void FrequencyGenerator::softPowerOn() {
    oled.initialise();
    setFrequency(savedFrequency);
    displayFrequency(currentFrequency);
 }
 
+/**
+ * Notification that soft power-off is about to occur
+ */
 void FrequencyGenerator::softPowerOff() {
    savedFrequency = getFrequency();
    setFrequency(Frequency_Off);

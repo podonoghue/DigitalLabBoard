@@ -237,8 +237,10 @@ public:
 
       // Enable timer
       pit().MCR = Info::mcr;
-      for (unsigned i=0; i<Info::irqCount; i++) {
-         configureChannelInTicks(i, Info::pit_ldval);
+      for (PitChannelNum channel = PitChannelNum_0;
+           channel < PitInfo::NumChannels;
+           channel = channel+1) {
+         configureChannelInTicks(channel, Info::pit_ldval);
          disableNvicInterrupts(Info::irqLevel);
       }
    }
@@ -254,7 +256,7 @@ public:
       for (PitChannelNum channel = PitChannelNum_0;
            channel < PitInfo::NumChannels;
            channel = channel+1) {
-         disableChannel(channel);
+         disableNvicInterrupts(channel);
       }
       pit().MCR = pitDebugMode|PIT_MCR_MDIS(0); // MDIS cleared => enabled!
       allocatedChannels = -1;

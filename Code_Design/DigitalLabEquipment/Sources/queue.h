@@ -24,7 +24,6 @@ class Queue {
    T        fBuff[QUEUE_SIZE];
    T        *fHead, *fTail;
    int      fNumberOfElements;
-//   uint32_t fLock;
 
 public:
    /*

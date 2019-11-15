@@ -55,7 +55,7 @@ public:
    I2C_State           state;               //!< State of current transaction
 
 protected:
-   static constexpr unsigned TIMEOUT_LIMIT = 1000;
+   static constexpr unsigned TIMEOUT_LIMIT = 1000000;
 
    /** Callback to catch unhandled interrupt */
    static void unhandledCallback() {

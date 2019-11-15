@@ -54,7 +54,7 @@ using TrafficButtons = USBDM::GpioDField<3,0,USBDM::ActiveLow>;
 /// I2C address for Traffic intersection GPIO expander
 /// IO0_7-0 = Fixed direction I/O to user
 /// IO1_7-0 = Outputs to LEDs (active high)
-static constexpr uint8_t TRAFFIC_I2C_ADDRESS = 0b01000010;
+static constexpr uint8_t TRAFFIC_I2C_ADDRESS = 0b001;
 
 /// Traffic intersection - Mask for east-west RED LED (GPIO expander outputs IO1_0)
 static constexpr uint8_t EW_RED_LED_MASK          = 1U<<0;
@@ -112,7 +112,7 @@ using VddSample = USBDM::Adc0::Channel<0>;
 /// I2C address for debounced buttons GPIO expander
 /// IO0_7-0 = Outputs to user
 /// IO1_7-0 = Inputs from switches/Outputs to LEDs (active-low)
-static constexpr uint8_t BUTTON_I2C_ADDRESS  = 0b01000000;
+static constexpr uint8_t BUTTON_I2C_ADDRESS  = 0b000;
 
 /*
  * SPARE PINS

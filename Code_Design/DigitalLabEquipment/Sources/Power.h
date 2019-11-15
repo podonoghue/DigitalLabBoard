@@ -8,7 +8,30 @@
 #ifndef SOURCES_POWER_H_
 #define SOURCES_POWER_H_
 
-#include "FrequencyGenerator.h"
+#include "Configure.h"
+
+class Power;
+
+class PowerSubscriber {
+
+private:
+   friend Power;
+
+   /**
+    * Notification that soft power-on has occurred
+    */
+   virtual void softPowerOn()  = 0;
+
+   /**
+    * Notification that soft power-off is about to occur
+    */
+   virtual void softPowerOff() = 0;
+
+public:
+
+   PowerSubscriber(){}
+   virtual ~PowerSubscriber(){}
+};
 
 class Power {
 private:
@@ -17,39 +40,42 @@ private:
    unsigned stableCount          = 0;
    unsigned powerOnRecoveryCount = 0;
 
+   PowerSubscriber *powerSubscribers[5];
+   unsigned         powerSubscriberCount = 0;
 
+   /**
+    * Notifies all devices that soft power-on has occurred
+    *
+    * @note This is done after the power-on
+    */
+   void powerOnNotify() {
+      for (unsigned index=0; index<powerSubscriberCount; index++) {
+         powerSubscribers[index]->softPowerOn();
+      }
+   }
+
+   /**
+    * Notifies all devices that soft power-off has occurred
+    *
+    * @note This is done before the power-off
+    */
+   void powerOffNotify() {
+      for (unsigned index=0; index<powerSubscriberCount; index++) {
+         powerSubscribers[index]->softPowerOff();
+      }
+   }
+
+   // Self pointer for static methods e.g. call-backs
    static Power    *This;
-
-   FrequencyGenerator &frequencyGenerator;
 
    static void callback(uint32_t result, int channel) {
       This->vddSampleCallback(result, channel);
    }
 
+   /**
+    * Initialise Power object
+    */
    void powerInitialise();
-
-public:
-   Power(FrequencyGenerator &frequencyGenerator) : frequencyGenerator(frequencyGenerator) {
-      usbdm_assert((This == nullptr), "Only one instance of Power object is allowed");
-      This = this;
-      powerInitialise();
-   }
-
-   /**
-    * Does recovery after soft power-on
-    * This routine is called after a delay.
-    */
-   void powerOnRecovery();
-
-   /**
-    * Called to turn off all devices on soft power-off
-    */
-   void powerOff();
-
-   /**
-    * Poll power button and monitor target Vdd
-    */
-   void pollPower();
 
    /**
     * ADC Callback used to monitor overloads
@@ -59,6 +85,35 @@ public:
     */
    void vddSampleCallback(uint32_t result, int channel);
 
+public:
+   Power() {
+
+      usbdm_assert((This == nullptr), "Only one instance of Power object is allowed");
+
+      This = this;
+      powerInitialise();
+   }
+
+   /**
+    * Add an object to be notified of soft power-on and power-off events
+    *
+    * @param powerSubscriber
+    */
+   void addPowerSubscriber(PowerSubscriber *powerSubscriber) {
+      powerSubscribers[powerSubscriberCount++] = powerSubscriber;
+   }
+
+   /**
+    * Poll power button and monitor target Vdd
+    */
+   void pollPower();
+
+   /**
+    * Indicates if the power is current on
+    *
+    * @return  True  => power is on
+    * @return  False => power is off
+    */
    bool isPowerOn() {
       return powerOn;
    }
