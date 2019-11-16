@@ -18,31 +18,29 @@
 
 using namespace USBDM;
 
-Power                powerControl{};
-I2cInterface         i2c{};
-Oled                 oled(i2c);
-FunctionQueue        functionQueue{};
-MotorSimulator       motorSimulator{};
-FrequencyGenerator   frequencyGenerator(oled, functionQueue, powerControl);
-Switches             switches(i2c, functionQueue, powerControl);
-Traffic              traffic(i2c, functionQueue, powerControl);
+static Power                powerControl{};
+static I2cInterface         i2c{};
+static Oled                 oled(i2c);
+static FunctionQueue        functionQueue{};
+static MotorSimulator       motorSimulator(functionQueue, powerControl);
+static FrequencyGenerator   frequencyGenerator(oled, functionQueue, powerControl);
+static Switches             switches(i2c, functionQueue, powerControl);
+static Traffic              traffic(i2c, functionQueue, powerControl);
 
 /**
  * Timer call-back to poll buttons @ 5ms interval
  */
-void buttonPollTimerCallback() {
+static void buttonPollTimerCallback() {
    powerControl.pollPower();
-   if (powerControl.isPowerOn()) {
-      frequencyGenerator.pollButtons();
-      switches.pollButtons();
-      traffic.pollButtons();
-   }
+   frequencyGenerator.pollButtons();
+   switches.pollButtons();
+   traffic.pollButtons();
 }
 
 /**
  * Initialise the button polling using a PIT channel
  */
-void configureButtonPolling() {
+static void configureButtonPolling() {
    ButtonPollTimer::configure(PitDebugMode_Stop);
    ButtonPollChannel::setCallback(buttonPollTimerCallback);
    ButtonPollChannel::enableNvicInterrupts(NvicPriority_Low);

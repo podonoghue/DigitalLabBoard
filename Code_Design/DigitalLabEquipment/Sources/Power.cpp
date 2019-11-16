@@ -42,19 +42,20 @@ void Power::pollPower() {
       if (currentButtonValue) {
          powerOn = !powerOn;
          if (powerOn) {
+            enableTargetVdd();
             powerOnRecoveryCount = POWER_ON_DELAY_COUNT;
          }
          else {
+            disableTargetVdd();
             powerOffNotify();
          }
-         PowerEnableControl::write(powerOn);
       }
+   }
+   if ((powerOnRecoveryCount <= (POWER_ON_DELAY_COUNT-POWER_ON_ADC_DELAY_COUNT)) && powerOn) {
+      TargetVddSample::startConversion(AdcInterrupt_Enabled);
    }
    if (powerOnRecoveryCount == 1) {
       powerOnNotify();
-   }
-   if ((powerOnRecoveryCount == 0) && powerOn) {
-      VddSample::startConversion(AdcInterrupt_Enabled);
    }
 }
 
@@ -67,7 +68,7 @@ void Power::pollPower() {
 void Power::vddSampleCallback(uint32_t result, int) {
    if (powerOn &&(result<(Adc0::getSingleEndedMaximum(AdcResolution_8bit_se)*0.8))) {
       powerOffNotify();
-      PowerEnableControl::off();
+      disableTargetVdd();
       powerOn = false;
    }
 }

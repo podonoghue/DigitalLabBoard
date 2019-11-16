@@ -66,6 +66,9 @@ private:
     */
    unsigned getFrequency();
 
+   /// Whether interface is powered
+   bool powerOn = false;
+
    /**
     * Notification that soft power-on has occurred
     */

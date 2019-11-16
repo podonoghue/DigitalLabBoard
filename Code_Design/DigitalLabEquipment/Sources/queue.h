@@ -21,9 +21,9 @@ namespace USBDM {
  */
 template<class T, int QUEUE_SIZE>
 class Queue {
-   T        fBuff[QUEUE_SIZE];
-   T        *fHead, *fTail;
-   int      fNumberOfElements;
+   volatile T        fBuff[QUEUE_SIZE];
+   volatile T        *fHead, *fTail;
+   volatile int      fNumberOfElements;
 
 public:
    /*

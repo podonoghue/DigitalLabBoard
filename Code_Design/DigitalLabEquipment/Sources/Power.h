@@ -85,6 +85,30 @@ private:
     */
    void vddSampleCallback(uint32_t result, int channel);
 
+   /**
+    * Enable target Vdd
+    *
+    * Disconnects TargetVddDischarge
+    * Connects TargetVddSample to target Vdd
+    */
+   void enableTargetVdd() {
+      TargetVddDischarge::off();
+      TargetVddSample::setInput();
+      PowerEnableControl::on();
+   }
+
+   /**
+    * Disable target Vdd
+    *
+    * Connects TargetVddDischarge to target Vdd and makes active
+    * Disconnects TargetVddSample
+    */
+   void disableTargetVdd() {
+      PowerEnableControl::off();
+      TargetVddDischarge::setOutput(USBDM::PinDriveStrength_High, USBDM::PinDriveMode_OpenDrain, USBDM::PinSlewRate_Slow);
+      TargetVddDischarge::on();
+   }
+
 public:
    Power() {
 

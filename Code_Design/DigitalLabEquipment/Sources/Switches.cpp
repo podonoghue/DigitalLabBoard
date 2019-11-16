@@ -13,6 +13,9 @@ Switches *Switches::This = nullptr;
  * Notification that soft power-on has occurred
  */
 void Switches::softPowerOn() {
+
+   powerOn = true;
+
    // User outputs are always output
    switchGpio.setDirection0(0b11111111);
 
@@ -30,6 +33,8 @@ void Switches::softPowerOn() {
  * Notification that soft power-off is about to occur
  */
 void Switches::softPowerOff() {
+
+   powerOn = false;
 }
 
 void Switches::runTests() {
@@ -49,7 +54,7 @@ void Switches::updateSwitches() {
    static uint8_t  lastButtonValue      = 0;
    static unsigned stableCount          = 0;
 
-   if (!power.isPowerOn()) {
+   if (!powerOn) {
       // Don't access peripherals if no power!
       return;
    }
@@ -83,6 +88,7 @@ void Switches::updateSwitches() {
    }
    // Restore LEDs (either 3-state or low)
    switchGpio.setDirection1(currentOutputValues|latchedOutputValues);
+
    // Update switch outputs
    switchGpio.writeData0(currentOutputValues|latchedOutputValues);
 }

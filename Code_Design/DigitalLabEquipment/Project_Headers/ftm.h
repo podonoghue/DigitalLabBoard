@@ -734,14 +734,16 @@ public:
       while (prescalerValue<=7) {
          float    clock = inputClock/prescaleFactor;
          uint32_t periodInTicks   = round(period*clock);
+
+         pPrescalerValue = prescalerValue;
+         pPeriodInTicks  = periodInTicks;
+
          if (periodInTicks < Info::minimumResolution) {
             usbdm_assert(false, "Interval is too short");
             // Too short a period for minimum resolution
             return setErrorCode(E_TOO_SMALL);
          }
          if (periodInTicks <= maxPeriodInTicks) {
-            pPrescalerValue = prescalerValue;
-            pPeriodInTicks  = periodInTicks;
             return E_NO_ERROR;
          }
          prescalerValue++;

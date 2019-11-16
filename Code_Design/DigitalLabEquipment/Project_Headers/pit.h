@@ -247,7 +247,7 @@ public:
 
    /**
     *  Enables and configures the PIT.
-    *  This also clears all channels and channel reservations.
+    *  This also disables all channel interrupts and channel reservations.
     *
     *  @param[in]  pitDebugMode  Determined whether the PIT halts when suspended during debug
     */

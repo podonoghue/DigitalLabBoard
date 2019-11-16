@@ -27,21 +27,24 @@ using MotorPhases    = USBDM::GpioCField<7,4,USBDM::ActiveHigh>;
 /// Motor simulator - PIT channel
 using MotorPitChannel = USBDM::Pit::Channel<0>;
 
-/// Interval x5ms for switch debouncing
+/// Interval x5ms for switch debouncing/unlatching
 static constexpr unsigned DEBOUNCE_INTERVAL_COUNT = 20/5;
 
-/// Interval x5ms for switch latching/unlatching
+/// Interval x5ms for switch latching
 static constexpr unsigned LATCHED_INTERVAL_COUNT = 2000/5;
 
 /// Interval x5ms for power switch delay
 static constexpr unsigned POWER_BUTTON_DELAY_COUNT = 500/5;
 
+/// Interval x5ms for power-up delay before power checks start (ADC)
+static constexpr unsigned POWER_ON_ADC_DELAY_COUNT = 20/5;
+
 /// Interval x5ms for power-up delay before notifying peripherals
-/// This also affect the delay until power checks start (ADC)
-static constexpr unsigned POWER_ON_DELAY_COUNT = 4;
+static constexpr unsigned POWER_ON_DELAY_COUNT = 100/5;
 
 /// Timer used for polling
 using ButtonPollTimer = USBDM::Pit;
+
 /// Used to poll directly connected buttons - power, clock and traffic
 using ButtonPollChannel = USBDM::Pit::Channel<1>;
 
@@ -52,40 +55,69 @@ using ButtonPollChannel = USBDM::Pit::Channel<1>;
 using TrafficButtons = USBDM::GpioDField<3,0,USBDM::ActiveLow>;
 
 /// I2C address for Traffic intersection GPIO expander
-/// IO0_7-0 = Fixed direction I/O to user
+/// IO0_7-0 = Fixed direction user I/O
 /// IO1_7-0 = Outputs to LEDs (active high)
 static constexpr uint8_t TRAFFIC_I2C_ADDRESS = 0b001;
 
-/// Traffic intersection - Mask for east-west RED LED (GPIO expander outputs IO1_0)
-static constexpr uint8_t EW_RED_LED_MASK          = 1U<<0;
-/// Traffic intersection - Mask for east-west AMBER LED (GPIO expander outputs IO1_1)
-static constexpr uint8_t EW_AMBER_LED_MASK        = 1U<<1;
-/// Traffic intersection - Mask for east-west GREEN LED (GPIO expander outputs IO1_2)
-static constexpr uint8_t EW_GREEN_LED_MASK        = 1U<<2;
-/// Traffic intersection - Mask for east-west PEDESTRIAN GREEN LED (GPIO expander outputs IO1_3)
-static constexpr uint8_t EW_PEDESTRIAN_LED_MASK   = 1U<<3;
-/// Traffic intersection - Mask for north-south RED LED (GPIO expander outputs IO1_4)
-static constexpr uint8_t NS_RED_LED_MASK          = 1U<<4;
-/// Traffic intersection - Mask for north-south AMBER LED (GPIO expander outputs IO1_5)
-static constexpr uint8_t NS_AMBER_LED_MASK        = 1U<<5;
-/// Traffic intersection - Mask for north-south GREEN LED (GPIO expander outputs IO1_6)
-static constexpr uint8_t NS_GREEN_LED_MASK        = 1U<<6;
-/// Traffic intersection - Mask for north-south PEDESTRIAN GREEN LED (GPIO expander outputs IO1_7)
-static constexpr uint8_t NS_PEDESTRIAN_LED_MASK   = 1U<<7;
+/**
+ * Extract north-south lights from user input
+ *
+ * @param portValue Port value from IO0_7-0
+ *
+ * @return 0-3 indicating light encoding
+ */
+static constexpr inline unsigned northSouthLights(unsigned portValue) {
+   // Traffic intersection - Mask for north-south LIGHTS input from user (GPIO expander outputs IO0_1-0)
+   constexpr uint8_t NS_LIGHTS_IN_OFFSET      = 0;
+   constexpr uint8_t NS_LIGHTS_IN_MASK        = 0b11U<<NS_LIGHTS_IN_OFFSET;
 
-/// Traffic intersection - Mask for east-west PEDESTRIAN BUTTON output to user (GPIO expander outputs IO0_7)
-static constexpr uint8_t EW_PED_OUT_MASK          = 1U<<7;
-/// Traffic intersection - Mask for north-south PEDESTRIAN BUTTON output to user (GPIO expander outputs IO0_6)
-static constexpr uint8_t NS_PED_OUT_MASK          = 1U<<6;
-/// Traffic intersection - Mask for east-west CAR BUTTON output to user (GPIO expander outputs IO0_5)
-static constexpr uint8_t EW_CAR_OUT_MASK          = 1U<<5;
-/// Traffic intersection - Mask for north-south CAR BUTTON output to user (GPIO expander outputs IO0_4)
-static constexpr uint8_t NS_CAR_OUT_MASK          = 1U<<5;
+   return (portValue & NS_LIGHTS_IN_MASK)>>NS_LIGHTS_IN_OFFSET;
+}
 
-/// Traffic intersection - Mask for east-west LIGHTS input from user (GPIO expander outputs IO0_3-2)
-static constexpr uint8_t EW_LIGHTS_IN_MASK        = 3U<<2;
-/// Traffic intersection - Mask for north-south LIGHTS input from user (GPIO expander outputs IO0_1-0)
-static constexpr uint8_t NS_LIGHTS_IN_MASK        = 3U<<0;
+/**
+ * Extract east-west lights from user input
+ *
+ * @param portValue Port value from IO0_7-0
+ *
+ * @return 0-3 indicating light encoding
+ */
+static constexpr inline unsigned eastWestLights(unsigned portValue) {
+   // Traffic intersection - Masks for LIGHTS input from user (GPIO expander outputs IO0_3-2)
+   constexpr uint8_t EW_LIGHTS_IN_OFFSET      = 2;
+   constexpr uint8_t EW_LIGHTS_IN_MASK        = 0b11U<<(EW_LIGHTS_IN_OFFSET);
+
+   return (portValue & EW_LIGHTS_IN_MASK)>>EW_LIGHTS_IN_OFFSET;
+}
+
+/**
+ * Encode north-south and east-west light values to LED mask
+ *
+ * @param nsLights   North-south lights input
+ * @param ewLights   East-west lights input
+ */
+static constexpr inline unsigned trafficLedsEncode(unsigned nsLights, unsigned ewLights) {
+   /// Traffic intersection - Mask for LEDs (GPIO expander outputs IO1_(3..0)/IO1_(7..4))
+   enum {
+      RED_LED_MASK         = 0b0001,
+      AMBER_LED_MASK       = 0b0010,
+      GREEN_LED_MASK       = 0b0100,
+      PEDESTRIAN_LED_MASK  = 0b1000,
+   };
+
+   // Encoding for traffic LEDs
+   const uint8_t lightTable[] = {
+         RED_LED_MASK,                          // Red
+         AMBER_LED_MASK,                        // Amber
+         GREEN_LED_MASK,                        // Green
+         GREEN_LED_MASK|PEDESTRIAN_LED_MASK,    // Green + Walk
+   };
+
+   // Offsets for LEDs (GPIO expander outputs IO1_(7..4)/IO1_(3..0))
+   constexpr unsigned NS_LED_OFFSET = 0;
+   constexpr unsigned EW_LED_OFFSET = 4;
+
+   return (lightTable[nsLights]<<NS_LED_OFFSET)|(lightTable[ewLights]<<EW_LED_OFFSET);
+}
 
 /*
  * FREQUENCY GENERATOR
@@ -104,8 +136,11 @@ using FrequencyGeneratorTimerChannel = FrequencyGeneratorTimer::Channel<6>;
 using PowerEnableControl  = USBDM::GpioB<3,  USBDM::ActiveHigh>;
 /// Power - Enable button
 using PowerButton          = USBDM::GpioA<4,  USBDM::ActiveLow>;
-// Used to sample the target power supply
-using VddSample = USBDM::Adc0::Channel<0>;
+/// Power - Used to sample the target power supply (alias for TargetVddDischarge)
+using TargetVddSample = USBDM::Adc0::Channel<6>;
+/// Power - Used to discharge the target power supply (alias for TargetVddSample)
+using TargetVddDischarge = USBDM::GpioD<5, USBDM::ActiveLow>;
+
 /*
  * BUTTONS
  */

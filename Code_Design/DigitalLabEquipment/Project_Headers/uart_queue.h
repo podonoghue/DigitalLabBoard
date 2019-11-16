@@ -20,16 +20,15 @@ namespace USBDM {
  */
 template<class T, int QUEUE_SIZE>
 class UartQueue {
-   T        fBuff[QUEUE_SIZE];
-   T        *fHead, *fTail;
-   int      fNumberOfElements;
-//   uint32_t fLock;
+   volatile T        fBuff[QUEUE_SIZE];
+   volatile T        *fHead, *fTail;
+   volatile int      fNumberOfElements;
 
 public:
    /*
-    * Create empty UartQueue
+    * Create empty Queue
     */
-   UartQueue() : fHead(fBuff), fTail(fBuff), fNumberOfElements(0) {
+   constexpr UartQueue() : fHead(fBuff), fTail(fBuff), fNumberOfElements(0) {
    }
 
    /**
@@ -65,7 +64,7 @@ public:
    void enQueue(T element) {
       bool success = enQueueDiscardOnFull(element);
       (void)success;
-      usbdm_assert(success, "UartQueue full");
+      usbdm_assert(success, "Queue full");
    }
    /*
     * Add element to queue. Discards on full.
@@ -94,7 +93,7 @@ public:
     */
    T deQueue() {
       USBDM::CriticalSection cs;
-      usbdm_assert(!isEmpty(), "UartQueue empty");
+      usbdm_assert(!isEmpty(), "Queue empty");
       T t = *fHead++;
       fNumberOfElements--;
       if (fHead>=(fBuff+QUEUE_SIZE)) {
@@ -102,7 +101,6 @@ public:
       }
       return t;
    }
-
 };
 
 } // End namespace USBDM

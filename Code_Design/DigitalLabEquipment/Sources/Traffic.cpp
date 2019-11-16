@@ -17,7 +17,7 @@ void Traffic::updateSwitches() {
    static uint8_t  lastButtonValue      = 0;
    static unsigned stableCount          = 0;
 
-   if (!power.isPowerOn()) {
+   if (!powerOn) {
       // Don't access peripherals if no power!
       return;
    }
@@ -47,15 +47,18 @@ void Traffic::updateSwitches() {
    uint8_t lightInputs;
    trafficGpio.readData0(lightInputs);
 
-   static const uint8_t lightTable[] = {
-         0b0001,  // Red
-         0b0010,  // Amber
-         0b0100,  // Green
-         0b1100,  // Green + Walk
-   };
-   uint8_t ledMask = 0;
-   ledMask |= lightTable[lightInputs&0b11];
-   ledMask |= lightTable[(lightInputs>>2)&0b11]<<4;
+   uint8_t ledMask = trafficLedsEncode(northSouthLights(lightInputs), eastWestLights(lightInputs));
+
+//   static const uint8_t lightTable[] = {
+//         RED_LED_MASK,           // Red
+//         AMBER_LED_MASK,         // Amber
+//         GREEN_LED_MASK,         // Green
+//         PEDESTRIAN_LED_MASK,    // Green + Walk
+//   };
+//
+//   uint8_t ledMask = 0;
+//   ledMask |= lightTable[northSouthLights(lightInputs)]<<NS_LED_OFFSET;
+//   ledMask |= lightTable[eastWestLights(lightInputs)]<<EW_LED_OFFSET;
 
    // Update LEDs
    trafficGpio.writeData1(ledMask);
@@ -66,6 +69,8 @@ void Traffic::updateSwitches() {
  */
 void Traffic::softPowerOn() {
    // Initialise GPIO as state has been lost
+
+   powerOn = true;
 
    // User I/O
    trafficGpio.setDirection0(0b11110000);
@@ -81,6 +86,7 @@ void Traffic::softPowerOn() {
  */
 void Traffic::softPowerOff() {
 
+   powerOn = false;
 }
 
 /// Self pointer for static methods e.g. call-backs

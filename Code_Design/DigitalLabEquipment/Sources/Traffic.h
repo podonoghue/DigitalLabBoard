@@ -27,8 +27,11 @@ private:
    /// Queue for serialised function execution
    FunctionQueue  &functionQueue;
 
-   // Indicates if module is enabled
+   /// Indicates if module is enabled
    bool enabled = false;
+
+   /// Whether interface is powered
+   bool powerOn = false;
 
    /**
     * Serialised call-back function

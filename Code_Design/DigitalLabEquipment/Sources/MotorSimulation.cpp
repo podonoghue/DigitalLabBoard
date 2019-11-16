@@ -12,33 +12,34 @@
 using namespace USBDM;
 
 /**
- * Data for 1 Charlie-plexed LED
+ * Data for 1 Charlieplexed LED
  */
 struct CharlieData {
-   uint8_t highLed;
-   uint8_t lowLed;
+   uint8_t highPin;
+   uint8_t lowPin;
 };
 
 /**
- * Data for Charlie-plexed LEDs
+ * Data for Charlieplexed LEDs
+ * In clockwise sequence
  */
 static const CharlieData charlieData[] = {
-//       3210    3210
+      // High    Low
+      // 3210    3210
       {0b0000, 0b0000}, // Off
 
-      // Visible clockwise sequence
-      {0b0001, 0b1000}, // LED #12
-      {0b1000, 0b0001}, // LED #11
-      {0b0010, 0b1000}, // LED #10
-      {0b1000, 0b0010}, // LED #9
-      {0b0001, 0b0100}, // LED #8
-      {0b0100, 0b0001}, // LED #7
-      {0b0100, 0b1000}, // LED #6
-      {0b1000, 0b0100}, // LED #5
-      {0b0010, 0b0100}, // LED #4
-      {0b0100, 0b0010}, // LED #3
-      {0b0001, 0b0010}, // LED #2
-      {0b0010, 0b0001}, // LED #1
+      {0b0001, 0b1000}, // Physical LED #12
+      {0b1000, 0b0001}, // Physical LED #11
+      {0b0010, 0b1000}, // Physical LED #10
+      {0b1000, 0b0010}, // Physical LED #9
+      {0b0001, 0b0100}, // Physical LED #8
+      {0b0100, 0b0001}, // Physical LED #7
+      {0b0100, 0b1000}, // Physical LED #6
+      {0b1000, 0b0100}, // Physical LED #5
+      {0b0010, 0b0100}, // Physical LED #4
+      {0b0100, 0b0010}, // Physical LED #3
+      {0b0001, 0b0010}, // Physical LED #2
+      {0b0010, 0b0001}, // Physical LED #1
 };
 
 /**
@@ -48,18 +49,18 @@ static const CharlieData charlieData[] = {
  */
 void MotorSimulator::writeLed(unsigned ledNum) {
    unsigned index = ledNum;
-   CharliePlexing::write(charlieData[index].highLed);
-   CharliePlexing::setDirection(charlieData[index].highLed|charlieData[index].lowLed);
+   CharliePlexing::write(charlieData[index].highPin);
+   CharliePlexing::setDirection(charlieData[index].highPin|charlieData[index].lowPin);
 }
 
 /**
  * Motor phases
  */
 enum Phase {
-   Phase0 = 0b00,//!< Phase0
-   Phase1 = 0b01,//!< Phase1
-   Phase2 = 0b10,//!< Phase2
-   Phase3 = 0b11,//!< Phase3
+   Phase0 = 0b00,
+   Phase1 = 0b01,
+   Phase2 = 0b10,
+   Phase3 = 0b11,
 };
 
 /**
@@ -83,19 +84,28 @@ void MotorSimulator::motorAbort() {
  */
 void MotorSimulator::timerCallback() {
 
-   static unsigned position  = 0;
    static uint8_t  lastInput = 0;
 
-   unsigned lastPosition = position;
+   if (!powerOn) {
+      return;
+   }
+
    uint8_t input = MotorPhases::read();
 
-   // Wait until input is stable
+   // Wait until input is stable for 1 sample period
    if (input != lastInput) {
       lastInput = input;
       return;
    }
 
-   Phase phase = (Phase)(position&0b11);
+   // Enable on 1st user input
+   enabled = enabled || (input != 0b0000);
+
+   if (!enabled) {
+      return;
+   }
+
+   Phase phase = (Phase)(motorPosition&0b11);
 
    switch (phase) {
       default:
@@ -104,10 +114,10 @@ void MotorSimulator::timerCallback() {
             // No action
          }
          else if (input == 0b0010) {
-            position++;
+            motorPosition++;
          }
          else if (input == 0b0001) {
-            position--;
+            motorPosition--;
          }
          else {
             motorAbort();
@@ -118,10 +128,10 @@ void MotorSimulator::timerCallback() {
             // No action
          }
          else if (input == 0b0100) {
-            position++;
+            motorPosition++;
          }
          else if (input == 0b1000) {
-            position--;
+            motorPosition--;
          }
          else {
             motorAbort();
@@ -132,10 +142,10 @@ void MotorSimulator::timerCallback() {
             // No action
          }
          else if (input == 0b0001) {
-            position++;
+            motorPosition++;
          }
          else if (input == 0b0010) {
-            position--;
+            motorPosition--;
          }
          else {
             motorAbort();
@@ -146,45 +156,24 @@ void MotorSimulator::timerCallback() {
             // No action
          }
          else if (input == 0b1000) {
-            position++;
+            motorPosition++;
          }
          else if (input == 0b0100) {
-            position--;
+            motorPosition--;
          }
          else {
             motorAbort();
          }
          break;
    }
-   if (position == 0) {
-      position = 12;
+   if (motorPosition == 0) {
+      motorPosition = 12;
    }
-   if (position > 12) {
-      position = 1;
+   if (motorPosition > 12) {
+      motorPosition = 1;
    }
-   if (position != lastPosition) {
-      // Update on change
-      writeLed(position);
-   }
-}
-
-void MotorSimulator::initialiseMotorSimulation() {
-   CharliePlexing::setInOut(
-         PinPull_None,
-         PinDriveStrength_High,
-         PinDriveMode_PushPull,
-         PinAction_None,
-         PinFilter_None,
-         PinSlewRate_Slow);
-   MotorPhases::setInput(PinPull_None, PinAction_None, PinFilter_None);
-
-   auto cb = []() {
-      This->timerCallback();
-   };
-
-   MotorPitChannel::setCallback(cb);
-   MotorPitChannel::enableNvicInterrupts(NvicPriority_Low);
-   MotorPitChannel::configure(1*ms, PitChannelIrq_Enabled);
+   // Update display
+   writeLed(motorPosition);
 }
 
 /**
@@ -198,16 +187,48 @@ void MotorSimulator::testMotorLeds() {
          PinAction_None,
          PinFilter_None,
          PinSlewRate_Slow);
-   unsigned position = 0;
 
-   for(;;) {
-      position++;
-      if (position>12) {
-         position = 1;
-      }
-      writeLed(position);
-      waitMS(100);
+   motorPosition++;
+   if (motorPosition>12) {
+      motorPosition = 1;
    }
+   writeLed(motorPosition);
+}
+
+/**
+ * Notification that soft power-on has occurred
+ */
+void MotorSimulator::softPowerOn() {
+   CharliePlexing::setInOut(
+         PinPull_None,
+         PinDriveStrength_High,
+         PinDriveMode_PushPull,
+         PinAction_None,
+         PinFilter_None,
+         PinSlewRate_Slow);
+
+   MotorPhases::setInput(
+         PinPull_None,
+         PinAction_None,
+         PinFilter_None);
+
+   auto cb = []() {
+      This->timerCallback();
+   };
+
+   writeLed(enabled?motorPosition:LEDS_OFF);
+
+   MotorPitChannel::setCallback(cb);
+   MotorPitChannel::enableNvicInterrupts(NvicPriority_Normal);
+   MotorPitChannel::configure(1*ms, PitChannelIrq_Enabled);
+}
+
+/**
+ * Notification that soft power-off is about to occur
+ */
+void MotorSimulator::softPowerOff() {
+   MotorPitChannel::configure(1*ms, PitChannelIrq_Disabled);
+   writeLed(LEDS_OFF);
 }
 
 /// Self pointer for static methods e.g. call-backs

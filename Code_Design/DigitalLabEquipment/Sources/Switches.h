@@ -26,6 +26,9 @@ private:
    /// Current state of latched user outputs
    uint8_t  latchedOutputValues  = 0;
 
+   /// Conflicted outputs
+   uint8_t  conflictedOutputValues  = 0;
+
    /// GPIO used for shared LEDs/buttons pins and user outputs
    USBDM::Pca9555 switchGpio;
 
@@ -34,6 +37,9 @@ private:
 
    /// Queue for serialised function execution
    FunctionQueue  &functionQueue;
+
+   /// Whether interface is powered
+   bool powerOn = false;
 
    /**
     * Serialised call-back function

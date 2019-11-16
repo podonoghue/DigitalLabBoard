@@ -182,9 +182,15 @@ const float FrequencyGenerator::freqs[] = {
  * Do all polling operations
  */
 void FrequencyGenerator::pollButtons() {
+
    static unsigned lastButtonValue = 0;
    static unsigned stableCount = 0;
    static unsigned frequencyIndex = 0;
+
+   if (!powerOn) {
+      return;
+   }
+
    unsigned currentButtonValue = FrequencyButtons::read();
 
    if (lastButtonValue != currentButtonValue) {
@@ -223,6 +229,9 @@ void FrequencyGenerator::pollButtons() {
  * Notification that soft power-on has occurred
  */
 void FrequencyGenerator::softPowerOn() {
+
+   powerOn = true;
+
    oled.initialise();
    setFrequency(savedFrequency);
    displayFrequency(currentFrequency);
@@ -232,6 +241,9 @@ void FrequencyGenerator::softPowerOn() {
  * Notification that soft power-off is about to occur
  */
 void FrequencyGenerator::softPowerOff() {
+
+   powerOn = false;
+
    savedFrequency = getFrequency();
    setFrequency(Frequency_Off);
 }

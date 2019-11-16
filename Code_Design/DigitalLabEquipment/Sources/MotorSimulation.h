@@ -10,29 +10,26 @@
 
 #include "hardware.h"
 #include "pit.h"
+#include "FunctionQueue.h"
+#include "Power.h"
 
-class MotorSimulator {
+class MotorSimulator : PowerSubscriber {
 
    /// Self pointer for static methods e.g. call-backs
    static MotorSimulator *This;
 
+   /// Queue for serialised function execution
+   FunctionQueue  &functionQueue;
+
    /**
-    * Initialises the module
+    * Notification that soft power-on has occurred
     */
-   void initialiseMotorSimulation();
+   virtual void softPowerOn() override;
 
-public:
    /**
-    * Constructor
+    * Notification that soft power-off is about to occur
     */
-   MotorSimulator() {
-      usbdm_assert((This == nullptr), "Only single instance of MotorSimulator allowed");
-      This = this;
-
-      USBDM::Pit::configure(USBDM::PitDebugMode_Stop);
-
-      initialiseMotorSimulation();
-   }
+   virtual void softPowerOff() override;
 
    /**
     * Turn on given LED
@@ -60,6 +57,33 @@ public:
     *   3:    0b0001 0b1000 0b0100
     */
    void timerCallback();
+
+   static constexpr unsigned LEDS_OFF = 0;
+
+   /// Whether interface is enabled
+   bool enabled = false;
+
+   /// Whether interface is powered
+   bool powerOn = false;
+
+   // Current motor motorPosition
+   unsigned motorPosition  = 1;
+
+public:
+   /**
+    * Constructor
+    *
+    * @param functionQueue    Serialised call-back function queue
+    * @param power            Power object
+    */
+   MotorSimulator(FunctionQueue &functionQueue, Power &power) : functionQueue(functionQueue) {
+      usbdm_assert((This == nullptr), "Only single instance of MotorSimulator allowed");
+      This = this;
+
+      power.addPowerSubscriber(this);
+
+      USBDM::Pit::configure(USBDM::PitDebugMode_Stop);
+   }
 
    /**
     * Test motor LEDs
