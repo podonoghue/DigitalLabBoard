@@ -1,4 +1,4 @@
 # DigitalLabBoard
 Digital Board for Undergraduate Laboratory  
 
-[Documentation](PCB_Design/DigitalLabBoard.PDF)
+[Documentation](PCB_Design/DigitalLabBoard.pdf)
