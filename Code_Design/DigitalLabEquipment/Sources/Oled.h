@@ -16,7 +16,7 @@ namespace USBDM {
 
 enum OledVccControl : int8_t {
    OledVccControl_Internal = 0,
-         OledVccControl_External = 1,
+   OledVccControl_External = 1,
 };
 
 enum WriteMode {

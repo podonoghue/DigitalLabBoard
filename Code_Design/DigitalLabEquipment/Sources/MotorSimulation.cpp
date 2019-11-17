@@ -21,7 +21,7 @@ struct CharlieData {
 
 /**
  * Data for Charlieplexed LEDs
- * In clockwise sequence
+ * Clockwise sequence.
  */
 static const CharlieData charlieData[] = {
       // High    Low
@@ -48,9 +48,8 @@ static const CharlieData charlieData[] = {
  * @param ledNum
  */
 void MotorSimulator::writeLed(unsigned ledNum) {
-   unsigned index = ledNum;
-   CharliePlexing::write(charlieData[index].highPin);
-   CharliePlexing::setDirection(charlieData[index].highPin|charlieData[index].lowPin);
+   CharliePlexing::write(charlieData[ledNum].highPin);
+   CharliePlexing::setDirection(charlieData[ledNum].highPin|charlieData[ledNum].lowPin);
 }
 
 /**
@@ -199,6 +198,7 @@ void MotorSimulator::testMotorLeds() {
  * Notification that soft power-on has occurred
  */
 void MotorSimulator::softPowerOn() {
+
    CharliePlexing::setInOut(
          PinPull_None,
          PinDriveStrength_High,
@@ -218,6 +218,8 @@ void MotorSimulator::softPowerOn() {
 
    writeLed(enabled?motorPosition:LEDS_OFF);
 
+   powerOn = true;
+
    MotorPitChannel::setCallback(cb);
    MotorPitChannel::enableNvicInterrupts(NvicPriority_Normal);
    MotorPitChannel::configure(1*ms, PitChannelIrq_Enabled);
@@ -227,6 +229,9 @@ void MotorSimulator::softPowerOn() {
  * Notification that soft power-off is about to occur
  */
 void MotorSimulator::softPowerOff() {
+
+   powerOn = false;
+
    MotorPitChannel::configure(1*ms, PitChannelIrq_Disabled);
    writeLed(LEDS_OFF);
 }

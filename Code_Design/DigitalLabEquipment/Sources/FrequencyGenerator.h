@@ -21,13 +21,13 @@ private:
    /// Self pointer for static methods e.g. call-backs
    static FrequencyGenerator *This;
 
-   // OLED display to use
+   /// OLED display to use
    USBDM::Oled &oled;
 
-   // Saved frequency for power-off
+   /// Saved frequency for power-off
    unsigned savedFrequency   = Frequency_Off;
 
-   // Current output frequency
+   /// Current output frequency
    unsigned currentFrequency = Frequency_Off;
 
    /// Queue for serialised function execution
@@ -78,6 +78,8 @@ private:
     * Notification that soft power-off is about to occur
     */
    virtual void softPowerOff() override;
+
+   void ftmCallback(uint8_t status);
 
 public:
    /// Used to indicate generator off

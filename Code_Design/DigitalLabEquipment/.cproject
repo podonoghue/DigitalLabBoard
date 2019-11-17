@@ -76,7 +76,6 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="FunctionQueue.cpp|Snippets" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FunctionQueue.cpp"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -160,7 +159,6 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="FunctionQueue.cpp|Snippets" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FunctionQueue.cpp"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -170,10 +168,22 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="DigitalLabEquipment.net.sourceforge.usbdm.cdt.newProjectType.exe.1205689371" name="Executable" projectType="net.sourceforge.usbdm.cdt.newProjectType.exe"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="net.sourceforge.usbdm.cdt.arm.exe.release.configuration.2027377773;net.sourceforge.usbdm.cdt.arm.exe.release.configuration.2027377773.;net.sourceforge.usbdm.cdt.arm.toolchain.cpp.compiler.1433337063;net.sourceforge.usbdm.cdt.arm.toolchain.cpp.compiler.input.1016865253">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="net.sourceforge.usbdm.cdt.arm.exe.debug.configuration.1689992568;net.sourceforge.usbdm.cdt.arm.exe.debug.configuration.1689992568.;net.sourceforge.usbdm.cdt.arm.toolchain.cpp.compiler.1038101231;net.sourceforge.usbdm.cdt.arm.toolchain.cpp.compiler.input.1544669595">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="net.sourceforge.usbdm.cdt.arm.exe.release.configuration.2027377773;net.sourceforge.usbdm.cdt.arm.exe.release.configuration.2027377773.;net.sourceforge.usbdm.cdt.arm.toolchain.c.compiler.467323504;net.sourceforge.usbdm.cdt.arm.toolchain.c.compiler.input.1195347535">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="net.sourceforge.usbdm.cdt.arm.exe.debug.configuration.1689992568;net.sourceforge.usbdm.cdt.arm.exe.debug.configuration.1689992568.;net.sourceforge.usbdm.cdt.arm.toolchain.c.compiler.1944029069;net.sourceforge.usbdm.cdt.arm.toolchain.c.compiler.input.1856818530">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>

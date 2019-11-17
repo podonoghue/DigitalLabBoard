@@ -58,6 +58,7 @@ class MotorSimulator : PowerSubscriber {
     */
    void timerCallback();
 
+   /// LED value to turn off all LEDs
    static constexpr unsigned LEDS_OFF = 0;
 
    /// Whether interface is enabled
@@ -66,7 +67,7 @@ class MotorSimulator : PowerSubscriber {
    /// Whether interface is powered
    bool powerOn = false;
 
-   // Current motor motorPosition
+   /// Current motor motorPosition
    unsigned motorPosition  = 1;
 
 public:

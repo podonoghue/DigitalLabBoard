@@ -13,12 +13,12 @@ using namespace USBDM;
 static constexpr unsigned LOW_FREQ_DIVISION_FACTOR = 100;
 
 /**
- * Interrupt handler for FrequencyGeneratorTimer interrupts
+ * Interrupt handler for FrequencyGenerator interrupts
  * This sets the next interrupt/pin toggle for a half-period from the last event
  *
  * @param[in] status Flags indicating interrupt source channel(s)
  */
-static void ftmCallback(uint8_t status) {
+void FrequencyGenerator::ftmCallback(uint8_t status) {
    static unsigned iterationCounter = 0;
 
    // Check channel
@@ -52,8 +52,12 @@ void FrequencyGenerator::initialiseWaveform() {
          FtmMode_LeftAlign,       // Left-aligned is required for OC/IC
          FtmClockSource_System);  // Bus clock most accurate source
 
+   static auto cb = [](uint8_t status) {
+      This->ftmCallback(status);
+   };
+
    // Set callback function (may be shared by multiple channels)
-   FrequencyGeneratorTimer::setChannelCallback(ftmCallback);
+   FrequencyGeneratorTimer::setChannelCallback(cb);
 
    // Enable FTM interrupts (required for channel interrupts)
    FrequencyGeneratorTimer::enableNvicInterrupts(NvicPriority_MidHigh);
