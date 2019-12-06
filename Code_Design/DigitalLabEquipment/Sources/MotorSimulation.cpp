@@ -21,7 +21,7 @@ struct CharlieData {
 
 /**
  * Data for Charlieplexed LEDs
- * Clockwise sequence.
+ * In clockwise sequence
  */
 static const CharlieData charlieData[] = {
       // High    Low

@@ -13,7 +13,7 @@ using namespace USBDM;
 static constexpr unsigned LOW_FREQ_DIVISION_FACTOR = 100;
 
 /**
- * Interrupt handler for FrequencyGenerator interrupts
+ * Interrupt handler for FrequencyGenerator Timer interrupts
  * This sets the next interrupt/pin toggle for a half-period from the last event
  *
  * @param[in] status Flags indicating interrupt source channel(s)
