@@ -11,7 +11,6 @@
 #include "string.h"
 #include "derivative.h" /* include peripheral declarations */
 #include "system.h"
-#include "utilities.h"
 #include "stdbool.h"
 #include "hardware.h"
 #ifdef USBDM_RTC_IS_DEFINED
@@ -156,7 +155,7 @@ namespace USBDM {
          MCG_C8_LOLRE(0)  | // LOLRE  PLL Loss of Lock Reset Enable
          MCG_C8_CME1(0),    // CME1   Clock Monitor Enable 1
       },
-      {  // ClockConfig_FEE_42MHz (ClockMode_FEE)
+      {  // ClockConfig_FEE_40MHz (ClockMode_FEE)
          
          //! SIM CLKDIV1 System Clock Divider Register 1
          SIM_CLKDIV1_OUTDIV4(3)|  // Flash clock
@@ -232,9 +231,6 @@ volatile uint32_t SystemMcgPllClock;
 
 /** Bus clock (from MCGOUTCLK/CLKDIV) */
 //volatile uint32_t SystemBusClock;
-
-/** LPO - Low power oscillator 1kHz clock available in LP modes */
-volatile uint32_t SystemLpoClock;
 
 typedef void (*set_sys_dividers_asm_t)(uint32_t simClkDiv1);
 
@@ -601,8 +597,6 @@ void Mcg::SystemCoreClockUpdate(void) {
    }
    ::SystemCoreClock   = SystemMcgOutClock/(((SIM->CLKDIV1&SIM_CLKDIV1_OUTDIV1_MASK)>>SIM_CLKDIV1_OUTDIV1_SHIFT)+1);
    ::SystemBusClock    = SystemMcgOutClock/(((SIM->CLKDIV1&SIM_CLKDIV1_OUTDIV2_MASK)>>SIM_CLKDIV1_OUTDIV2_SHIFT)+1);
-
-   SystemLpoClock    = 1000;
 }
 
 /**

@@ -124,10 +124,14 @@ static constexpr inline unsigned trafficLedsEncode(unsigned nsLights, unsigned e
  */
 /// Frequency generator - Up/Down buttons
 using FrequencyButtons   = USBDM::GpioBField<17,16, USBDM::ActiveLow>;
+/// Frequency generator - Mask for UP button (see FrequencyButtons)
+static constexpr unsigned FREQUENCY_UP_BUTTON = 0b10;
+/// Frequency generator - Mask for DOWN button (see FrequencyButtons)
+static constexpr unsigned FREQUENCY_DOWN_BUTTON = 0b01;
 /// Frequency generator - Timer being used
 using FrequencyGeneratorTimer = USBDM::Ftm0;
 /// Frequency generator - Timer channel being used
-using FrequencyGeneratorTimerChannel = FrequencyGeneratorTimer::Channel<6>;
+using FrequencyGeneratorTimerChannel = FrequencyGeneratorTimer::Channel<5>;
 
 /*
  * POWER CONTROL
@@ -137,9 +141,9 @@ using PowerEnableControl  = USBDM::GpioB<3,  USBDM::ActiveHigh>;
 /// Power - Enable button
 using PowerButton          = USBDM::GpioA<4,  USBDM::ActiveLow>;
 /// Power - Used to sample the target power supply (alias for TargetVddDischarge)
-using TargetVddSample = USBDM::Adc0::Channel<6>;
+using TargetVddSample = USBDM::Adc0::Channel<7>;
 /// Power - Used to discharge the target power supply (alias for TargetVddSample)
-using TargetVddDischarge = USBDM::GpioD<5, USBDM::ActiveLow>;
+using TargetVddDischarge = USBDM::GpioD<6, USBDM::ActiveLow>;
 
 /*
  * BUTTONS

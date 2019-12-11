@@ -57,10 +57,6 @@ extern volatile uint32_t SystemMcgFllClock;
 
 /** MCGPLLCLK - Output of PLL */
 extern volatile uint32_t SystemMcgPllClock;
-
-/** LPO - Low power oscillator 1kHz clock available in LP modes */
-extern volatile uint32_t SystemLpoClock;
-
 } // End namespace USBDM
 
 /**

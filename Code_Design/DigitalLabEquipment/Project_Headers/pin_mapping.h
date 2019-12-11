@@ -1268,6 +1268,82 @@ public:
  * @}
  */
 /**
+ * @addtogroup PMC_Group PMC, Power Management Controller
+ * @brief Abstraction for Power Management Controller
+ * @{
+ */
+#define USBDM_PMC_IS_DEFINED
+/**
+ * Peripheral information for PMC, Power Management Controller.
+ * 
+ * This may include pin information, constants, register addresses, and default register values,
+ * along with simple accessor functions.
+ */
+class PmcInfo {
+public:
+   // Template:pmc_mk
+
+   //! Hardware base address as uint32_t 
+   static constexpr uint32_t baseAddress = PMC_BasePtr;
+
+   //! Hardware base pointer
+   __attribute__((always_inline)) static volatile PMC_Type &pmc() {
+      return *reinterpret_cast<PMC_Type *>(baseAddress);
+   }
+
+   //! Default value for Low Voltage Detect Status And Control 1 register
+   static constexpr uint32_t pmc_lvdsc1  = 
+   #ifdef PMC_LVDSC1_LVDV
+      PMC_LVDSC1_LVDV(0)   | // Low-Voltage Detect Voltage Select
+   #endif
+      PMC_LVDSC1_LVDIE(0) | // Low-Voltage Detect Interrupt Enable
+      PMC_LVDSC1_LVDRE(0);  // Low-Voltage Detect Reset Enable
+
+   //! Frequency of Low Power Oscillator (LPO) Clock [~1kHz]
+   static constexpr uint32_t system_low_power_clock = 1000UL;
+
+   //! Default value for Low Voltage Detect Status And Control 2 register
+   static constexpr uint32_t pmc_lvdsc2  = 
+   #ifdef PMC_LVDSC2_LVWV
+      PMC_LVDSC2_LVWV(0)   | // Low-Voltage Warning Voltage Select
+   #endif
+      PMC_LVDSC2_LVWIE(0);  // Low-Voltage Warning Interrupt Enable
+
+   /**
+    * Get LPO clock
+    *
+    * @return frequency in Hz as uint32_t
+    */
+   static constexpr uint32_t getLpoClock() {
+      return system_low_power_clock;
+   }
+
+   #ifdef PMC_REGSC_BGEN
+   //! Default value for Regulator Status And Control register
+   static constexpr uint32_t pmc_regsc  = 
+      PMC_REGSC_BGEN(0) | // Bandgap Enable In VLPx Operation
+      PMC_REGSC_BGBE(0);  // Bandgap Buffer Enable   
+
+   #endif
+   //! IRQ numbers for hardware
+   static constexpr IRQn_Type irqNums[]  = PMC_IRQS;
+
+   //! Number of IRQs for hardware
+   static constexpr uint32_t irqCount  = sizeof(irqNums)/sizeof(irqNums[0]);
+
+   //! Class based callback handler has been installed in vector table
+   static constexpr bool irqHandlerInstalled = 0;
+
+   //! Default IRQ level
+   static constexpr uint32_t irqLevel =  8;
+
+};
+
+/** 
+ * End group PMC_Group
+ * @}
+ */
+/**
  * @addtogroup ADC_Group ADC, Analogue Input
  * @brief Abstraction for Analogue Input
  * @{
@@ -1423,8 +1499,8 @@ public:
          /*   3: ADC0_SE3             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*   4: ADC0_SE4b            = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*   5: ADC0_SE5b            = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
-         /*   6: ADC0_SE6b            = PTD5 (p46)                     */  { PortDInfo,  GPIOD_BasePtr,  5,       PORT_PCR_MUX(0)|defaultPcrValue  },
-         /*   7: ADC0_SE7b            = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
+         /*   6: ADC0_SE6b            = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
+         /*   7: ADC0_SE7b            = PTD6 (p47)                     */  { PortDInfo,  GPIOD_BasePtr,  6,       PORT_PCR_MUX(0)|defaultPcrValue  },
          /*   8: ADC0_SE8             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*   9: ADC0_SE9             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*  10: --                   = --                             */  { NoPortInfo, 0,         INVALID_PCR,  0 },
@@ -1454,7 +1530,7 @@ public:
 #else
       enablePortClocks(PORTD_CLOCK_MASK);
 #endif
-      PORTD->GPCLR = pcrValue|PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x0020UL);
+      PORTD->GPCLR = pcrValue|PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x0040UL);
    }
 
    /**
@@ -1466,7 +1542,7 @@ public:
 #else
       enablePortClocks(PORTD_CLOCK_MASK);
 #endif
-      PORTD->GPCLR = PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x20U);
+      PORTD->GPCLR = PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x40U);
    }
 
 #define USBDM_ADC0_INFODP_IS_DEFINED
@@ -2603,8 +2679,8 @@ public:
          /*   2: FTM0_CH2             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*   3: FTM0_CH3             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*   4: FTM0_CH4             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
-         /*   5: FTM0_CH5             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
-         /*   6: FTM0_CH6             = PTD6 (p47)                     */  { PortDInfo,  GPIOD_BasePtr,  6,       PORT_PCR_MUX(4)|defaultPcrValue  },
+         /*   5: FTM0_CH5             = PTD5 (p46)                     */  { PortDInfo,  GPIOD_BasePtr,  5,       PORT_PCR_MUX(4)|defaultPcrValue  },
+         /*   6: FTM0_CH6             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*   7: FTM0_CH7             = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
    };
 
@@ -2619,7 +2695,7 @@ public:
 #else
       enablePortClocks(PORTD_CLOCK_MASK);
 #endif
-      PORTD->GPCLR = pcrValue|PORT_PCR_MUX(4)|PORT_GPCLR_GPWE(0x0040UL);
+      PORTD->GPCLR = pcrValue|PORT_PCR_MUX(4)|PORT_GPCLR_GPWE(0x0020UL);
    }
 
    /**
@@ -2631,7 +2707,7 @@ public:
 #else
       enablePortClocks(PORTD_CLOCK_MASK);
 #endif
-      PORTD->GPCLR = PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x40U);
+      PORTD->GPCLR = PORT_PCR_MUX(0)|PORT_GPCLR_GPWE(0x20U);
    }
 
 #define USBDM_FTM0_INFOFAULT_IS_DEFINED
@@ -3446,7 +3522,7 @@ public:
       switch(lptmr().PSR&LPTMR_PSR_PCS_MASK) {
       default:
       case LPTMR_PSR_PCS(0): return McgInfo::getMcgIrClock();
-      case LPTMR_PSR_PCS(1): return SystemLpoClock;
+      case LPTMR_PSR_PCS(1): return PmcInfo::getLpoClock();
       case LPTMR_PSR_PCS(2): return SimInfo::getErc32kClock();
       case LPTMR_PSR_PCS(3): return Osc0Info::getOscerClock();
       }
@@ -3812,70 +3888,6 @@ public:
 
 /** 
  * End group PIT_Group
- * @}
- */
-/**
- * @addtogroup PMC_Group PMC, Power Management Controller
- * @brief Abstraction for Power Management Controller
- * @{
- */
-#define USBDM_PMC_IS_DEFINED
-/**
- * Peripheral information for PMC, Power Management Controller.
- * 
- * This may include pin information, constants, register addresses, and default register values,
- * along with simple accessor functions.
- */
-class PmcInfo {
-public:
-   // Template:pmc_mk
-
-   //! Hardware base address as uint32_t 
-   static constexpr uint32_t baseAddress = PMC_BasePtr;
-
-   //! Hardware base pointer
-   __attribute__((always_inline)) static volatile PMC_Type &pmc() {
-      return *reinterpret_cast<PMC_Type *>(baseAddress);
-   }
-
-   //! Default value for Low Voltage Detect Status And Control 1 register
-   static constexpr uint32_t pmc_lvdsc1  = 
-   #ifdef PMC_LVDSC1_LVDV
-      PMC_LVDSC1_LVDV(0)   | // Low-Voltage Detect Voltage Select
-   #endif
-      PMC_LVDSC1_LVDIE(0) | // Low-Voltage Detect Interrupt Enable
-      PMC_LVDSC1_LVDRE(0);  // Low-Voltage Detect Reset Enable
-
-   //! Default value for Low Voltage Detect Status And Control 2 register
-   static constexpr uint32_t pmc_lvdsc2  = 
-   #ifdef PMC_LVDSC2_LVWV
-      PMC_LVDSC2_LVWV(0)   | // Low-Voltage Warning Voltage Select
-   #endif
-      PMC_LVDSC2_LVWIE(0);  // Low-Voltage Warning Interrupt Enable
-
-   #ifdef PMC_REGSC_BGEN
-   //! Default value for Regulator Status And Control register
-   static constexpr uint32_t pmc_regsc  = 
-      PMC_REGSC_BGEN(0) | // Bandgap Enable In VLPx Operation
-      PMC_REGSC_BGBE(0);  // Bandgap Buffer Enable   
-
-   #endif
-   //! IRQ numbers for hardware
-   static constexpr IRQn_Type irqNums[]  = PMC_IRQS;
-
-   //! Number of IRQs for hardware
-   static constexpr uint32_t irqCount  = sizeof(irqNums)/sizeof(irqNums[0]);
-
-   //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
-
-   //! Default IRQ level
-   static constexpr uint32_t irqLevel =  8;
-
-};
-
-/** 
- * End group PMC_Group
  * @}
  */
 /**
@@ -4710,7 +4722,7 @@ public:
    static constexpr uint32_t irqCount  = sizeof(irqNums)/sizeof(irqNums[0]);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = 1;
 
    //! Default IRQ level
    static constexpr uint32_t irqLevel =  8;
@@ -4975,8 +4987,8 @@ public:
    
       switch(wdog().STCTRLH&WDOG_STCTRLH_CLKSRC_MASK) {
       default:
-      case WDOG_STCTRLH_CLKSRC(0): return SystemLpoClock; // LPO
-      case WDOG_STCTRLH_CLKSRC(1): return SystemBusClock; // Alt = System Bus Clock
+      case WDOG_STCTRLH_CLKSRC(0): return PmcInfo::getLpoClock(); // LPO
+      case WDOG_STCTRLH_CLKSRC(1): return SystemBusClock;         // Alt = System Bus Clock
       }
    }
 
@@ -5015,7 +5027,7 @@ namespace USBDM {
  */
 using Adc_p8               = const USBDM::Adc0::Channel<19>;
 using Adc_p7               = const USBDM::Adc0::Channel<0>;
-using Adc_p46              = const USBDM::Adc0::Channel<6>;
+using Adc_p47              = const USBDM::Adc0::Channel<7>;
 /** 
  * End group ADC_Group
  * @}
@@ -5025,7 +5037,7 @@ using Adc_p46              = const USBDM::Adc0::Channel<6>;
  * @brief Abstraction for PWM, Input capture and Output compare
  * @{
  */
-using Ftm_p47              = const USBDM::Ftm0::Channel<6>;
+using Ftm_p46              = const USBDM::Ftm0::Channel<5>;
 /** 
  * End group FTM_Group
  * @}
@@ -5100,8 +5112,8 @@ using Gpio_p45             = const USBDM::GpioD<4>;
  *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_NS_BTN       
  *  PTD3                     | GPIOD_3                                     | p44                       | PED_EW_BTN       
  *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | GPIO_IRQ       
- *  PTD5                     | ADC0_SE6b                                   | p46                       | CLOCK       
- *  PTD6                     | FTM0_CH6                                    | p47                       | VddSample/Discharge       
+ *  PTD5                     | FTM0_CH5                                    | p46                       | CLOCK       
+ *  PTD6                     | ADC0_SE7b                                   | p47                       | VddSample/Discharge       
  *  PTD7                     | -                                           | p48                       | Spare2       
  *  RESET_b                  | RESET_b                                     | p26                       | Reset       
  *  USB0_DM                  | USB0_DM                                     | p4                        | USBDM       
@@ -5170,8 +5182,8 @@ using Gpio_p45             = const USBDM::GpioD<4>;
  *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_NS_BTN       
  *  PTD3                     | GPIOD_3                                     | p44                       | PED_EW_BTN       
  *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | GPIO_IRQ       
- *  PTD5                     | ADC0_SE6b                                   | p46                       | CLOCK       
- *  PTD6                     | FTM0_CH6                                    | p47                       | VddSample/Discharge       
+ *  PTD5                     | FTM0_CH5                                    | p46                       | CLOCK       
+ *  PTD6                     | ADC0_SE7b                                   | p47                       | VddSample/Discharge       
  *  PTD7                     | -                                           | p48                       | Spare2       
  *
  *
@@ -5182,10 +5194,10 @@ using Gpio_p45             = const USBDM::GpioD<4>;
  *  PTD7                     | -                                           | p48                       | Spare2       
  *  ADC0_DM0                 | ADC0_DM0/ADC0_SE19                          | p8                        | Unused       
  *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | Unused       
- *  PTD5                     | ADC0_SE6b                                   | p46                       | CLOCK       
+ *  PTD6                     | ADC0_SE7b                                   | p47                       | VddSample/Discharge       
  *  PTA18                    | EXTAL0                                      | p24                       | 16 MHz Crystal       
  *  EXTAL32                  | EXTAL32                                     | p15                       | Unused       
- *  PTD6                     | FTM0_CH6                                    | p47                       | VddSample/Discharge       
+ *  PTD5                     | FTM0_CH5                                    | p46                       | CLOCK       
  *  PTA4                     | GPIOA_4/LLWU_P3                             | p21                       | POWER_BTN       
  *  PTB3                     | GPIOB_3                                     | p30                       | POWER_EN       
  *  PTB16                    | GPIOB_16                                    | p31                       | FREQ_DOWN_BTN       

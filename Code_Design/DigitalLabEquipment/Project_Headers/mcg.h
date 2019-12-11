@@ -37,12 +37,6 @@ extern volatile uint32_t SystemMcgOutClock;
 extern volatile uint32_t SystemMcgFllClock;
 /** MCGPLLCLK - Output of PLL */
 extern volatile uint32_t SystemMcgPllClock;
-/** Core/System clock (from MCGOUTCLK/CLKDIV) */
-//extern volatile uint32_t SystemCoreClock;
-/** Bus clock (from MCGOUTCLK/CLKDIV) */
-//extern volatile uint32_t SystemBusClock;
-/** LPO - Low power oscillator 1kHz clock available in LP modes */
-extern volatile uint32_t SystemLpoClock;
 
 extern void setSysDividersStub(uint32_t simClkDiv1);
 
@@ -52,7 +46,7 @@ extern void setSysDividersStub(uint32_t simClkDiv1);
 enum ClockConfig {
    ClockConfig_PEE_48MHz,
    ClockConfig_BLPE_4MHz,
-   ClockConfig_FEE_42MHz,
+   ClockConfig_FEE_40MHz,
 
    ClockConfig_default = 0,
 };

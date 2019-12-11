@@ -179,7 +179,7 @@ const float FrequencyGenerator::freqs[] = {
       1*kHz,2*kHz,5*kHz,
       10*kHz,20*kHz,50*kHz,
       100*kHz,200*kHz,500*kHz,
-      1*MHz,2*MHz,5*MHz,
+      1*MHz,2*MHz,
 };
 
 /**
@@ -187,9 +187,9 @@ const float FrequencyGenerator::freqs[] = {
  */
 void FrequencyGenerator::pollButtons() {
 
-   static unsigned lastButtonValue = 0;
-   static unsigned stableCount = 0;
-   static unsigned frequencyIndex = 0;
+   static unsigned lastButtonValue     = 0;
+   static unsigned stableCount         = 0;
+   static unsigned frequencyIndex      = 0;
 
    if (!powerOn) {
       return;
@@ -207,17 +207,19 @@ void FrequencyGenerator::pollButtons() {
    }
    if (stableCount == DEBOUNCE_INTERVAL_COUNT) {
       switch(currentButtonValue) {
-         case 0b10:
+         case FREQUENCY_UP_BUTTON:
             frequencyIndex++;
             if (frequencyIndex>= (sizeof(freqs)/sizeof(freqs[0]))) {
+               // Wrap around
                frequencyIndex = 0;
             }
             setFrequency(freqs[frequencyIndex]);
             displayFrequency(currentFrequency);
             break;
-         case 0b01:
+         case FREQUENCY_DOWN_BUTTON:
             frequencyIndex--;
             if (frequencyIndex >= (sizeof(freqs)/sizeof(freqs[0]))) {
+               // Wrap around
                frequencyIndex = (sizeof(freqs)/sizeof(freqs[0]) - 1);
             }
             setFrequency(freqs[frequencyIndex]);
