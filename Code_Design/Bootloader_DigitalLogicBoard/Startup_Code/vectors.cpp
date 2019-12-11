@@ -145,15 +145,6 @@ void Reset_Handler(void) __attribute__((__interrupt__));
 extern uint32_t __StackTop;
 }
 
-void toggleDebug();
-
-void NMI_Handler() {
-   SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
-   PORTA->PCR[4] = PORT_PCR_MUX(1);
-   toggleDebug();
-}
-
-
 /*
  * Each vector is assigned an unique name.  This is then 'weakly' assigned to the
  * default handler.
@@ -221,6 +212,14 @@ void PORTC_IRQHandler(void)                   WEAK_DEFAULT_HANDLER;
 void PORTD_IRQHandler(void)                   WEAK_DEFAULT_HANDLER;
 void PORTE_IRQHandler(void)                   WEAK_DEFAULT_HANDLER;
 void SWI_IRQHandler(void)                     WEAK_DEFAULT_HANDLER;
+
+void toggleDebug();
+
+void NMI_Handler() {
+   SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
+   PORTA->PCR[4] = PORT_PCR_MUX(1);
+   toggleDebug();
+}
 
 typedef struct {
    uint32_t *initialSP;

@@ -117,10 +117,10 @@ void checkICP() {
 #define SCB_AIRCR_VECTKEY(x) (((x)<<SCB_AIRCR_VECTKEY_Pos)&SCB_AIRCR_VECTKEY_Msk)
 #endif
 
-void ResetSystem() {
+void resetSystem() {
 
    /* Request system reset */
-   SCB->AIRCR = SCB_AIRCR_VECTKEY(0xFA05) | SCB_AIRCR_SYSRESETREQ_Msk;
+   SCB->AIRCR = SCB_AIRCR_VECTKEY(0x5FA) | SCB_AIRCR_SYSRESETREQ_Msk;
 
    /* Wait until reset */
   for(;;) {
@@ -130,10 +130,8 @@ void ResetSystem() {
 
 int main() {
 
-//   uint32_t crc = calcuateCRC32((uint8_t *)FLASH_BUFFER_START, FLASH_BUFFER_SIZE);
-//   console.write("Flash CRC = 0x").writeln(crc, Radix_16);
-
-//   console.writeln("Flash is invalid - Starting USB bootloader");
+//   console.write("Flash image is ").writeln(isFlashValid()?"valid":"invalid");
+//   console.writeln("Starting USB boot-loader");
 
    // Start USB
    UsbImplementation::initialise();
@@ -187,6 +185,10 @@ int main() {
                response.byteLength  = command.byteLength;
                responseSize         = command.byteLength + sizeof(ResponseStatus);
                memcpy(response.data, (uint8_t *)(command.startAddress), command.byteLength);
+               break;
+
+            case Command_Reset:
+               resetSystem();
                break;
          }
          Usb0::sendBulkData(responseSize, (uint8_t *)&response);
