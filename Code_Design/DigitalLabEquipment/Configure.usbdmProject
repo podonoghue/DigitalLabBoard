@@ -107,5 +107,4 @@
    <item key="/SIM/system_core_clock[2]"                   value="40000000" />
    <item key="/SIM/system_flash_clock[1]"                  value="1000000" />
    <item key="/SIM/system_flash_clock[2]"                  value="20000000" />
-   <item key="/USB0/irqHandlingMethod"                     value="$ClassMethod" />
 </section>

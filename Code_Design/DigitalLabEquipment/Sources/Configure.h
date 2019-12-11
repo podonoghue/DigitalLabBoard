@@ -156,7 +156,6 @@ static constexpr uint8_t BUTTON_I2C_ADDRESS  = 0b000;
 /*
  * SPARE PINS
  */
-using Spare1  = USBDM::GpioA<4, USBDM::ActiveHigh>;
 using Spare2  = USBDM::GpioD<4, USBDM::ActiveHigh>;
 using Spare3  = USBDM::GpioD<5, USBDM::ActiveHigh>;
 
