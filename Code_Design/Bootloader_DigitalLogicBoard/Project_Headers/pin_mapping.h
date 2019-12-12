@@ -3766,7 +3766,7 @@ public:
    static constexpr uint32_t irqCount  = sizeof(irqNums)/sizeof(irqNums[0]);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = 1;
 
    //! Default IRQ level
    static constexpr uint32_t irqLevel =  8;

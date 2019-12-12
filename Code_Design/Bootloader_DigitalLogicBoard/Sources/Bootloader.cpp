@@ -145,7 +145,11 @@ int main() {
       CommandMessage  command;
       ResponseMessage response;
       for(;;) {
-         Usb0::receiveBulkData(sizeof(command), (uint8_t *)&command);
+         uint16_t size = sizeof(command);
+         ErrorCode rc = Usb0::receiveBulkData(size, (uint8_t *)&command);
+         if (rc != E_NO_ERROR) {
+            continue;
+         }
 //         writeCommandMessage(command);
 
          // Default to OK small response
@@ -161,6 +165,8 @@ int main() {
             case Command_Identify:
                response.hardwareVersion   = HW_LOGIC_BOARD_V2;
                response.bootloaderVersion = BOOTLOADER_V1;
+               response.flashStart        = FLASH_BUFFER_START;
+               response.flashSize         = FLASH_BUFFER_SIZE;
                responseSize               = command.byteLength + sizeof(ResponseIdentify);
                break;
 
@@ -191,7 +197,7 @@ int main() {
                resetSystem();
                break;
          }
-         Usb0::sendBulkData(responseSize, (uint8_t *)&response);
+         Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
       }
    }
    return 0;
