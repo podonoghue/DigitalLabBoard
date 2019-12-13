@@ -276,26 +276,17 @@ ErrorCode Usb0::receiveBulkData(uint16_t &size, uint8_t *buffer) {
  *
  *  @param[IN] size    Number of bytes to send
  *  @param[IN] buffer  Pointer to bytes to send
- *  @param[IN] timeout Maximum time to wait for packet
+ *  @param[IN] timeout Maximum time to wait for idle before transmission
  *
  *  @note : Waits for idle BEFORE transmission but\n
  *          returns before data has been transmitted
  */
 ErrorCode Usb0::sendBulkData(uint16_t size, const uint8_t *buffer, uint32_t timeout) {
-   static bool expired = false;
-
-   USBDM::PitChannelNum pitChannel = Pit::allocateChannel();
-   static auto cb = [] () {
-      expired = true;
+   static auto fn = [] {
+      // Waiting for idle
+      return epBulkIn.getState() == EPIdle;
    };
-   if (pitChannel != PitChannelNum_None) {
-      Pit::oneShotInMilliseconds(pitChannel, cb, timeout);
-   }
-   while (!expired && (epBulkIn.getState() != EPIdle)) {
-      __WFI();
-   }
-   Pit::freeChannel(pitChannel);
-   if (epBulkIn.getState() != EPIdle) {
+   if (!waitMS(timeout, fn)) {
       return E_TIMEOUT;
    }
    epBulkIn.startTxStage(EPDataIn, size, buffer);

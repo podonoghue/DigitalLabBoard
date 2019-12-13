@@ -22,11 +22,10 @@ using DebugPin  = GpioD<4,  USBDM::ActiveLow>;
 /**
  * Report command to console
  *
- * @param message COmmand message to describe
+ * @param message Command message to describe
  */
 void writeCommandMessage(CommandMessage &message) {
-   console.
-   write(getCommandName(message.command));
+   console.write(getCommandName(message.command));
    if (message.byteLength>0) {
       console.
       write(" [0x").write(message.startAddress, Radix_16).
@@ -50,7 +49,7 @@ uint32_t calcuateCRC32(uint8_t *start, uint32_t size) {
 
    // Calculate CRC32
    Crc::configure_Crc32();
-   uint32_t crc = Crc::calculateCrc(start, size);
+   uint32_t crc = Crc::calculateCrc((uint32_t *)start, size);
    return crc;
 }
 
@@ -89,13 +88,13 @@ bool programFlash(CommandMessage command) {
    return true;
 }
 
-void toggleDebug() {
-   DebugPin::setOutput();
-   for (int i=0; i<100; i++) {
-      DebugPin::toggle();
-      waitUS(100);
-   }
-}
+//void toggleDebug() {
+//   DebugPin::setOutput();
+//   for (int i=0; i<100; i++) {
+//      DebugPin::toggle();
+//      waitUS(100);
+//   }
+//}
 
 void checkICP() {
    IcpButton::setInput(PinPull_Up);
