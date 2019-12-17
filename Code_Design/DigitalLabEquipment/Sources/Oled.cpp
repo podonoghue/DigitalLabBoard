@@ -3,6 +3,8 @@
  *
  *  Created on: 31 Oct 2019
  *      Author: podonoghue
+ *
+ *  Based loosely on Adafruit library (initialisation sequences and constants)
  */
 #include "malloc.h"
 #include "Oled.h"
@@ -35,6 +37,7 @@ Oled &Oled::clearDisplay(void) {
  * @return true on success
  *
  * @note   This function must be called before any drawing or updates!
+ * @note   Based loosely on Adafruit library initialisation sequence
  */
 void Oled::initialise() {
 
