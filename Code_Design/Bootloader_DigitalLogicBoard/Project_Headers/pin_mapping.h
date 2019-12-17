@@ -247,8 +247,8 @@ public:
    static constexpr PinInfo  info[] = {
 
          //      Signal                 Pin                                  portInfo    gpioAddress     gpioBit  PCR value
-         /*   0: XTAL0                = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
-         /*   1: EXTAL0               = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
+         /*   0: XTAL0                = PTA19 (XTAL0)                  */  { PortAInfo,  GPIOA_BasePtr,  19,      PORT_PCR_MUX(0)|defaultPcrValue  },
+         /*   1: EXTAL0               = PTA18 (EXTAL0)                 */  { PortAInfo,  GPIOA_BasePtr,  18,      PORT_PCR_MUX(0)|defaultPcrValue  },
    };
 
    /**
@@ -257,13 +257,24 @@ public:
     * @param pcrValue PCR value controlling pin options
     */
    static void initPCRs(uint32_t pcrValue=defaultPcrValue) {
-      (void)pcrValue;
+#ifdef PCC_PCCn_CGC_MASK
+      PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+#else
+      enablePortClocks(PORTA_CLOCK_MASK);
+#endif
+      PORTA->GPCHR = pcrValue|PORT_PCR_MUX(0)|PORT_GPCHR_GPWE(0x000CUL);
    }
 
    /**
     * Resets pins used by peripheral
     */
    static void clearPCRs() {
+#ifdef PCC_PCCn_CGC_MASK
+      PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+#else
+      enablePortClocks(PORTA_CLOCK_MASK);
+#endif
+      PORTA->GPCHR = PORT_PCR_MUX(0)|PORT_GPCHR_GPWE(0xCU);
    }
 
 };
@@ -4978,8 +4989,8 @@ using Adc_A7               = const USBDM::Adc0::Channel<23>;
  *  PTA5                     | -                                           | D2                        | -       
  *  PTA12                    | -                                           | D8                        | -       
  *  PTA13                    | -                                           | D24                       | -       
- *  PTA18                    | -                                           | EXTAL0                    | -       
- *  PTA19                    | -                                           | XTAL0                     | -       
+ *  PTA18                    | EXTAL0                                      | EXTAL0                    | -       
+ *  PTA19                    | XTAL0                                       | XTAL0                     | -       
  *  PTB0                     | -                                           | A5/ACC_SCL                | -       
  *  PTB1                     | -                                           | A4/ACC_SDA                | -       
  *  PTB2                     | -                                           | D15                       | -       
@@ -5074,7 +5085,7 @@ using Adc_A7               = const USBDM::Adc0::Channel<23>;
  *  PTC9                     | -                                           | D23                       | -       
  *  PTA13                    | -                                           | D24                       | -       
  *  PTC10                    | -                                           | D25                       | -       
- *  PTA18                    | -                                           | EXTAL0                    | -       
+ *  PTA18                    | EXTAL0                                      | EXTAL0                    | -       
  *  EXTAL32                  | EXTAL32                                     | EXTAL32                   | -       
  *  RESET_b                  | RESET_b                                     | RESET_b                   | -       
  *  PTA0                     | -                                           | SWD_CLK                   | -       
@@ -5096,7 +5107,7 @@ using Adc_A7               = const USBDM::Adc0::Channel<23>;
  *  VSS2                     | VSS2                                        | VSS2                      | -       
  *  VSS3                     | VSS3                                        | VSS3                      | -       
  *  VSSA                     | VSSA                                        | VSSA                      | -       
- *  PTA19                    | -                                           | XTAL0                     | -       
+ *  PTA19                    | XTAL0                                       | XTAL0                     | -       
  *  XTAL32                   | XTAL32                                      | XTAL32                    | -       
  *
  *
@@ -5110,6 +5121,7 @@ using Adc_A7               = const USBDM::Adc0::Channel<23>;
  *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | A10                       | -       
  *  ADC0_DP3                 | ADC0_DP3/ADC0_SE3                           | A8                        | -       
  *  ADC0_SE23                | ADC0_SE23/CMP1_IN3                          | A7                        | -       
+ *  PTA18                    | EXTAL0                                      | EXTAL0                    | -       
  *  EXTAL32                  | EXTAL32                                     | EXTAL32                   | -       
  *  RESET_b                  | RESET_b                                     | RESET_b                   | -       
  *  USB0_DM                  | USB0_DM                                     | USB0_DM                   | -       
@@ -5128,6 +5140,7 @@ using Adc_A7               = const USBDM::Adc0::Channel<23>;
  *  VSS2                     | VSS2                                        | VSS2                      | -       
  *  VSS3                     | VSS3                                        | VSS3                      | -       
  *  VSSA                     | VSSA                                        | VSSA                      | -       
+ *  PTA19                    | XTAL0                                       | XTAL0                     | -       
  *  XTAL32                   | XTAL32                                      | XTAL32                    | -       
  *
  */

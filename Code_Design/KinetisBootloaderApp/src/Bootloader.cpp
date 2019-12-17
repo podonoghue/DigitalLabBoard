@@ -13,7 +13,7 @@ static constexpr uint8_t   EP_OUT      = LIBUSB_ENDPOINT_OUT|1;  // EP #1 OUT
 static constexpr uint8_t   EP_IN       = LIBUSB_ENDPOINT_IN |2;  // EP #2 IN
 
 static constexpr uint16_t  VENDOR_ID   = 0x16D0;    // Vendor (actually MCS)
-static constexpr uint16_t  PRODUCT_ID  = 0x4325;    // Product ID
+static constexpr uint16_t  PRODUCT_ID  = 0x4327;    // Product ID
 
 Bootloader::Bootloader() {
 }

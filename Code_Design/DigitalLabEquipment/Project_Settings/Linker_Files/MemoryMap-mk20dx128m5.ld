@@ -61,7 +61,7 @@ MEMORY
  *  <o>  FLASH  address <constant>
  *  <o1> FLASH  size    <constant>
  */
-  flash          (rx)  : ORIGIN = 0x00008000, LENGTH = 0x00018000
+  flash          (rx)  : ORIGIN = 0x00004000, LENGTH = 0x0001C000
 /*
  *  <o>  ram_high address <constant>
  *  <o1> ram_high size    <constant>

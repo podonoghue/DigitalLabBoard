@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>Documentation</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>Readme-Hardware.md</name>
+			<type>1</type>
+			<locationURI>PARENT-1-WORKSPACE_LOC/PCB_Design/Readme.md</locationURI>
+		</link>
+		<link>
+			<name>Readme-Overall.md</name>
+			<type>1</type>
+			<locationURI>PARENT-1-WORKSPACE_LOC/Readme.md</locationURI>
+		</link>
+		<link>
+			<name>Readme-Software.md</name>
+			<type>1</type>
+			<locationURI>PARENT-1-WORKSPACE_LOC/Code_Design/Readme.md</locationURI>
+		</link>
+	</linkedResources>
+</projectDescription>

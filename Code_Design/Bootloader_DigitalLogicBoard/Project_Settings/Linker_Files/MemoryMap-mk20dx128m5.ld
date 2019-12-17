@@ -61,7 +61,7 @@ MEMORY
  *  <o>  FLASH  address <constant>
  *  <o1> FLASH  size    <constant>
  */
-  flash          (rx)  : ORIGIN = 0x00000000, LENGTH = 0x00008000
+  flash          (rx)  : ORIGIN = 0x00000000, LENGTH = 0x00004000
 /*
  *  <o>  FLASH stub address <constant>
  *  <o1> FLASH stub size    <constant>

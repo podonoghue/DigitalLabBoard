@@ -39,10 +39,10 @@ void writeCommandMessage(CommandMessage &message) {
 }
 
 /** Start of Flash region being used for image */
-static constexpr unsigned FLASH_BUFFER_START =  0x8000;
+static constexpr unsigned FLASH_BUFFER_START =  0x4000;
 
 /** Size of Flash region being used for image */
-static constexpr unsigned FLASH_BUFFER_SIZE  = 0x18000;
+static constexpr unsigned FLASH_BUFFER_SIZE  = 0x1C000;
 
 uint32_t calcuateCRC32(uint8_t *start, uint32_t size) {
    using Crc = Crc0;

@@ -27,6 +27,12 @@ namespace USBDM {
  * Used to configure pin-mapping before 1st use of peripherals
  */
 void mapAllPins() {
+#ifdef PCC_PCCn_CGC_MASK
+      PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+#else
+      enablePortClocks(PORTA_CLOCK_MASK);
+#endif
+      PORTA->GPCHR = 0x0000UL|PORT_GPCHR_GPWE(0x000CUL);
 }
 /** 
  * End group USBDM_Group

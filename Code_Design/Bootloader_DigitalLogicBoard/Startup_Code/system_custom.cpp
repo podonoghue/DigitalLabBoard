@@ -141,8 +141,6 @@ void SystemInitLowLevel(void) {
     * Needed to be done before too much uC configuration
     */
    checkICP();
-
-
 }
 
 /**

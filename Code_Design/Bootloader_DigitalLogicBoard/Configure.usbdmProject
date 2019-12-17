@@ -8,6 +8,8 @@
    <item key="$$DeviceInfo_Device_Variant"                 value="FRDM_K20D50M" />
    <item key="$$DeviceInfo_SubFamily"                      value="MK20D5" />
    <item key="$$Hardware_Source_Filename"                  value="MK20D5.usbdmHardware" />
+   <item key="$signal$PTA18_muxSetting"                    value="mux0" />
+   <item key="$signal$PTA19_muxSetting"                    value="mux0" />
    <item key="/FTFL/peripheral_file"                       value="ftfl_32k_flexrom" />
    <item key="/MCG/ClockConfig[0]"                         value="ClockConfig_PEE_48MHz" />
    <item key="/MCG/ClockConfig[1]"                         value="ClockConfig_BLPE_4MHz" />
