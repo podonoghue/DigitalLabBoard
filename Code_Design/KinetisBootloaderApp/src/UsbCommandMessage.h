@@ -16,21 +16,21 @@ static constexpr uint16_t BOOTLOADER_V1     = 1;
 /**
  * Commands available
  */
-enum Command : uint32_t {
-   Command_Nop,            // No operation
-   Command_Identify,       // Identify boot-loader and hardware versions etc
-   Command_EraseFlash,     // Erase all of flash image
-   Command_ReadBlock,      // Read block from flash
-   Command_ProgramBlock,   // Program block to flash
-   Command_Reset,          // Reset device
+enum UsbCommand : uint32_t {
+   UsbCommand_Nop,            // No operation
+   UsbCommand_Identify,       // Identify boot-loader and hardware versions etc
+   UsbCommand_EraseFlash,     // Erase all of flash image
+   UsbCommand_ReadBlock,      // Read block from flash
+   UsbCommand_ProgramBlock,   // Program block to flash
+   UsbCommand_Reset,          // Reset device
 };
 
 /**
  * Result of command
  */
-enum Status : uint32_t {
-   Status_OK,    //!< Status_OK
-   Status_Failed,//!< Status_Failed
+enum UsbCommandStatus : uint32_t {
+   UsbCommandStatus_OK,    //!< Status_OK
+   UsbCommandStatus_Failed,//!< Status_Failed
 };
 
 /**
@@ -44,11 +44,11 @@ enum Status : uint32_t {
  */
 static inline const char *getCommandName(Command command) {
    static const char *names[] = {
-         "Command_Nop",
-         "Command_Identify",
-         "Command_EraseFlash",
-         "Command_ReadBlock",
-         "Command_ProgramBlock",
+         "UsbCommand_Nop",
+         "UsbCommand_Identify",
+         "UsbCommand_EraseFlash",
+         "UsbCommand_ReadBlock",
+         "UsbCommand_ProgramBlock",
    };
    const char *name = "Unknown";
    if (command < (sizeof(names)/sizeof(names[0]))) {
@@ -102,8 +102,8 @@ struct SimpleCommandMessage {
  * General USB response message
  */
 struct ResponseMessage {
-   Status   status;        // Last status
-   uint32_t byteLength;    // Size of data
+   UsbCommandStatus   status;        // Status
+   uint32_t           byteLength;    // Size of data
    union {
       struct {
          uint16_t hardwareVersion;    // Hardware version
@@ -119,15 +119,15 @@ struct ResponseMessage {
  * USB status response message
  */
 struct ResponseStatus {
-   Status   status;        // Last status
-   uint32_t byteLength;    // Size of data
+   UsbCommandStatus   status;        // Status
+   uint32_t           byteLength;    // Size of data
 };
 
 /**
  * USB identify response message
  */
 struct ResponseIdentify {
-   Status   status;             // Last status
+   UsbCommandStatus   status;        // Status
    uint32_t byteLength;         // Size of data (not used)
    uint16_t hardwareVersion;    // Hardware version
    uint16_t bootloaderVersion;  // Boot-loader version

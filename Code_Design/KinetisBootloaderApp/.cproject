@@ -67,6 +67,7 @@
 									<listOptionValue builtIn="false" value="&quot;${WXWIN}/lib/gcc_dll&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/DLLs}&quot;"/>
 								</option>
+								<option id="gnu.cpp.link.option.flags.1387807923" superClass="gnu.cpp.link.option.flags" value="-Wl,--subsystem,windows" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1163916053" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -147,6 +148,7 @@
 									<listOptionValue builtIn="false" value="&quot;${WXWIN}/lib/gcc_dll&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/DLLs}&quot;"/>
 								</option>
+								<option id="gnu.cpp.link.option.flags.153578767" superClass="gnu.cpp.link.option.flags" useByScannerDiscovery="false" value="-Wl,--subsystem,windows" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.311917333" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>

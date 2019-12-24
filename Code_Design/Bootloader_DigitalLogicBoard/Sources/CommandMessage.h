@@ -1,5 +1,5 @@
 /*
- * CommandMessage.h
+ * UsbCommandMessage.h
  *
  *  Created on: 9 Dec 2019
  *      Author: podonoghue
@@ -16,13 +16,13 @@ static constexpr uint16_t BOOTLOADER_V1     = 1;
 /**
  * Commands available
  */
-enum Command : uint32_t {
-   Command_Nop,            // No operation
-   Command_Identify,       // Identify boot-loader and hardware versions etc
-   Command_EraseFlash,     // Erase all of flash image
-   Command_ReadBlock,      // Read block from flash
-   Command_ProgramBlock,   // Program block to flash
-   Command_Reset,          // Reset device
+enum UsbCommand : uint32_t {
+   UsbCommand_Nop,            // No operation
+   UsbCommand_Identify,       // Identify boot-loader and hardware versions etc
+   UsbCommand_EraseFlash,     // Erase all of flash image
+   UsbCommand_ReadBlock,      // Read block from flash
+   UsbCommand_ProgramBlock,   // Program block to flash
+   UsbCommand_Reset,          // Reset device
 };
 
 /**
@@ -42,13 +42,13 @@ enum Status : uint32_t {
  *
  * @note return value is a pointer to a STATIC object - do not free
  */
-static inline const char *getCommandName(Command command) {
+static inline const char *getCommandName(UsbCommand command) {
    static const char *names[] = {
-         "Command_Nop",
-         "Command_Identify",
-         "Command_EraseFlash",
-         "Command_ReadBlock",
-         "Command_ProgramBlock",
+         "UsbCommand_Nop",
+         "UsbCommand_Identify",
+         "UsbCommand_EraseFlash",
+         "UsbCommand_ReadBlock",
+         "UsbCommand_ProgramBlock",
    };
    const char *name = "Unknown";
    if (command < (sizeof(names)/sizeof(names[0]))) {
@@ -82,8 +82,8 @@ static inline const char *getHardwareType(uint16_t hardwareVersion) {
 /**
  * General USB command message
  */
-struct CommandMessage {
-   Command  command;       // Command to execute
+struct UsbCommandMessage {
+   UsbCommand  command;       // Command to execute
    uint32_t startAddress;  // Target memory address
    uint32_t byteLength;    // Size of data
    uint8_t  data[1024];    // Data (up to 1 flash block)
@@ -93,7 +93,7 @@ struct CommandMessage {
  * Simple USB command message
  */
 struct SimpleCommandMessage {
-   Command  command;       // Command to execute
+   UsbCommand  command;       // Command to execute
    uint32_t startAddress;  // Target memory address
    uint32_t byteLength;    // Size of data
 };

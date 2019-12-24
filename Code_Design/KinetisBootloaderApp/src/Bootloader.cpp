@@ -1,13 +1,39 @@
-/*
- * Bootloader.cpp
- *
- *  Created on: 9 Dec 2019
- *      Author: podonoghue
- */
+/*! \file
+    \brief Bootloader for Kinetis devices
 
-#include "Bootloader.h"
+    Bootloader.cpp
+
+    \verbatim
+    USBDM
+    Copyright (C) 20019 Peter O'Donoghue
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    \endverbatim
+
+    \verbatim
+   Change History
+   -=========================================================================================
+   | 10 Dec 2019 | Initial work                                              - pgo
+   +=========================================================================================
+   \endverbatim
+ */
+#include <stdio.h>
+
 #include "libusb.h"
-#include "CommandMessage.h"
+#include "Bootloader.h"
+#include "UsbCommandMessage.h"
 
 static constexpr uint8_t   EP_OUT      = LIBUSB_ENDPOINT_OUT|1;  // EP #1 OUT
 static constexpr uint8_t   EP_IN       = LIBUSB_ENDPOINT_IN |2;  // EP #2 IN

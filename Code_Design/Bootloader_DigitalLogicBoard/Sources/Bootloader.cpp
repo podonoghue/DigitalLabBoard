@@ -24,7 +24,7 @@ using DebugPin  = GpioD<4,  USBDM::ActiveLow>;
  *
  * @param message Command message to describe
  */
-void writeCommandMessage(CommandMessage &message) {
+void writeCommandMessage(UsbCommandMessage &message) {
    console.write(getCommandName(message.command));
    if (message.byteLength>0) {
       console.
@@ -73,7 +73,7 @@ bool isFlashValid() {
  * @return true  => Successfully programmed
  * @return false => Programming failed
  */
-bool programFlash(CommandMessage command) {
+bool programFlash(UsbCommandMessage command) {
    if (command.startAddress < FLASH_BUFFER_START) {
       return false;
    }
@@ -141,7 +141,7 @@ int main() {
       while(!UsbImplementation::isConfigured()) {
          __WFI();
       }
-      CommandMessage  command;
+      UsbCommandMessage  command;
       ResponseMessage response;
       for(;;) {
          uint16_t size = sizeof(command);
