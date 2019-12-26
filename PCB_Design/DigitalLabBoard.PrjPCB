@@ -183,7 +183,7 @@ DItemRevisionGUID=
 
 [Parameter1]
 Name=Version
-Value=2.0
+Value=3.0
 
 [Configuration1]
 Name=Sources
