@@ -72,6 +72,12 @@ void Traffic::softPowerOn() {
 
    powerOn = true;
 
+   // Buttons are shared so fully initialise each time
+   TrafficButtons::setInput(
+         USBDM::PinPull_None,
+         USBDM::PinAction_None,
+         USBDM::PinFilter_None);
+
    // User I/O
    trafficGpio.setDirection0(0b11110000);
    trafficGpio.writeData0(0b0000);

@@ -65,10 +65,6 @@ public:
       This = this;
 
       power.addPowerSubscriber(this);
-      TrafficButtons::setInput(
-            USBDM::PinPull_None,
-            USBDM::PinAction_None,
-            USBDM::PinFilter_None);
    }
 
    /**

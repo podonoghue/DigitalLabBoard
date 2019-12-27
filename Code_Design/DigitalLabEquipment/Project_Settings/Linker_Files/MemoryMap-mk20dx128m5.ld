@@ -58,10 +58,10 @@ MEMORY
  */
   flexNVM        (rx)  : ORIGIN = 0x10000000, LENGTH = 0x00008000
 /*
- *  <o>  FLASH  address <constant>
- *  <o1> FLASH  size    <constant>
+ *  <o>  FLASH  address
+ *  <o1> FLASH  size
  */
-  flash          (rx)  : ORIGIN = 0x00004000, LENGTH = 0x0001C000
+  flash          (rx)  : ORIGIN = 0x0, LENGTH = 0x20000
 /*
  *  <o>  ram_high address <constant>
  *  <o1> ram_high size    <constant>

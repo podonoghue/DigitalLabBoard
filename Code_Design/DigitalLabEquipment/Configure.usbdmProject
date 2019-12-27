@@ -9,7 +9,7 @@
    <item key="$$DeviceInfo_SubFamily"                      value="MK20D5" />
    <item key="$$Hardware_Source_Filename"                  value="MK20D5.usbdmHardware" />
    <item key="$signal$ADC0_DM0_descriptionSetting"         value="Unused" />
-   <item key="$signal$ADC0_DP0_descriptionSetting"         value="Unused" />
+   <item key="$signal$ADC0_DP0_descriptionSetting"         value="Vref_JTAG" />
    <item key="$signal$EXTAL32_descriptionSetting"          value="Unused" />
    <item key="$signal$PTA0_descriptionSetting"             value="SWD_CLK" />
    <item key="$signal$PTA0_muxSetting"                     value="mux7" />
@@ -52,21 +52,22 @@
    <item key="$signal$PTC6_muxSetting"                     value="mux1" />
    <item key="$signal$PTC7_descriptionSetting"             value="PH3" />
    <item key="$signal$PTC7_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD0_descriptionSetting"             value="CAR_NS_BTN" />
+   <item key="$signal$PTD0_descriptionSetting"             value="CAR_NS_TCK" />
    <item key="$signal$PTD0_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD1_descriptionSetting"             value="CAR_EW_BTN" />
+   <item key="$signal$PTD1_descriptionSetting"             value="CAR_EW_TDO" />
    <item key="$signal$PTD1_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD2_descriptionSetting"             value="PED_NS_BTN" />
+   <item key="$signal$PTD2_descriptionSetting"             value="PED_NS_TDI" />
    <item key="$signal$PTD2_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD3_descriptionSetting"             value="PED_EW_BTN" />
+   <item key="$signal$PTD3_descriptionSetting"             value="PED_EW_TMS" />
    <item key="$signal$PTD3_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD4_descriptionSetting"             value="GPIO_IRQ" />
+   <item key="$signal$PTD4_descriptionSetting"             value="Pass_LED" />
    <item key="$signal$PTD4_muxSetting"                     value="mux1" />
    <item key="$signal$PTD5_descriptionSetting"             value="CLOCK" />
    <item key="$signal$PTD5_muxSetting"                     value="mux4" />
    <item key="$signal$PTD6_descriptionSetting"             value="VddSample/Discharge" />
    <item key="$signal$PTD6_muxSetting"                     value="mux0" />
-   <item key="$signal$PTD7_descriptionSetting"             value="Spare2" />
+   <item key="$signal$PTD7_descriptionSetting"             value="Busy_LED" />
+   <item key="$signal$PTD7_muxSetting"                     value="mux1" />
    <item key="$signal$RESET_b_descriptionSetting"          value="Reset" />
    <item key="$signal$USB0_DM_descriptionSetting"          value="USBDM" />
    <item key="$signal$USB0_DP_descriptionSetting"          value="USBDP" />
@@ -107,4 +108,5 @@
    <item key="/SIM/system_core_clock[2]"                   value="40000000" />
    <item key="/SIM/system_flash_clock[1]"                  value="1000000" />
    <item key="/SIM/system_flash_clock[2]"                  value="20000000" />
+   <item key="/USB0/irqHandlingMethod"                     value="$ClassMethod" />
 </section>

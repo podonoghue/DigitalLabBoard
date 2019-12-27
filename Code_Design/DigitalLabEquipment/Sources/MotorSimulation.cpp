@@ -89,7 +89,7 @@ void MotorSimulator::timerCallback() {
       return;
    }
 
-   uint8_t input = MotorPhases::read();
+   uint8_t input = 0;//MotorPhases::read();
 
    // Wait until input is stable for 1 sample period
    if (input != lastInput) {
@@ -207,10 +207,10 @@ void MotorSimulator::softPowerOn() {
          PinFilter_None,
          PinSlewRate_Slow);
 
-   MotorPhases::setInput(
-         PinPull_None,
-         PinAction_None,
-         PinFilter_None);
+//   MotorPhases::setInput(
+//         PinPull_None,
+//         PinAction_None,
+//         PinFilter_None);
 
    auto cb = []() {
       This->timerCallback();
@@ -220,9 +220,9 @@ void MotorSimulator::softPowerOn() {
 
    powerOn = true;
 
-   MotorPitChannel::setCallback(cb);
-   MotorPitChannel::enableNvicInterrupts(NvicPriority_Normal);
-   MotorPitChannel::configure(1*ms, PitChannelIrq_Enabled);
+   Pit::setCallback(pitChannel, cb);
+   Pit::enableNvicInterrupts(pitChannel, NvicPriority_Normal);
+   Pit::configureChannel(pitChannel, 1*ms, PitChannelIrq_Enabled);
 }
 
 /**
@@ -232,7 +232,8 @@ void MotorSimulator::softPowerOff() {
 
    powerOn = false;
 
-   MotorPitChannel::configure(1*ms, PitChannelIrq_Disabled);
+   Pit::configureChannel(pitChannel, 1*ms, PitChannelIrq_Disabled);
+
    writeLed(LEDS_OFF);
 }
 

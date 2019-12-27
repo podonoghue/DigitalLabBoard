@@ -12,7 +12,7 @@
 
 #include "hardware.h"
 #include "i2c.h"
-#include "pit.h"
+//#include "pit.h"
 
 /// I2C Interface for OLED, and GPIOs
 using I2cInterface = USBDM::I2c0;
@@ -25,7 +25,7 @@ using CharliePlexing = USBDM::GpioCField<4,0,USBDM::ActiveHigh>;
 /// Motor simulator - Phase inputs from user
 using MotorPhases    = USBDM::GpioCField<7,4,USBDM::ActiveHigh>;
 /// Motor simulator - PIT channel
-using MotorPitChannel = USBDM::Pit::Channel<0>;
+//using MotorPitChannel = USBDM::Pit::Channel<0>;
 
 /// Interval x5ms for switch debouncing/unlatching
 static constexpr unsigned DEBOUNCE_INTERVAL_COUNT = 20/5;
@@ -43,10 +43,10 @@ static constexpr unsigned POWER_ON_ADC_DELAY_COUNT = 20/5;
 static constexpr unsigned POWER_ON_DELAY_COUNT = 100/5;
 
 /// Timer used for polling
-using ButtonPollTimer = USBDM::Pit;
+//using ButtonPollTimer = USBDM::Pit;
 
 /// Used to poll directly connected buttons - power, clock and traffic
-using ButtonPollChannel = USBDM::Pit::Channel<1>;
+//using ButtonPollChannel = USBDM::Pit::Channel<1>;
 
 /*
  * TRAFFIC SIMULATOR
@@ -153,10 +153,9 @@ using TargetVddDischarge = USBDM::GpioD<6, USBDM::ActiveLow>;
 /// IO1_7-0 = Inputs from switches/Outputs to LEDs (active-low)
 static constexpr uint8_t BUTTON_I2C_ADDRESS  = 0b000;
 
-/*
- * SPARE PINS
- */
-using Spare2  = USBDM::GpioD<4, USBDM::ActiveHigh>;
-using Spare3  = USBDM::GpioD<5, USBDM::ActiveHigh>;
+// Programmer LEDs
+using ProgrammerOkLed   = USBDM::GpioD<4>;
+using ProgrammerBusyLed = USBDM::GpioD<7>;
+
 
 #endif /* SOURCES_CONFIGURE_H_ */

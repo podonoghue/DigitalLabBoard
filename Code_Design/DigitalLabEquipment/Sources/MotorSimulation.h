@@ -18,6 +18,9 @@ class MotorSimulator : PowerSubscriber {
    /// Self pointer for static methods e.g. call-backs
    static MotorSimulator *This;
 
+   /// Allocated PIT channel
+   USBDM::PitChannelNum pitChannel = USBDM::PitChannelNum_None;
+
    /// Queue for serialised function execution
    FunctionQueue  &functionQueue;
 
@@ -83,7 +86,7 @@ public:
 
       power.addPowerSubscriber(this);
 
-      USBDM::Pit::configure(USBDM::PitDebugMode_Stop);
+      pitChannel = USBDM::Pit::allocateChannel();
    }
 
    /**

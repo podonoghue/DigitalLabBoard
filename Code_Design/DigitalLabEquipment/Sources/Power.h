@@ -43,6 +43,8 @@ private:
    PowerSubscriber *powerSubscribers[5];
    unsigned         powerSubscriberCount = 0;
 
+   static constexpr USBDM::AdcResolution adcResolution = USBDM::AdcResolution_8bit_se;
+
    /**
     * Notifies all devices that soft power-on has occurred
     *

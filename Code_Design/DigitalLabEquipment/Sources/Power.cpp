@@ -15,8 +15,7 @@ using namespace USBDM;
 void Power::powerInitialise() {
    PowerButton::setInput(PinPull_Up, PinAction_None, PinFilter_None);
    PowerEnableControl::setOutput(PinDriveStrength_High, PinDriveMode_PushPull, PinSlewRate_Slow);
-   Adc0::configure(AdcResolution_8bit_se, AdcClockSource_Busdiv2);
-   Adc0::setAveraging(AdcAveraging_8);
+
    Adc0::setCallback(callback);
    Adc0::enableNvicInterrupts(NvicPriority_Normal);
 }
@@ -51,7 +50,8 @@ void Power::pollPower() {
          }
       }
    }
-   if ((powerOnRecoveryCount <= (POWER_ON_DELAY_COUNT-POWER_ON_ADC_DELAY_COUNT)) && powerOn) {
+   if ((powerOnRecoveryCount <= (POWER_ON_DELAY_COUNT-POWER_ON_ADC_DELAY_COUNT)) && powerOn && !Adc0::isBusy()) {
+      Adc0::configure(adcResolution, AdcClockSource_Bus);
       TargetVddSample::startConversion(AdcInterrupt_Enabled);
    }
    if (powerOnRecoveryCount == 1) {
@@ -66,7 +66,7 @@ void Power::pollPower() {
  * @param channel
  */
 void Power::vddSampleCallback(uint32_t result, int) {
-   if (powerOn &&(result<(Adc0::getSingleEndedMaximum(AdcResolution_8bit_se)*0.8))) {
+   if (powerOn && (result<(Adc0::getSingleEndedMaximum(adcResolution)*0.8))) {
       powerOffNotify();
       disableTargetVdd();
       powerOn = false;

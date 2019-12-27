@@ -16,6 +16,7 @@
 #include "hardware.h"
 
 /*********** $start(VectorsIncludeFiles) *** Do not edit after this comment ****************/
+#include "usb.h"
 #include "ftm.h"
 #include "llwu.h"
 #include "pit.h"
@@ -163,7 +164,7 @@ void Reset_Handler(void);
 #ifdef __cplusplus
 }
 #endif
-//void NMI_Handler(void)                        WEAK_DEFAULT_HANDLER;
+void NMI_Handler(void)                        WEAK_DEFAULT_HANDLER;
 void MemManage_Handler(void)                  WEAK_DEFAULT_HANDLER;
 void BusFault_Handler(void)                   WEAK_DEFAULT_HANDLER;
 void UsageFault_Handler(void)                 WEAK_DEFAULT_HANDLER;
@@ -198,7 +199,6 @@ void CMT_IRQHandler(void)                     WEAK_DEFAULT_HANDLER;
 void RTC_Alarm_IRQHandler(void)               WEAK_DEFAULT_HANDLER;
 void RTC_Seconds_IRQHandler(void)             WEAK_DEFAULT_HANDLER;
 void PDB0_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
-void USB0_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
 void USBDCD0_IRQHandler(void)                 WEAK_DEFAULT_HANDLER;
 void TSI0_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
 void MCG_IRQHandler(void)                     WEAK_DEFAULT_HANDLER;
@@ -209,11 +209,6 @@ void PORTC_IRQHandler(void)                   WEAK_DEFAULT_HANDLER;
 void PORTD_IRQHandler(void)                   WEAK_DEFAULT_HANDLER;
 void PORTE_IRQHandler(void)                   WEAK_DEFAULT_HANDLER;
 void SWI_IRQHandler(void)                     WEAK_DEFAULT_HANDLER;
-
-void NMI_Handler() {
-   SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
-   PORTA->PCR[4] = PORT_PCR_MUX(0);
-}
 
 typedef struct {
    uint32_t *initialSP;
@@ -279,7 +274,7 @@ VectorTable const __vector_table = {
       USBDM::Pit::Channel<2>::irqHandler,      /*   48,   32  Periodic Interrupt Timer                                                         */
       USBDM::Pit::Channel<3>::irqHandler,      /*   49,   33  Periodic Interrupt Timer                                                         */
       PDB0_IRQHandler,                         /*   50,   34  Programmable Delay Block                                                         */
-      USB0_IRQHandler,                         /*   51,   35  Universal Serial Bus                                                             */
+      USBDM::Usb0::irqHandler,                 /*   51,   35  Universal Serial Bus                                                             */
       USBDCD0_IRQHandler,                      /*   52,   36  USB Device Charger Detection                                                     */
       TSI0_IRQHandler,                         /*   53,   37  Touch Sense Interface                                                            */
       MCG_IRQHandler,                          /*   54,   38  Multipurpose Clock Generator                                                     */

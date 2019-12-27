@@ -5064,6 +5064,7 @@ using Gpio_p42             = const USBDM::GpioD<1>;
 using Gpio_p43             = const USBDM::GpioD<2>;
 using Gpio_p44             = const USBDM::GpioD<3>;
 using Gpio_p45             = const USBDM::GpioD<4>;
+using Gpio_p48             = const USBDM::GpioD<7>;
 /** 
  * End group GPIO_Group
  * @}
@@ -5084,7 +5085,7 @@ using Gpio_p45             = const USBDM::GpioD<4>;
  *    Pin Name               |   Functions                                 |  Location                 |  Description  
  *  ------------------------ | --------------------------------------------|---------------------------| ------------- 
  *  ADC0_DM0                 | ADC0_DM0/ADC0_SE19                          | p8                        | Unused       
- *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | Unused       
+ *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | Vref_JTAG       
  *  EXTAL32                  | EXTAL32                                     | p15                       | Unused       
  *  PTA0                     | JTAG_TCLK/SWD_CLK                           | p17                       | SWD_CLK       
  *  PTA1                     | UART0_RX                                    | p18                       | SWD_Rx       
@@ -5107,14 +5108,14 @@ using Gpio_p45             = const USBDM::GpioD<4>;
  *  PTC5                     | GPIOC_5/LLWU_P9                             | p38                       | PH1       
  *  PTC6                     | GPIOC_6/LLWU_P10                            | p39                       | PH2       
  *  PTC7                     | GPIOC_7                                     | p40                       | PH3       
- *  PTD0                     | GPIOD_0/LLWU_P12                            | p41                       | CAR_NS_BTN       
- *  PTD1                     | GPIOD_1                                     | p42                       | CAR_EW_BTN       
- *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_NS_BTN       
- *  PTD3                     | GPIOD_3                                     | p44                       | PED_EW_BTN       
- *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | GPIO_IRQ       
+ *  PTD0                     | GPIOD_0/LLWU_P12                            | p41                       | CAR_NS_TCK       
+ *  PTD1                     | GPIOD_1                                     | p42                       | CAR_EW_TDO       
+ *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_NS_TDI       
+ *  PTD3                     | GPIOD_3                                     | p44                       | PED_EW_TMS       
+ *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | Pass_LED       
  *  PTD5                     | FTM0_CH5                                    | p46                       | CLOCK       
  *  PTD6                     | ADC0_SE7b                                   | p47                       | VddSample/Discharge       
- *  PTD7                     | -                                           | p48                       | Spare2       
+ *  PTD7                     | GPIOD_7                                     | p48                       | Busy_LED       
  *  RESET_b                  | RESET_b                                     | p26                       | Reset       
  *  USB0_DM                  | USB0_DM                                     | p4                        | USBDM       
  *  USB0_DP                  | USB0_DP                                     | p3                        | USBDP       
@@ -5143,7 +5144,7 @@ using Gpio_p45             = const USBDM::GpioD<4>;
  *  USB0_DM                  | USB0_DM                                     | p4                        | USBDM       
  *  VOUT33                   | VOUT33                                      | p5                        | Vdd       
  *  VREGIN                   | VREGIN                                      | p6                        | 5V_Fused       
- *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | Unused       
+ *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | Vref_JTAG       
  *  ADC0_DM0                 | ADC0_DM0/ADC0_SE19                          | p8                        | Unused       
  *  VDDA                     | VDDA                                        | p9                        | Vdd       
  *  VREFH                    | VREFH                                       | p10                       | Vdd       
@@ -5177,23 +5178,23 @@ using Gpio_p45             = const USBDM::GpioD<4>;
  *  PTC5                     | GPIOC_5/LLWU_P9                             | p38                       | PH1       
  *  PTC6                     | GPIOC_6/LLWU_P10                            | p39                       | PH2       
  *  PTC7                     | GPIOC_7                                     | p40                       | PH3       
- *  PTD0                     | GPIOD_0/LLWU_P12                            | p41                       | CAR_NS_BTN       
- *  PTD1                     | GPIOD_1                                     | p42                       | CAR_EW_BTN       
- *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_NS_BTN       
- *  PTD3                     | GPIOD_3                                     | p44                       | PED_EW_BTN       
- *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | GPIO_IRQ       
+ *  PTD0                     | GPIOD_0/LLWU_P12                            | p41                       | CAR_NS_TCK       
+ *  PTD1                     | GPIOD_1                                     | p42                       | CAR_EW_TDO       
+ *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_NS_TDI       
+ *  PTD3                     | GPIOD_3                                     | p44                       | PED_EW_TMS       
+ *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | Pass_LED       
  *  PTD5                     | FTM0_CH5                                    | p46                       | CLOCK       
  *  PTD6                     | ADC0_SE7b                                   | p47                       | VddSample/Discharge       
- *  PTD7                     | -                                           | p48                       | Spare2       
+ *  PTD7                     | GPIOD_7                                     | p48                       | Busy_LED       
  *
  *
  * @section PinsByFunction Pins by Function
  *
  *    Pin Name               |   Functions                                 |  Location                 |  Description  
  *  ------------------------ | --------------------------------------------|---------------------------| ------------- 
- *  PTD7                     | -                                           | p48                       | Spare2       
+ *  PTB2                     | -                                           | p29                       | Spare1       
  *  ADC0_DM0                 | ADC0_DM0/ADC0_SE19                          | p8                        | Unused       
- *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | Unused       
+ *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | Vref_JTAG       
  *  PTD6                     | ADC0_SE7b                                   | p47                       | VddSample/Discharge       
  *  PTA18                    | EXTAL0                                      | p24                       | 16 MHz Crystal       
  *  EXTAL32                  | EXTAL32                                     | p15                       | Unused       
@@ -5210,11 +5211,12 @@ using Gpio_p45             = const USBDM::GpioD<4>;
  *  PTC5                     | GPIOC_5/LLWU_P9                             | p38                       | PH1       
  *  PTC6                     | GPIOC_6/LLWU_P10                            | p39                       | PH2       
  *  PTC7                     | GPIOC_7                                     | p40                       | PH3       
- *  PTD0                     | GPIOD_0/LLWU_P12                            | p41                       | CAR_NS_BTN       
- *  PTD1                     | GPIOD_1                                     | p42                       | CAR_EW_BTN       
- *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_NS_BTN       
- *  PTD3                     | GPIOD_3                                     | p44                       | PED_EW_BTN       
- *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | GPIO_IRQ       
+ *  PTD0                     | GPIOD_0/LLWU_P12                            | p41                       | CAR_NS_TCK       
+ *  PTD1                     | GPIOD_1                                     | p42                       | CAR_EW_TDO       
+ *  PTD2                     | GPIOD_2/LLWU_P13                            | p43                       | PED_NS_TDI       
+ *  PTD3                     | GPIOD_3                                     | p44                       | PED_EW_TMS       
+ *  PTD4                     | GPIOD_4/LLWU_P14                            | p45                       | Pass_LED       
+ *  PTD7                     | GPIOD_7                                     | p48                       | Busy_LED       
  *  PTB0                     | I2C0_SCL                                    | p27                       | I2C_SCL       
  *  PTB1                     | I2C0_SDA                                    | p28                       | I2C_SDA       
  *  PTA0                     | JTAG_TCLK/SWD_CLK                           | p17                       | SWD_CLK       
