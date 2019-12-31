@@ -28,7 +28,7 @@ DItemRevisionGUID=
 ReportSuppressedErrorsInMessages=0
 FSMCodingStyle=eFMSDropDownList_OneProcess
 FSMEncodingStyle=eFMSDropDownList_OneHot
-OutputPath=
+OutputPath=Project Outputs for DigitalLabBoard
 LogFolderPath=
 ManagedProjectGUID=
 IncludeDesignInRelease=0
@@ -89,23 +89,6 @@ GenerateClassCluster=0
 DocumentUniqueId=IOUAIYMI
 
 [Document4]
-DocumentPath=DigitalLabBoard.OutJob
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=
-
-[Document5]
 DocumentPath=DigitalLabBoard_Switches.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -122,7 +105,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=LLQMXHQG
 
-[Document6]
+[Document5]
 DocumentPath=DigitalLabBoard_LEDs.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -139,7 +122,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=DFUOSCXE
 
-[Document7]
+[Document6]
 DocumentPath=DigitalLabBoard_Die.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -156,7 +139,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=VOIETKQA
 
-[Document8]
+[Document7]
 DocumentPath=DigitalLabBoard_Stepper.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -173,12 +156,293 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=BJXIQECX
 
+[Document8]
+DocumentPath=DigitalLabBoard.OutJob
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=
+
 [GeneratedDocument1]
-DocumentPath=Project Outputs for DigitalLabBoard\Design Rule Check - DigitalLabBoard.html
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\Bill of Materials-DigitalLabBoard.xls
 DItemRevisionGUID=
 
 [GeneratedDocument2]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\Bill of Materials-DigitalLabBoard.xls
+DItemRevisionGUID=
+
+[GeneratedDocument3]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\Bill of Materials-DigitalLabBoard.xls
+DItemRevisionGUID=
+
+[GeneratedDocument4]
+DocumentPath=Project Outputs for DigitalLabBoard\Design Rule Check - DigitalLabBoard.html
+DItemRevisionGUID=
+
+[GeneratedDocument5]
 DocumentPath=DigitalLabBoard 21-10-2019 9-24-44 PM.WAS
+DItemRevisionGUID=
+
+[GeneratedDocument6]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard-RoundHoles.TXT
+DItemRevisionGUID=
+
+[GeneratedDocument7]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard-RoundHoles.TXT
+DItemRevisionGUID=
+
+[GeneratedDocument8]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard-RoundHoles.TXT
+DItemRevisionGUID=
+
+[GeneratedDocument9]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard-SlotHoles.TXT
+DItemRevisionGUID=
+
+[GeneratedDocument10]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard-SlotHoles.TXT
+DItemRevisionGUID=
+
+[GeneratedDocument11]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard-SlotHoles.TXT
+DItemRevisionGUID=
+
+[GeneratedDocument12]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.DRR
+DItemRevisionGUID=
+
+[GeneratedDocument13]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.DRR
+DItemRevisionGUID=
+
+[GeneratedDocument14]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.DRR
+DItemRevisionGUID=
+
+[GeneratedDocument15]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.EXTREP
+DItemRevisionGUID=
+
+[GeneratedDocument16]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.EXTREP
+DItemRevisionGUID=
+
+[GeneratedDocument17]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.EXTREP
+DItemRevisionGUID=
+
+[GeneratedDocument18]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GBL
+DItemRevisionGUID=
+
+[GeneratedDocument19]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GBL
+DItemRevisionGUID=
+
+[GeneratedDocument20]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GBL
+DItemRevisionGUID=
+
+[GeneratedDocument21]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GBO
+DItemRevisionGUID=
+
+[GeneratedDocument22]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GBO
+DItemRevisionGUID=
+
+[GeneratedDocument23]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GBO
+DItemRevisionGUID=
+
+[GeneratedDocument24]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GBS
+DItemRevisionGUID=
+
+[GeneratedDocument25]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GBS
+DItemRevisionGUID=
+
+[GeneratedDocument26]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GBS
+DItemRevisionGUID=
+
+[GeneratedDocument27]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GKO
+DItemRevisionGUID=
+
+[GeneratedDocument28]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GKO
+DItemRevisionGUID=
+
+[GeneratedDocument29]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GKO
+DItemRevisionGUID=
+
+[GeneratedDocument30]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GM1
+DItemRevisionGUID=
+
+[GeneratedDocument31]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GM1
+DItemRevisionGUID=
+
+[GeneratedDocument32]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GM1
+DItemRevisionGUID=
+
+[GeneratedDocument33]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GM13
+DItemRevisionGUID=
+
+[GeneratedDocument34]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GM13
+DItemRevisionGUID=
+
+[GeneratedDocument35]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GM13
+DItemRevisionGUID=
+
+[GeneratedDocument36]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GM15
+DItemRevisionGUID=
+
+[GeneratedDocument37]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GM15
+DItemRevisionGUID=
+
+[GeneratedDocument38]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GM15
+DItemRevisionGUID=
+
+[GeneratedDocument39]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GPB
+DItemRevisionGUID=
+
+[GeneratedDocument40]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GPB
+DItemRevisionGUID=
+
+[GeneratedDocument41]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GPB
+DItemRevisionGUID=
+
+[GeneratedDocument42]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GPT
+DItemRevisionGUID=
+
+[GeneratedDocument43]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GPT
+DItemRevisionGUID=
+
+[GeneratedDocument44]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GPT
+DItemRevisionGUID=
+
+[GeneratedDocument45]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GTL
+DItemRevisionGUID=
+
+[GeneratedDocument46]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GTL
+DItemRevisionGUID=
+
+[GeneratedDocument47]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GTL
+DItemRevisionGUID=
+
+[GeneratedDocument48]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GTO
+DItemRevisionGUID=
+
+[GeneratedDocument49]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GTO
+DItemRevisionGUID=
+
+[GeneratedDocument50]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GTO
+DItemRevisionGUID=
+
+[GeneratedDocument51]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GTP
+DItemRevisionGUID=
+
+[GeneratedDocument52]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GTP
+DItemRevisionGUID=
+
+[GeneratedDocument53]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GTP
+DItemRevisionGUID=
+
+[GeneratedDocument54]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GTS
+DItemRevisionGUID=
+
+[GeneratedDocument55]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GTS
+DItemRevisionGUID=
+
+[GeneratedDocument56]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GTS
+DItemRevisionGUID=
+
+[GeneratedDocument57]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.LDP
+DItemRevisionGUID=
+
+[GeneratedDocument58]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.LDP
+DItemRevisionGUID=
+
+[GeneratedDocument59]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.LDP
+DItemRevisionGUID=
+
+[GeneratedDocument60]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.REP
+DItemRevisionGUID=
+
+[GeneratedDocument61]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.REP
+DItemRevisionGUID=
+
+[GeneratedDocument62]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.REP
+DItemRevisionGUID=
+
+[GeneratedDocument63]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.RUL
+DItemRevisionGUID=
+
+[GeneratedDocument64]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.RUL
+DItemRevisionGUID=
+
+[GeneratedDocument65]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.RUL
+DItemRevisionGUID=
+
+[GeneratedDocument66]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\Pick Place for DigitalLabBoard.csv
+DItemRevisionGUID=
+
+[GeneratedDocument67]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\Pick Place for DigitalLabBoard.csv
+DItemRevisionGUID=
+
+[GeneratedDocument68]
+DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\Pick Place for DigitalLabBoard.csv
 DItemRevisionGUID=
 
 [Parameter1]
@@ -196,7 +460,7 @@ ContentTypeGUID=CB6F2064-E317-11DF-B822-12313F0024A2
 ConfigurationType=Source
 
 [Generic_EDE]
-OutputDir=
+OutputDir=Project Outputs for DigitalLabBoard
 
 [OutputGroup1]
 Name=Netlist Outputs
@@ -1187,7 +1451,187 @@ NetClassSeparateForBusSections=0
 SelectedOnly=0
 UpdateVariants=1
 PartTypes=0
-FullReplace=1
+ComponentLibIdentifierKind0=Library Name And Type
+ComponentLibraryIdentifier0=MyLibrary.IntLib
+ComponentDesignItemID0=74HC541PW,118
+ComponentSymbolReference0=74HC541PW,118
+ComponentUpdate0=0
+ComponentIsDeviceSheet0=0
+ComponentLibIdentifierKind1=Library Name And Type
+ComponentLibraryIdentifier1=MyLibrary.IntLib
+ComponentDesignItemID1=Cap
+ComponentSymbolReference1=Cap
+ComponentUpdate1=0
+ComponentIsDeviceSheet1=0
+ComponentLibIdentifierKind2=Library Name And Type
+ComponentLibraryIdentifier2=MyLibrary.IntLib
+ComponentDesignItemID2=Cap_CCNP_0603
+ComponentSymbolReference2=Cap_CCNP_0603
+ComponentUpdate2=0
+ComponentIsDeviceSheet2=0
+ComponentLibIdentifierKind3=Library Name And Type
+ComponentLibraryIdentifier3=MyLibrary.IntLib
+ComponentDesignItemID3=Crystal 16MHz
+ComponentSymbolReference3=Crystal 16MHz
+ComponentUpdate3=0
+ComponentIsDeviceSheet3=0
+ComponentLibIdentifierKind4=Library Name And Type
+ComponentLibraryIdentifier4=MyLibrary.IntLib
+ComponentDesignItemID4=Header 1x6
+ComponentSymbolReference4=Header 1x6
+ComponentUpdate4=0
+ComponentIsDeviceSheet4=0
+ComponentLibIdentifierKind5=Library Name And Type
+ComponentLibraryIdentifier5=MyLibrary.IntLib
+ComponentDesignItemID5=Header 2x3
+ComponentSymbolReference5=Header 2x3
+ComponentUpdate5=0
+ComponentIsDeviceSheet5=0
+ComponentLibIdentifierKind6=Library Name And Type
+ComponentLibraryIdentifier6=MyLibrary.IntLib
+ComponentDesignItemID6=Header 2x4
+ComponentSymbolReference6=Header 2x4
+ComponentUpdate6=0
+ComponentIsDeviceSheet6=0
+ComponentLibIdentifierKind7=Library Name And Type
+ComponentLibraryIdentifier7=MyLibrary.IntLib
+ComponentDesignItemID7=Header 2x8
+ComponentSymbolReference7=Header 2x8
+ComponentUpdate7=0
+ComponentIsDeviceSheet7=0
+ComponentLibIdentifierKind8=Library Name And Type
+ComponentLibraryIdentifier8=MyLibrary.IntLib
+ComponentDesignItemID8=JLC_Serial_Number
+ComponentSymbolReference8=JLC_Serial_Number
+ComponentUpdate8=0
+ComponentIsDeviceSheet8=0
+ComponentLibIdentifierKind9=Library Name And Type
+ComponentLibraryIdentifier9=MyLibrary.IntLib
+ComponentDesignItemID9=OSHW Logo
+ComponentSymbolReference9=OSHW Logo
+ComponentUpdate9=0
+ComponentIsDeviceSheet9=0
+ComponentLibIdentifierKind10=Library Name And Type
+ComponentLibraryIdentifier10=MyLibrary.IntLib
+ComponentDesignItemID10=Res_CR0603
+ComponentSymbolReference10=Res_CR0603
+ComponentUpdate10=0
+ComponentIsDeviceSheet10=0
+ComponentLibIdentifierKind11=Library Name And Type
+ComponentLibraryIdentifier11=MyLibrary.IntLib
+ComponentDesignItemID11=ResistorNetwork_CR0603x4
+ComponentSymbolReference11=ResistorNetwork_CR0603x4
+ComponentUpdate11=0
+ComponentIsDeviceSheet11=0
+ComponentLibIdentifierKind12=Library Name And Type
+ComponentLibraryIdentifier12=MyLibrary.IntLib
+ComponentDesignItemID12=SMD0805-050
+ComponentSymbolReference12=SMD0805-050
+ComponentUpdate12=0
+ComponentIsDeviceSheet12=0
+ComponentLibIdentifierKind13=Library Name And Type
+ComponentLibraryIdentifier13=MyLibrary.IntLib
+ComponentDesignItemID13=TP
+ComponentSymbolReference13=TP
+ComponentUpdate13=0
+ComponentIsDeviceSheet13=0
+ComponentLibIdentifierKind14=Library Name And Type
+ComponentLibraryIdentifier14=MySchLib.schlib
+ComponentDesignItemID14=Breadboard - 300 holes
+ComponentSymbolReference14=Breadboard - 300 holes
+ComponentUpdate14=0
+ComponentIsDeviceSheet14=0
+ComponentLibIdentifierKind15=Library Name And Type
+ComponentLibraryIdentifier15=MySchLib.schlib
+ComponentDesignItemID15=Header Female 2x2S
+ComponentSymbolReference15=Header Female 2x2S
+ComponentUpdate15=0
+ComponentIsDeviceSheet15=0
+ComponentLibIdentifierKind16=Library Name And Type
+ComponentLibraryIdentifier16=MySchLib.schlib
+ComponentDesignItemID16=LED-0603-Green
+ComponentSymbolReference16=LED-0603-Green
+ComponentUpdate16=0
+ComponentIsDeviceSheet16=0
+ComponentLibIdentifierKind17=Library Name And Type
+ComponentLibraryIdentifier17=MySchLib.schlib
+ComponentDesignItemID17=LED-0603-Red
+ComponentSymbolReference17=LED-0603-Red
+ComponentUpdate17=0
+ComponentIsDeviceSheet17=0
+ComponentLibIdentifierKind18=Library Name And Type
+ComponentLibraryIdentifier18=MySchLib.schlib
+ComponentDesignItemID18=LED-0603-Yellow
+ComponentSymbolReference18=LED-0603-Yellow
+ComponentUpdate18=0
+ComponentIsDeviceSheet18=0
+ComponentLibIdentifierKind19=Library Name And Type
+ComponentLibraryIdentifier19=MySchLib.schlib
+ComponentDesignItemID19=MK20DX128VLF5
+ComponentSymbolReference19=MK20DX128VLF5
+ComponentUpdate19=0
+ComponentIsDeviceSheet19=0
+ComponentLibIdentifierKind20=Library Name And Type
+ComponentLibraryIdentifier20=MySchLib.schlib
+ComponentDesignItemID20=Mounting_Feet
+ComponentSymbolReference20=Mounting_Feet
+ComponentUpdate20=0
+ComponentIsDeviceSheet20=0
+ComponentLibIdentifierKind21=Library Name And Type
+ComponentLibraryIdentifier21=MySchLib.schlib
+ComponentDesignItemID21=Nalclip-Edge
+ComponentSymbolReference21=Nalclip-Edge
+ComponentUpdate21=0
+ComponentIsDeviceSheet21=0
+ComponentLibIdentifierKind22=Library Name And Type
+ComponentLibraryIdentifier22=MySchLib.schlib
+ComponentDesignItemID22=OLED_Display
+ComponentSymbolReference22=OLED_Display
+ComponentUpdate22=0
+ComponentIsDeviceSheet22=0
+ComponentLibIdentifierKind23=Library Name And Type
+ComponentLibraryIdentifier23=MySchLib.schlib
+ComponentDesignItemID23=PCA9535PW,118
+ComponentSymbolReference23=PCA9535PW,118
+ComponentUpdate23=0
+ComponentIsDeviceSheet23=0
+ComponentLibIdentifierKind24=Library Name And Type
+ComponentLibraryIdentifier24=MySchLib.schlib
+ComponentDesignItemID24=PCA9555PW,118
+ComponentSymbolReference24=PCA9555PW,118
+ComponentUpdate24=0
+ComponentIsDeviceSheet24=0
+ComponentLibIdentifierKind25=Library Name And Type
+ComponentLibraryIdentifier25=MySchLib.schlib
+ComponentDesignItemID25=PRTR5V0U4D,125
+ComponentSymbolReference25=PRTR5V0U4D,125
+ComponentUpdate25=0
+ComponentIsDeviceSheet25=0
+ComponentLibIdentifierKind26=Library Name And Type
+ComponentLibraryIdentifier26=MySchLib.schlib
+ComponentDesignItemID26=SPX3819M5-L-3-3/TR
+ComponentSymbolReference26=SPX3819M5-L-3-3/TR
+ComponentUpdate26=0
+ComponentIsDeviceSheet26=0
+ComponentLibIdentifierKind27=Library Name And Type
+ComponentLibraryIdentifier27=MySchLib.schlib
+ComponentDesignItemID27=SW_PB-TS
+ComponentSymbolReference27=SW_PB-TS
+ComponentUpdate27=0
+ComponentIsDeviceSheet27=0
+ComponentLibIdentifierKind28=Library Name And Type
+ComponentLibraryIdentifier28=MySchLib.schlib
+ComponentDesignItemID28=SWD2X5_JIG
+ComponentSymbolReference28=SWD2X5_JIG
+ComponentUpdate28=0
+ComponentIsDeviceSheet28=0
+ComponentLibIdentifierKind29=Library Name And Type
+ComponentLibraryIdentifier29=MySchLib.schlib
+ComponentDesignItemID29=USB4085-GF-A
+ComponentSymbolReference29=USB4085-GF-A
+ComponentUpdate29=0
+ComponentIsDeviceSheet29=0
+FullReplace=0
 UpdateDesignatorLock=1
 UpdatePartIDLock=1
 PreserveParameterLocations=1
@@ -1200,6 +1644,271 @@ RemoveParameters=0
 AddModels=1
 RemoveModels=1
 UpdateCurrentModels=1
+ParameterName0=Angle
+ParameterUpdate0=1
+ParameterName1=Class
+ParameterUpdate1=1
+ParameterName2=Class I
+ParameterUpdate2=1
+ParameterName3=Class II
+ParameterUpdate3=1
+ParameterName4=Comment
+ParameterUpdate4=1
+ParameterName5=Component Kind
+ParameterUpdate5=1
+ParameterName6=Description
+ParameterUpdate6=1
+ParameterName7=Digikey
+ParameterUpdate7=1
+ParameterName8=Digikey Link
+ParameterUpdate8=1
+ParameterName9=Digikey Part Number
+ParameterUpdate9=1
+ParameterName10=Farnell PN
+ParameterUpdate10=1
+ParameterName11=LatestRevisionDate
+ParameterUpdate11=1
+ParameterName12=LatestRevisionNote
+ParameterUpdate12=1
+ParameterName13=LCSC
+ParameterUpdate13=1
+ParameterName14=Library Reference
+ParameterUpdate14=1
+ParameterName15=Manufacturer
+ParameterUpdate15=1
+ParameterName16=Mouser
+ParameterUpdate16=1
+ParameterName17=Part Number
+ParameterUpdate17=1
+ParameterName18=Published
+ParameterUpdate18=1
+ParameterName19=Publisher
+ParameterUpdate19=1
+ParameterName20=Revision
+ParameterUpdate20=1
+ParameterName21=SubClass
+ParameterUpdate21=1
+ParameterName22=Value
+ParameterUpdate22=1
+ModelTypeGroup0=PCBLIB
+ModelTypeUpdate0=1
+ModelType0=PCBLIB
+ModelName0=BCS-102-L-D-TE
+ModelUpdate0=1
+ModelType1=PCBLIB
+ModelName1=Breadboard - 300 holes
+ModelUpdate1=1
+ModelType2=PCBLIB
+ModelName2=Bumper_RBS-10
+ModelUpdate2=1
+ModelType3=PCBLIB
+ModelName3=Bumper_RBS-10 + 3mm hole
+ModelUpdate3=1
+ModelType4=PCBLIB
+ModelName4=Bumper_RBS-2
+ModelUpdate4=1
+ModelType5=PCBLIB
+ModelName5=Bumper_RBS-2 + 3mm hole
+ModelUpdate5=1
+ModelType6=PCBLIB
+ModelName6=CAP - medium MKT
+ModelUpdate6=1
+ModelType7=PCBLIB
+ModelName7=CAP - small MKT
+ModelUpdate7=1
+ModelType8=PCBLIB
+ModelName8=CCNP1005-0402
+ModelUpdate8=1
+ModelType9=PCBLIB
+ModelName9=CCNP1608-0603
+ModelUpdate9=1
+ModelType10=PCBLIB
+ModelName10=CCNP2012-0805
+ModelUpdate10=1
+ModelType11=PCBLIB
+ModelName11=CCNP3216-1206
+ModelUpdate11=1
+ModelType12=PCBLIB
+ModelName12=CCNP3225-1210
+ModelUpdate12=1
+ModelType13=PCBLIB
+ModelName13=CR1206-0603_X4
+ModelUpdate13=1
+ModelType14=PCBLIB
+ModelName14=CR1206-0603_X4_L
+ModelUpdate14=1
+ModelType15=PCBLIB
+ModelName15=CR1206-0603_X4_M
+ModelUpdate15=1
+ModelType16=PCBLIB
+ModelName16=CR1206-0603_X4_N
+ModelUpdate16=1
+ModelType17=PCBLIB
+ModelName17=CR1608-0603
+ModelUpdate17=1
+ModelType18=PCBLIB
+ModelName18=CR1608-0603_N
+ModelUpdate18=1
+ModelType19=PCBLIB
+ModelName19=Crystal_SMD_3.2x2.5
+ModelUpdate19=1
+ModelType20=PCBLIB
+ModelName20=HDR_FEM2X2S
+ModelUpdate20=1
+ModelType21=PCBLIB
+ModelName21=HDR1X6S
+ModelUpdate21=1
+ModelType22=PCBLIB
+ModelName22=HDR2X3S
+ModelUpdate22=1
+ModelType23=PCBLIB
+ModelName23=HDR2X4S
+ModelUpdate23=1
+ModelType24=PCBLIB
+ModelName24=HDR2X8S
+ModelUpdate24=1
+ModelType25=PCBLIB
+ModelName25=JLC_Serial_Number
+ModelUpdate25=1
+ModelType26=PCBLIB
+ModelName26=LED1608-0603-GREEN
+ModelUpdate26=1
+ModelType27=PCBLIB
+ModelName27=LED1608-0603-GREEN_N
+ModelUpdate27=1
+ModelType28=PCBLIB
+ModelName28=LED1608-0603-RED
+ModelUpdate28=1
+ModelType29=PCBLIB
+ModelName29=LED1608-0603-RED_N
+ModelUpdate29=1
+ModelType30=PCBLIB
+ModelName30=LED1608-0603-Yellow
+ModelUpdate30=1
+ModelType31=PCBLIB
+ModelName31=LED1608-0603-Yellow_N
+ModelUpdate31=1
+ModelType32=PCBLIB
+ModelName32=MLC0.1
+ModelUpdate32=1
+ModelType33=PCBLIB
+ModelName33=MLC0.2
+ModelUpdate33=1
+ModelType34=PCBLIB
+ModelName34=Nalclip-Edge
+ModelUpdate34=1
+ModelType35=PCBLIB
+ModelName35=OLED_Display_128x32
+ModelUpdate35=1
+ModelType36=PCBLIB
+ModelName36=OSHW
+ModelUpdate36=1
+ModelType37=PCBLIB
+ModelName37=PCBPIN - 0.7mm
+ModelUpdate37=1
+ModelType38=PCBLIB
+ModelName38=PCBPIN - 0.9mm
+ModelUpdate38=1
+ModelType39=PCBLIB
+ModelName39=PCBPIN - 1mm
+ModelUpdate39=1
+ModelType40=PCBLIB
+ModelName40=SMD0805-050
+ModelUpdate40=1
+ModelType41=PCBLIB
+ModelName41=SMD-SW-4_5.1x5.1x1.5_M
+ModelUpdate41=1
+ModelType42=PCBLIB
+ModelName42=SMD-SW-4_5.1x5.1x1.5_N
+ModelUpdate42=1
+ModelType43=PCBLIB
+ModelName43=SMD-SW-4_5.1x5.1x2.0_M
+ModelUpdate43=1
+ModelType44=PCBLIB
+ModelName44=SMD-SW-4_5.1x5.1x2.0_N
+ModelUpdate44=1
+ModelType45=PCBLIB
+ModelName45=SMD-SW-4_5.1x5.1x3.5_M
+ModelUpdate45=1
+ModelType46=PCBLIB
+ModelName46=SMD-SW-4_5.1x5.1x3.5_N
+ModelUpdate46=1
+ModelType47=PCBLIB
+ModelName47=SOT-23-5
+ModelUpdate47=1
+ModelType48=PCBLIB
+ModelName48=SOT-23-5_L
+ModelUpdate48=1
+ModelType49=PCBLIB
+ModelName49=SOT457_L
+ModelUpdate49=1
+ModelType50=PCBLIB
+ModelName50=SOT457_M
+ModelUpdate50=1
+ModelType51=PCBLIB
+ModelName51=SOT457_N
+ModelUpdate51=1
+ModelType52=PCBLIB
+ModelName52=SWD-2x5-Jig-Header
+ModelUpdate52=1
+ModelType53=PCBLIB
+ModelName53=SWD-2x5-Jig-Pads
+ModelUpdate53=1
+ModelType54=PCBLIB
+ModelName54=SWD-2x5-Jig-Pin-guide
+ModelUpdate54=1
+ModelType55=PCBLIB
+ModelName55=SWD-2x5-Jig-Pin-holder
+ModelUpdate55=1
+ModelType56=PCBLIB
+ModelName56=TSQFP50P900X900-48L
+ModelUpdate56=1
+ModelType57=PCBLIB
+ModelName57=TSQFP50P900X900-48M
+ModelUpdate57=1
+ModelType58=PCBLIB
+ModelName58=TSQFP50P900X900-48N
+ModelUpdate58=1
+ModelType59=PCBLIB
+ModelName59=TSSOP20_L
+ModelUpdate59=1
+ModelType60=PCBLIB
+ModelName60=TSSOP20_M
+ModelUpdate60=1
+ModelType61=PCBLIB
+ModelName61=TSSOP20_N
+ModelUpdate61=1
+ModelType62=PCBLIB
+ModelName62=TSSOP24_L
+ModelUpdate62=1
+ModelType63=PCBLIB
+ModelName63=TSSOP24_M
+ModelUpdate63=1
+ModelType64=PCBLIB
+ModelName64=TSSOP24_N
+ModelUpdate64=1
+ModelType65=PCBLIB
+ModelName65=USB4085-GF-A
+ModelUpdate65=1
+ModelTypeGroup1=SI
+ModelTypeUpdate1=1
+ModelType66=SI
+ModelName66=Cap
+ModelUpdate66=1
+ModelType67=SI
+ModelName67=Connector
+ModelUpdate67=1
+ModelType68=SI
+ModelName68=Res
+ModelUpdate68=1
+ModelTypeGroup2=SIM
+ModelTypeUpdate2=1
+ModelType69=SIM
+ModelName69=CAP
+ModelUpdate69=1
+ModelType70=SIM
+ModelName70=RESISTOR
+ModelUpdate70=1
 
 [DatabaseUpdateOptions]
 SelectedOnly=0
