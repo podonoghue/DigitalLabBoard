@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 static constexpr uint16_t HW_LOGIC_BOARD_V2 = 1;
+static constexpr uint16_t HW_LOGIC_BOARD_V3 = 2;
 static constexpr uint16_t BOOTLOADER_V1     = 1;
 
 /**
@@ -78,7 +79,7 @@ struct SimpleCommandMessage {
 struct XsvfBlockCommandMessage {
    UsbCommand         command;       // Status
    uint32_t           byteLength;    // Size of data
-   uint8_t            data[1024];    // Data
+   uint8_t            data[MAX_MESSAGE_DATA];    // Data
 };
 
 /**

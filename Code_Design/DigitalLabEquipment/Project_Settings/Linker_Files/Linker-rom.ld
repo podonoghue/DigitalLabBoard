@@ -143,7 +143,7 @@ M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? (__VECTOR_TABLE_END - __VECT
    } > flash
    __exidx_end = .;
 
-   /* Flash region for programming */
+    /* Flash region for programming */
    .flash (NOLOAD) : 
    {
       . = ALIGN(4);
@@ -153,6 +153,13 @@ M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? (__VECTOR_TABLE_END - __VECT
    __etext = .;    /* define a global symbol at end of code */
    __DATA_ROM = .; /* Symbol is used by startup for data initialization */
 
+  /* Bootloader information */
+   .bootloader :
+   {
+     __bootloader = .;
+     KEEP(*(.bootloader))
+    } > bootInfo
+    
   /* reserve MTB memory at the beginning of data */
   .mtb : /* MTB buffer no0load */
   {

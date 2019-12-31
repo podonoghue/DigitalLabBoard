@@ -19,6 +19,7 @@
  */
 #include "usb_defs.h"
 #include "derivative.h"
+#include "error.h"
 
 namespace USBDM {
 
@@ -161,9 +162,8 @@ protected:
     */
    static EndpointState unsetHandlerCallback(EndpointState endpointState) {
       (void)endpointState;
-
+      setAndCheckErrorCode(E_NO_HANDLER);
       return EPIdle;
-      //      setAndCheckErrorCode(E_NO_HANDLER);
    }
 
    /** Reference to hardware instance */

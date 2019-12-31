@@ -24,7 +24,7 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 
 	sbSizer1->Add( loadFile_button, 0, wxALL|wxEXPAND, 5 );
 
-	loadedFile_static = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("-- No file loaded --"), wxDefaultPosition, wxDefaultSize, 0 );
+	loadedFile_static = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("-- no file loaded --"), wxDefaultPosition, wxDefaultSize, 0 );
 	loadedFile_static->Wrap( -1 );
 	loadedFile_static->SetToolTip( wxT("Name of currently loaded file") );
 
@@ -32,6 +32,20 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 
 
 	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
+
+	wxStaticBoxSizer* sbSizer31;
+	sbSizer31 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Device Information") ), wxHORIZONTAL );
+
+	CheckDevice_button = new wxButton( sbSizer31->GetStaticBox(), wxID_ANY, wxT("Check Device"), wxDefaultPosition, wxDefaultSize, 0 );
+	sbSizer31->Add( CheckDevice_button, 0, wxALL|wxEXPAND, 5 );
+
+	checkDevice_textCtrl = new wxTextCtrl( sbSizer31->GetStaticBox(), wxID_ANY, wxT("-- no information --"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
+	checkDevice_textCtrl->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
+
+	sbSizer31->Add( checkDevice_textCtrl, 1, wxALL|wxEXPAND, 5 );
+
+
+	bSizer1->Add( sbSizer31, 2, wxEXPAND, 5 );
 
 	wxStaticBoxSizer* sbSizer3;
 	sbSizer3 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Programming") ), wxHORIZONTAL );
@@ -42,7 +56,7 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 
 	sbSizer3->Add( programDevice_button, 0, wxALL|wxEXPAND, 5 );
 
-	programAction_static = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("No Action"), wxDefaultPosition, wxDefaultSize, 0 );
+	programAction_static = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("-- no action --"), wxDefaultPosition, wxDefaultSize, 0 );
 	programAction_static->Wrap( -1 );
 	programAction_static->SetToolTip( wxT("Result of last programming attempt") );
 
@@ -59,6 +73,7 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 
 	// Connect Events
 	loadFile_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onLoadFile ), NULL, this );
+	CheckDevice_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onCheckDevice ), NULL, this );
 	programDevice_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onProgramDevice ), NULL, this );
 }
 
@@ -66,6 +81,7 @@ BootloaderDialogueSkeleton::~BootloaderDialogueSkeleton()
 {
 	// Disconnect Events
 	loadFile_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onLoadFile ), NULL, this );
+	CheckDevice_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onCheckDevice ), NULL, this );
 	programDevice_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onProgramDevice ), NULL, this );
 
 }

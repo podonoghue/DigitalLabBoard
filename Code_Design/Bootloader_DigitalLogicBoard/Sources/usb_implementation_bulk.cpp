@@ -18,7 +18,6 @@
 
 #include "usb.h"
 #include "usb_implementation_bulk.h"
-#include "pit.h"
 
 namespace USBDM {
 
@@ -145,48 +144,48 @@ InEndpoint  <Usb0Info, Usb0::BULK_IN_ENDPOINT,  BULK_IN_EP_MAXSIZE>  Usb0::epBul
  * TODO Add additional end-points here
  */
 
-/**
- * Handler for Start of Frame Token interrupt (~1ms interval)
- *
- * @param frameNumber Frame number from SOF token
- *
- * @return  E_NO_ERROR on success
- */
-ErrorCode Usb0::sofCallback(uint16_t frameNumber) {
-   // Activity LED
-   // Off                     - no USB activity, not connected
-   // On                      - no USB activity, connected
-   // Off, flash briefly on   - USB activity, not connected
-   // On,  flash briefly off  - USB activity, connected
-   if ((frameNumber&0xFF)==0) {
-      // Every ~256 ms
-      switch ((frameNumber>>8)&0x3) {
-         case 0:
-            // LED on if configured, off if not
-            // UsbLed::write(fConnectionState == USBconfigured);
-            break;
-         case 1:
-         case 2:
-            break;
-         case 3:
-         default :
-            if (fActivityFlag) {
-               // Flash LED to indicate activity
-               // UsbLed::toggle();
-               fActivityFlag = false;
-            }
-            break;
-      }
-   }
-
-   return E_NO_ERROR;
-}
+///**
+// * Handler for Start of Frame Token interrupt (~1ms interval)
+// *
+// * @param frameNumber Frame number from SOF token
+// *
+// * @return  E_NO_ERROR on success
+// */
+//ErrorCode Usb0::sofCallback(uint16_t frameNumber) {
+//   // Activity LED
+//   // Off                     - no USB activity, not connected
+//   // On                      - no USB activity, connected
+//   // Off, flash briefly on   - USB activity, not connected
+//   // On,  flash briefly off  - USB activity, connected
+//   if ((frameNumber&0xFF)==0) {
+//      // Every ~256 ms
+//      switch ((frameNumber>>8)&0x3) {
+//         case 0:
+//            // LED on if configured, off if not
+//            // UsbLed::write(fConnectionState == USBconfigured);
+//            break;
+//         case 1:
+//         case 2:
+//            break;
+//         case 3:
+//         default :
+//            if (fActivityFlag) {
+//               // Flash LED to indicate activity
+//               // UsbLed::toggle();
+//               fActivityFlag = false;
+//            }
+//            break;
+//      }
+//   }
+//
+//   return E_NO_ERROR;
+//}
 
 /**
  * Handler for Token Complete USB interrupts for
  * end-points other than EP0
  *
- * @param usbStat USB Status value from USB hardware
+ * @param[in] usbStat USB Status value from USB hardware
  */
 void Usb0::handleTokenComplete(UsbStat usbStat) {
 
@@ -217,7 +216,7 @@ void Usb0::handleTokenComplete(UsbStat usbStat) {
  */
 EndpointState Usb0::bulkOutTransactionCallback(EndpointState state) {
    (void)state;
-   return EPIdle;
+   return EPComplete;
 }
 
 /**
@@ -229,7 +228,7 @@ EndpointState Usb0::bulkOutTransactionCallback(EndpointState state) {
  */
 EndpointState Usb0::bulkInTransactionCallback(EndpointState state) {
    (void)state;
-   return EPIdle;
+   return EPComplete;
 }
 
 /**
@@ -239,15 +238,22 @@ EndpointState Usb0::bulkInTransactionCallback(EndpointState state) {
  */
 void Usb0::initialise() {
    UsbBase_T::initialise();
+   setUserCallback(fUserCallbackFunction);
+}
 
-   // Add extra handling of CDC packets directed to EP0
-//   setUnhandledSetupCallback(handleUserEp0SetupRequests);
+ErrorCode Usb0::startReceiveBulkData(uint16_t size, uint8_t *buffer) {
+   if (epBulkOut.getState() == EPIdle) {
+      epBulkOut.startRxStage(EPDataOut, size, buffer);
+   }
+   return E_NO_ERROR;
+}
 
-   Pit::configure();
-   setSOFCallback(sofCallback);
-   /*
-    * TODO Additional initialisation
-    */
+int Usb0::pollReceiveBulkData() {
+   if (epBulkOut.getState() != EPComplete) {
+      return -1;
+   }
+   epBulkOut.setState(EPIdle);
+   return epBulkOut.getDataTransferredSize();
 }
 
 /**
@@ -261,9 +267,8 @@ void Usb0::initialise() {
  *   @note Doesn't return until some bytes have been received or timeout
  */
 ErrorCode Usb0::receiveBulkData(uint16_t &size, uint8_t *buffer) {
-   epBulkOut.startRxStage(EPDataOut, size, buffer);
-
-   while (epBulkOut.getState() != EPIdle) {
+   startReceiveBulkData(size, buffer);
+   while (pollReceiveBulkData() < 0) {
       __WFI();
    }
    setActive();
@@ -282,9 +287,10 @@ ErrorCode Usb0::receiveBulkData(uint16_t &size, uint8_t *buffer) {
  *          returns before data has been transmitted
  */
 ErrorCode Usb0::sendBulkData(uint16_t size, const uint8_t *buffer, uint32_t timeout) {
-   static auto fn = [] {
+   static const auto fn = [] {
       // Waiting for idle
-      return epBulkIn.getState() == EPIdle;
+      volatile EndpointState state = epBulkOut.getState();
+      return (state == EPIdle) || (state == EPComplete);
    };
    if (!waitMS(timeout, fn)) {
       return E_TIMEOUT;

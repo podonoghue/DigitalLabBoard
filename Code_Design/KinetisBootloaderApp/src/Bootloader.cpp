@@ -49,6 +49,7 @@ Bootloader::~Bootloader() {
 
 /**
  * Locate USB device to program
+ * Assumes libusb has been initialised.
  *
  * @return nullptr   => failed
  * @return !=nullptr => LIBUSB device handle
@@ -103,14 +104,15 @@ libusb_device_handle *Bootloader::findDevice() {
 }
 
 /**
- * Program a block to device
+ * Program a block to device.
+ * Assumes device has been opened
  *
  * @param message Information to send to device
  *
  * @return nullptr   => success
  * @return !=nullptr => failed, error message
  */
-const char *Bootloader::programBlock(CommandMessage &message) {
+const char *Bootloader::programBlock(UsbCommandMessage &message) {
    int rc = 0;
 
    int bytesSent   = 0;
@@ -133,7 +135,7 @@ const char *Bootloader::programBlock(CommandMessage &message) {
    if ((unsigned)bytesReceived < sizeof(ResponseStatus)) {
       return "Incomplete reception";
    }
-   if (response.status != Status_OK) {
+   if (response.status != UsbCommandStatus_OK) {
       return "Operation failed on device";
    }
 
@@ -142,6 +144,7 @@ const char *Bootloader::programBlock(CommandMessage &message) {
 
 /**
  * Erase device flash
+ * Assumes device has been opened
  *
  * @return nullptr   => success
  * @return !=nullptr => failed, error message
@@ -150,7 +153,7 @@ const char *Bootloader::eraseFlash() {
    int rc = 0;
 
    SimpleCommandMessage  command = {
-         /* command      */ Command_EraseFlash,
+         /* command      */ UsbCommand_EraseFlash,
          /* startAddress */ 0,
          /* byteLength   */ 0,
    };
@@ -174,7 +177,7 @@ const char *Bootloader::eraseFlash() {
    if ((unsigned)bytesReceived < sizeof(ResponseStatus)) {
       return "Incomplete reception";
    }
-   if (response.status != Status_OK) {
+   if (response.status != UsbCommandStatus_OK) {
       return "Operation failed on device";
    }
 
@@ -183,6 +186,7 @@ const char *Bootloader::eraseFlash() {
 
 /**
  * Reset device
+ * Assumes device has been opened
  *
  * @return nullptr   => success
  * @return !=nullptr => failed, error message
@@ -191,7 +195,7 @@ const char *Bootloader::resetDevice() {
    int rc = 0;
 
    SimpleCommandMessage  command = {
-         /* command      */ Command_Reset,
+         /* command      */ UsbCommand_Reset,
          /* startAddress */ 0,
          /* byteLength   */ 0,
    };
@@ -208,22 +212,24 @@ const char *Bootloader::resetDevice() {
 }
 
 /**
- * Read version and flash size information from device
+ * Get information about the device
+ * Assumes device has been opened
+ *
+ * @param[out] identity
  *
  * @return nullptr   => success
  * @return !=nullptr => failed, error message
  */
-const char *Bootloader::getDeviceInformation() {
-   int rc = 0;
+const char *Bootloader::queryDeviceInformation(ResponseIdentify &identity) {
 
    SimpleCommandMessage  command = {
-         /* command      */ Command_Identify,
+         /* command      */ UsbCommand_Identify,
          /* startAddress */ 0,
          /* byteLength   */ 0,
    };
 
    int bytesSent = 0;
-   rc = libusb_bulk_transfer(device, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 10000);
+   int rc = libusb_bulk_transfer(device, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 10000);
    if (rc < 0) {
       return libusb_error_name(rc);
    }
@@ -231,27 +237,23 @@ const char *Bootloader::getDeviceInformation() {
       return "Incomplete transmission";
    }
 
-   ResponseIdentify response = {};
-
    int bytesReceived = 0;
-   rc = libusb_bulk_transfer(device, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 10000);
+   rc = libusb_bulk_transfer(device, EP_IN, (uint8_t*)&identity, sizeof(identity), &bytesReceived, 10000);
    if (rc < 0) {
       return libusb_error_name(rc);
    }
-   if ((unsigned)bytesReceived < sizeof(response)) {
+   if ((unsigned)bytesReceived < sizeof(identity)) {
       return "Incomplete reception";
    }
-   if (response.status != Status_OK) {
+   if (identity.status != UsbCommandStatus_OK) {
       return "Operation failed on device";
    }
-   flashStart        = response.flashStart;
-   flashSize         = response.flashSize;
-   hardwareVersion   = response.hardwareVersion;
-   bootloaderVersion = response.bootloaderVersion;
 
-   fprintf(stderr, "Hardware Version = %s, Bootloader Version = %d, Flash[0x%08X..0x%08X]\n",
-         getHardwareType(hardwareVersion), bootloaderVersion, flashStart, flashStart+flashSize-1);
-   fflush(stderr);
+   flashStart           = identity.flashStart;
+   flashSize            = identity.flashSize;
+   hardwareVersion      = identity.bootHardwareVersion;
+   bootloaderVersion    = identity.bootSoftwareVersion;
+   existingImageVersion = identity.imageSoftwareVersion;
 
    return nullptr;
 }
@@ -275,7 +277,7 @@ const char *Bootloader::programFlash(FlashImagePtr flashImage) {
    fprintf(stderr, "Processing [0x%06X..0x%06X]\n", flashStart, (flashStart)+flashSize-1);
 
    // Maximum size of data to write
-   unsigned int maxSplitBlockSize = sizeof(CommandMessage::data);
+   unsigned int maxSplitBlockSize = sizeof(UsbCommandMessage::data);
 
    uint32_t flashAddress   = flashStart;
    uint32_t bytesToProgram = flashSize;
@@ -284,8 +286,8 @@ const char *Bootloader::programFlash(FlashImagePtr flashImage) {
       if (splitBlockSize>maxSplitBlockSize) {
          splitBlockSize = maxSplitBlockSize;
       }
-      CommandMessage  command = {
-            /* command      */ Command_ProgramBlock,
+      UsbCommandMessage  command = {
+            /* command      */ UsbCommand_ProgramBlock,
             /* startAddress */ flashAddress,
             /* byteLength   */ splitBlockSize,
             /* data         */ {}
@@ -352,7 +354,8 @@ const char *Bootloader::download(FlashImagePtr flashImage) {
       return "Device not found";
    }
    do {
-      errorMessage = getDeviceInformation();
+      ResponseIdentify identity;
+      errorMessage = queryDeviceInformation(identity);
       if (errorMessage != nullptr) {
          break;
       }
@@ -384,3 +387,44 @@ const char *Bootloader::download(FlashImagePtr flashImage) {
 
    return errorMessage;
 }
+
+/**
+ * Get information about the device
+ *
+ * @param[out] identity
+ *
+ * @return nullptr   => success
+ * @return !=nullptr => failed, error message
+ */
+const char *Bootloader::getDeviceInformation(ResponseIdentify &identity) {
+
+   const char *errorMessage = nullptr;
+
+   int rc = libusb_init(NULL);
+   if (rc < 0) {
+      return "Libusb failed initialisation";
+   }
+   device = findDevice();
+   if (device == nullptr) {
+      return "Device not found";
+   }
+   do {
+      const char *errorMessage = queryDeviceInformation(identity);
+      if (errorMessage) {
+         continue;
+      }
+      fprintf(stderr, "Hardware Version = %s, Bootloader Version = %d, Flash[0x%08X..0x%08X], Image Version = %d\n",
+            getHardwareType(hardwareVersion), bootloaderVersion, flashStart, flashStart+flashSize-1, existingImageVersion);
+      fflush(stderr);
+   } while (false);
+
+   if (device != nullptr) {
+      libusb_close(device);
+      device = nullptr;
+   }
+
+   libusb_exit(nullptr);
+
+   return errorMessage;
+}
+

@@ -17,6 +17,8 @@
 #ifndef PROJECT_HEADERS_USB_IMPLEMENTATION_BULK_H_
 #define PROJECT_HEADERS_USB_IMPLEMENTATION_BULK_H_
 
+#include <stdint.h>
+
 /*
  * Under Windows 8, or 10 there is no need to install a driver for
  * the bulk end-points if the MS_COMPATIBLE_ID_FEATURE is enabled.
@@ -42,9 +44,9 @@ namespace USBDM {
 #define UNIQUE_ID
 
 #ifdef UNIQUE_ID
-#define SERIAL_NO           "USBDM-"
+#define SERIAL_NO           "KinetisBoot-"
 #else
-#define SERIAL_NO           "USBDM-0001"
+#define SERIAL_NO           "KinetisBoot-0001"
 #endif
 #define PRODUCT_DESCRIPTION "Kinetis Bootloader"
 #define MANUFACTURER        "pgo"
@@ -73,6 +75,8 @@ class Usb0 : public UsbBase_T<Usb0Info, CONTROL_EP_MAXSIZE> {
    friend UsbBase_T<Usb0Info, CONTROL_EP_MAXSIZE>;
 
 public:
+
+   using UsbBase_T<Usb0Info, CONTROL_EP_MAXSIZE>::setUserCallback;
 
    /**
     * String indexes
@@ -171,6 +175,9 @@ public:
     *          returns before data has been transmitted
     */
    static ErrorCode sendBulkData(const uint16_t size, const uint8_t *buffer, uint32_t timeout);
+
+   static ErrorCode startReceiveBulkData(uint16_t size, uint8_t *buffer);
+   static int       pollReceiveBulkData();
 
    /**
     *  Blocking reception of data over bulk OUT end-point

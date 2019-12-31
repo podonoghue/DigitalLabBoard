@@ -187,7 +187,6 @@ enum Cmp1Input {
    Cmp1Input_Cmp1Dac    = Cmp1Input_7, //!< CMP1 6-bit internal DAC reference
 
    // Mapped inputs
-   Cmp1Input_Adc0Se23   = Cmp1Input_3,  //!< Fixed pin  ADC0_SE23
    Cmp1Input_VrefOut    = Cmp1Input_5,  //!< Fixed pin  VREF_OUT
 
 };

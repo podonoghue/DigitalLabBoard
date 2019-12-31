@@ -28,6 +28,7 @@ public:
 protected:
    virtual void onLoadFile(wxCommandEvent &event) override;
    virtual void onProgramDevice(wxCommandEvent &event) override;
+   virtual void onCheckDevice(wxCommandEvent &event) override;
 };
 
 #endif /* BOOTLOADERDIALOGUE_H_ */

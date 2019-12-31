@@ -32,7 +32,6 @@ void BootloaderDialogue::onLoadFile(wxCommandEvent &event) {
       // Ignore
       return;
    }
-
    wxString filePath = openFileDialog.GetPath();
    wxString fileName = openFileDialog.GetFilename();
 
@@ -55,6 +54,33 @@ void BootloaderDialogue::onLoadFile(wxCommandEvent &event) {
    }
 }
 
+void BootloaderDialogue::onCheckDevice(wxCommandEvent &event) {
+   checkDevice_textCtrl->SetLabel("Busy");
+   Bootloader bl;
+   ResponseIdentify identity;
+   const char *msg = bl.getDeviceInformation(identity);
+
+   if (msg == nullptr) {
+      wxString status = wxString::Format(
+            "Hardware Version   = %s\r\n"
+            "Bootloader Version = %d\r\n"
+            "Image H/W Version  = %s\r\n"
+            "Image Version      = %d\r\n"
+            "Flash Image[0x%08X..0x%08X]",
+            getHardwareType(identity.bootHardwareVersion),
+            identity.bootSoftwareVersion,
+            getHardwareType(identity.imageHardwareVersion),
+            identity.imageSoftwareVersion,
+            identity.flashStart,
+            identity.flashStart+identity.flashSize-1
+            );
+      checkDevice_textCtrl->SetLabel(status);
+   }
+   else {
+      checkDevice_textCtrl->SetLabel(msg);
+   }
+}
+
 void BootloaderDialogue::onProgramDevice(wxCommandEvent &event) {
    programAction_static->SetLabel("Busy");
    if (flashImage != nullptr) {
@@ -62,10 +88,12 @@ void BootloaderDialogue::onProgramDevice(wxCommandEvent &event) {
       const char *errorMessage = bl.download(flashImage);
       if (errorMessage != nullptr) {
          programAction_static->SetLabel(errorMessage);
-//         wxMessageBox(errorMessage, "Failed to download image to device");
+         //         wxMessageBox(errorMessage, "Failed to download image to device");
       }
       else {
          programAction_static->SetLabel("Success");
       }
    }
 }
+
+

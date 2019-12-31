@@ -185,7 +185,7 @@ InEndpoint  <Usb0Info, Usb0::BULK_IN_ENDPOINT,  BULK_IN_EP_MAXSIZE>  Usb0::epBul
  * Handler for Token Complete USB interrupts for
  * end-points other than EP0
  *
- * @param usbStat USB Status value from USB hardware
+ * @param[in] usbStat USB Status value from USB hardware
  */
 void Usb0::handleTokenComplete(UsbStat usbStat) {
 

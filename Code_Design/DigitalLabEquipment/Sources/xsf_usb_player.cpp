@@ -184,9 +184,9 @@ public:
    }
 };
 
-enum UsbState {UsbStartUp, UsbIdle, UsbWaiting};
+   static UsbCommandMessage command;
 
-static UsbCommandMessage command;
+enum UsbState {UsbStartUp, UsbIdle, UsbWaiting};
 
 void pollUsb() {
 
@@ -199,7 +199,7 @@ void pollUsb() {
    };
 
    if (usbState == UsbStartUp) {
-      // 1st time - initialise hardware
+      // 1st time - Initialise hardware
       ProgrammerBusyLed::setOutput(
             PinDriveStrength_High,
             PinDriveMode_PushPull,
@@ -212,28 +212,29 @@ void pollUsb() {
       usbState = UsbIdle;
       return;
    }
-
+   // Check for USB connection
    if (!UsbImplementation::isConfigured()) {
       // No connection
       return;
    }
 
    int size;
-   switch(usbState) {
-      default:
-      case UsbIdle:
-         // Set up to receive a message
-         Usb0::startReceiveBulkData(sizeof(command), (uint8_t *)&command);
-         usbState = UsbWaiting;
-         return;
 
-      case UsbWaiting:
-         // Check if we have received a message
-         size = Usb0::pollReceiveBulkData();
-         if (size < 0) {
-            // No message - USB still ready
-            return;
-         }
+   if (usbState != UsbWaiting) {
+      // UsbIdle
+      // Set up to receive a message
+      Usb0::startReceiveBulkData(sizeof(command), (uint8_t *)&command);
+      usbState = UsbWaiting;
+      return;
+   }
+
+   // UsbWaiting
+
+   // Check if we have received a message
+   size = Usb0::pollReceiveBulkData();
+   if (size < 0) {
+      // No message - USB still ready
+      return;
    }
 
    // *****************************
@@ -241,7 +242,7 @@ void pollUsb() {
    // *****************************
 
    // Default to Failed small response
-   ResponseMessage  response;
+   ResponseMessage    response;
    response.status     = UsbCommandStatus_Failed;
    response.byteLength = 0;
    unsigned responseSize = sizeof(SimpleResponseMessage);

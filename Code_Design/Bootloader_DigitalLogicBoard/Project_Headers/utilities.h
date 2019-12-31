@@ -98,23 +98,23 @@
 #endif
 
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#define leToNative32(x) __REV(x)
-#define leToNative16(x) __REV16(x)
-#define nativeToLe32(x) __REV(x)
-#define nativeToLe16(x) __REV16(x)
-#define beToNative32(x) (x)
-#define beToNative16(x) (x)
-#define nativeToBe32(x) (x)
-#define nativeToBe16(x) (x)
+#define leToNative32(x) (uint32_t)__REV(x)
+#define leToNative16(x) (uint16_t)__REV16(x)
+#define nativeToLe32(x) (uint32_t)__REV(x)
+#define nativeToLe16(x) (uint16_t)__REV16(x)
+#define beToNative32(x) (uint32_t)(x)
+#define beToNative16(x) (uint16_t)(x)
+#define nativeToBe32(x) (uint32_t)(x)
+#define nativeToBe16(x) (uint16_t)(x)
 #elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define leToNative32(x) (x)
-#define leToNative16(x) (x)
-#define nativeToLe32(x) (x)
-#define nativeToLe16(x) (x)
-#define beToNative32(x) __REV(x)
-#define beToNative16(x) __REV16(x)
-#define nativeToBe32(x) __REV(x)
-#define nativeToBe16(x) __REV16(x)
+#define leToNative32(x) (uint32_t)(x)
+#define leToNative16(x) (uint16_t)(x)
+#define nativeToLe32(x) (uint32_t)(x)
+#define nativeToLe16(x) (uint16_t)(x)
+#define beToNative32(x) (uint32_t)__REV(x)
+#define beToNative16(x) (uint16_t)__REV16(x)
+#define nativeToBe32(x) (uint32_t)__REV(x)
+#define nativeToBe16(x) (uint16_t)__REV16(x)
 #else
 #error "Unexpected __BYTE_ORDER__ value"
 #endif
@@ -131,7 +131,7 @@
 #define WRITE(...)   VA_MACRO(WRITE, __VA_ARGS__)
 #define WRITELN(...) VA_MACRO(WRITELN, __VA_ARGS__)
 
-#if defined(DEBUG_BUILD)
+#if 0 && defined(DEBUG_BUILD)
 #define WRITE1(_1)           write(_1)
 #define WRITE2(_1, _2)       write(_1,_2)
 #define WRITE3(_1, _2, _3)   write(_1,_2,_3)

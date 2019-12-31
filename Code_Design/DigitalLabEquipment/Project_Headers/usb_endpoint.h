@@ -162,9 +162,8 @@ protected:
     */
    static EndpointState unsetHandlerCallback(EndpointState endpointState) {
       (void)endpointState;
-      abort("Unhandled callback");
+      setAndCheckErrorCode(E_NO_HANDLER);
       return EPIdle;
-      //      setAndCheckErrorCode(E_NO_HANDLER);
    }
 
    /** Reference to hardware instance */

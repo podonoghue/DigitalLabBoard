@@ -21,6 +21,7 @@
 #include <wx/stattext.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
+#include <wx/textctrl.h>
 #include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -35,17 +36,20 @@ class BootloaderDialogueSkeleton : public wxDialog
 	protected:
 		wxButton* loadFile_button;
 		wxStaticText* loadedFile_static;
+		wxButton* CheckDevice_button;
+		wxTextCtrl* checkDevice_textCtrl;
 		wxButton* programDevice_button;
 		wxStaticText* programAction_static;
 
 		// Virtual event handlers, overide them in your derived class
 		virtual void onLoadFile( wxCommandEvent& event ) { event.Skip(); }
+		virtual void onCheckDevice( wxCommandEvent& event ) { event.Skip(); }
 		virtual void onProgramDevice( wxCommandEvent& event ) { event.Skip(); }
 
 
 	public:
 
-		BootloaderDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Kinetis Bootloader"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 446,211 ), long style = wxDEFAULT_DIALOG_STYLE );
+		BootloaderDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Kinetis Bootloader"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 446,300 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~BootloaderDialogueSkeleton();
 
 };

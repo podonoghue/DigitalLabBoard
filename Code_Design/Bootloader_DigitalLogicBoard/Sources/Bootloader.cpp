@@ -1,15 +1,19 @@
 /*
- * Bootloader.cpp
+ ============================================================================
+ * @file     Bootloader.cpp
+ *
+ * Kinetis bootloader
  *
  *  Created on: 7 Dec 2019
  *      Author: podonoghue
+ ============================================================================
  */
 #include "hardware.h"
 #include "usb.h"
+#include "UsbCommandMessage.h"
 #include "flash.h"
 #include "crc.h"
-#include "CommandMessage.h"
-
+// Allow access to USBDM methods
 using namespace USBDM;
 
 /*
@@ -24,18 +28,18 @@ using DebugPin  = GpioD<4,  USBDM::ActiveLow>;
  *
  * @param message Command message to describe
  */
-void writeCommandMessage(UsbCommandMessage &message) {
-   console.write(getCommandName(message.command));
+static void writeCommandMessage(UsbCommandMessage &message) {
+   console.WRITE(getCommandName(message.command));
    if (message.byteLength>0) {
       console.
-      write(" [0x").write(message.startAddress, Radix_16).
-      write("..0x").write(message.startAddress+message.byteLength-1, Radix_16).
-      writeln("]");
+      WRITE(" [0x").WRITE(message.startAddress, Radix_16).
+      WRITE("..0x").WRITE(message.startAddress+message.byteLength-1, Radix_16).
+      WRITELN("]");
       //   console.writeArray(message.data, message.byteLength, message.startAddress);
    }
    else {
-      console.writeln();
    }
+   console.WRITELN();
 }
 
 /** Start of Flash region being used for image */
@@ -98,16 +102,16 @@ bool programFlash(UsbCommandMessage command) {
 
 void checkICP() {
    IcpButton::setInput(PinPull_Up);
-//   toggleDebug();
+   //   toggleDebug();
 
    if (isFlashValid() && IcpButton::isReleased()) {
-//      console.writeln("Flash is valid - calling flash image via relocated vector table");
+      //      console.WRITELN("Flash is valid - calling flash image via relocated vector table");
 
       // Find the reset code */
       void (*f)() = (void (*)())(((uint32_t *)FLASH_BUFFER_START)[1]);
 
       // Call it
-//      console.write("Calling startup @0x").writeln((uint32_t*)f);
+      //      console.WRITE("Calling startup @0x").WRITELN((uint32_t*)f);
       f();
    }
 }
@@ -116,88 +120,170 @@ void checkICP() {
 #define SCB_AIRCR_VECTKEY(x) (((x)<<SCB_AIRCR_VECTKEY_Pos)&SCB_AIRCR_VECTKEY_Msk)
 #endif
 
-void resetSystem() {
+static void resetSystem() {
 
    /* Request system reset */
    SCB->AIRCR = SCB_AIRCR_VECTKEY(0x5FA) | SCB_AIRCR_SYSRESETREQ_Msk;
 
    /* Wait until reset */
-  for(;;) {
-     __asm__("nop");
-  }
+   for(;;) {
+      __asm__("nop");
+   }
+}
+
+struct BootInformation {
+   uint32_t reserved;
+   uint32_t softwareVersion;
+   uint32_t hardwareVersion;
+   uint32_t checksum;
+};
+
+static BootInformation *getBootInformation() {
+
+   if (isFlashValid()) {
+      BootInformation *imageVersion =
+            ((BootInformation *)(FLASH_BUFFER_START+FLASH_BUFFER_SIZE-sizeof(BootInformation)));
+      return imageVersion;
+   }
+   return 0;
+}
+
+static UsbCommandMessage command;
+
+enum UsbState {UsbStartUp, UsbIdle, UsbWaiting};
+
+void pollUsb() {
+
+   //   console.WRITE("Flash image is ").WRITELN(isFlashValid()?"valid":"invalid");
+   //   console.WRITELN("Starting USB boot-loader");
+
+   static UsbState usbState = UsbStartUp;
+
+   // Call-back to record resets
+   static auto cb = [](const UsbImplementation::UserEvent) {
+      // Restart transfers on reset etc.
+      usbState = UsbIdle;
+      return E_NO_ERROR;
+   };
+
+   if (usbState == UsbStartUp) {
+      // 1st time - Initialise hardware
+      // Start USB
+      console.WRITELN("UsbStartUp");
+      UsbImplementation::initialise();
+      UsbImplementation::setUserCallback(cb);
+      checkError();
+      usbState = UsbIdle;
+      return;
+   }
+   // Check for USB connection
+   if (!UsbImplementation::isConfigured()) {
+//      console.WRITELN("not isConfigured");
+      // No connection
+      return;
+   }
+
+   int size;
+
+   if (usbState != UsbWaiting) {
+      // UsbIdle
+      // Set up to receive a message
+//      console.WRITELN("startReceiveBulkData");
+      Usb0::startReceiveBulkData(sizeof(command), (uint8_t *)&command);
+      usbState = UsbWaiting;
+      return;
+   }
+
+   // UsbWaiting
+
+   // Check if we have received a message
+   size = Usb0::pollReceiveBulkData();
+   if (size < 0) {
+      // No message - USB still ready
+      return;
+   }
+
+   /*
+    * We have a message to process
+    */
+
+   // Default to OK small response
+   ResponseMessage    response;
+   response.status     = UsbCommandStatus_OK;
+   response.byteLength = 0;
+   unsigned responseSize = sizeof(ResponseStatus);
+
+   writeCommandMessage(command);
+   do {
+      if (size < (int)sizeof(command.command)) {
+         // Empty message?
+         console.WRITELN("Empty command");
+         response.status = UsbCommandStatus_Failed;
+         continue;
+      }
+      writeCommandMessage(command);
+
+      switch(command.command) {
+         default:
+            console.WRITE("Unexpected command: ").WRITELN(command.command);
+            response.status = UsbCommandStatus_Failed;
+            continue;
+
+         case UsbCommand_Nop:
+            continue;
+
+         case UsbCommand_Identify:
+         {
+            BootInformation *bootInformation = getBootInformation();
+
+            response.bootHardwareVersion  = HW_LOGIC_BOARD_V3;
+            response.bootSoftwareVersion  = BOOTLOADER_V1;
+            response.flashStart           = FLASH_BUFFER_START;
+            response.flashSize            = FLASH_BUFFER_SIZE;
+            if (bootInformation != nullptr) {
+               response.imageHardwareVersion = bootInformation->hardwareVersion;
+               response.imageSoftwareVersion = bootInformation->softwareVersion;
+            }
+            else {
+               response.imageHardwareVersion = 0;
+               response.imageSoftwareVersion = 0;
+            }
+            responseSize = command.byteLength + sizeof(ResponseIdentify);
+            continue;
+         }
+         case UsbCommand_EraseFlash:
+            if (Flash::eraseRange((uint8_t *)FLASH_BUFFER_START, FLASH_BUFFER_SIZE) != FLASH_ERR_OK) {
+               response.status = UsbCommandStatus_Failed;
+            }
+            continue;
+
+         case UsbCommand_ProgramBlock:
+            if (!programFlash(command)) {
+               response.status = UsbCommandStatus_Failed;
+               console.WRITELN("Flash programming failed");
+            }
+            continue;
+
+         case UsbCommand_ReadBlock:
+            response.status      = UsbCommandStatus_OK;
+            response.byteLength  = command.byteLength;
+            responseSize         = command.byteLength + sizeof(ResponseStatus);
+            memcpy(response.data, (uint8_t *)(command.startAddress), command.byteLength);
+            continue;
+
+         case UsbCommand_Reset:
+            resetSystem();
+            continue;
+      }
+   } while (false);
+
+   // Send response
+   Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
+   usbState = UsbIdle;
 }
 
 int main() {
-
-//   console.write("Flash image is ").writeln(isFlashValid()?"valid":"invalid");
-//   console.writeln("Starting USB boot-loader");
-
-   // Start USB
-   UsbImplementation::initialise();
-   checkError();
-
    for(;;) {
-      // Wait for USB connection
-      while(!UsbImplementation::isConfigured()) {
-         __WFI();
-      }
-      UsbCommandMessage  command;
-      ResponseMessage response;
-      for(;;) {
-         uint16_t size = sizeof(command);
-         ErrorCode rc = Usb0::receiveBulkData(size, (uint8_t *)&command);
-         if (rc != E_NO_ERROR) {
-            continue;
-         }
-//         writeCommandMessage(command);
-
-         // Default to OK small response
-         unsigned responseSize = sizeof(ResponseStatus);
-         response.byteLength = 0;
-         response.status     = Status_OK;
-
-         switch(command.command) {
-            default:
-            case Command_Nop:
-               break;
-
-            case Command_Identify:
-               response.hardwareVersion   = HW_LOGIC_BOARD_V2;
-               response.bootloaderVersion = BOOTLOADER_V1;
-               response.flashStart        = FLASH_BUFFER_START;
-               response.flashSize         = FLASH_BUFFER_SIZE;
-               responseSize               = command.byteLength + sizeof(ResponseIdentify);
-               break;
-
-            case Command_EraseFlash:
-               if (Flash::eraseRange((uint8_t *)FLASH_BUFFER_START, FLASH_BUFFER_SIZE) != FLASH_ERR_OK) {
-                  response.status = Status_Failed;
-               }
-               break;
-
-            case Command_ProgramBlock:
-               if (!programFlash(command)) {
-                  response.status = Status_Failed;
-//                  console.writeln("Flash programming failed");
-               }
-//               if (isFlashValid()) {
-//                  console.writeln("Flash is valid");
-//               }
-               break;
-
-            case Command_ReadBlock:
-               response.status      = Status_OK;
-               response.byteLength  = command.byteLength;
-               responseSize         = command.byteLength + sizeof(ResponseStatus);
-               memcpy(response.data, (uint8_t *)(command.startAddress), command.byteLength);
-               break;
-
-            case Command_Reset:
-               resetSystem();
-               break;
-         }
-         Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
-      }
+      pollUsb();
    }
-   return 0;
 }

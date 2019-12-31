@@ -61,7 +61,13 @@ MEMORY
  *  <o>  FLASH  address
  *  <o1> FLASH  size
  */
-  flash          (rx)  : ORIGIN = 0x0, LENGTH = 0x20000
+  flash          (rx)  : ORIGIN = 0x4000, LENGTH = 0x1BFF0
+/*
+ *  <o>  Boot Information  address
+ *  <o1> Boot Information  size
+ */
+  bootInfo          (rx)  : ORIGIN = 0x1FFF0, LENGTH = 0x10
+  
 /*
  *  <o>  ram_high address <constant>
  *  <o1> ram_high size    <constant>
@@ -107,5 +113,3 @@ REGION_ALIAS("stack_ram",      "ram_high");
 /* These must be in upper RAM */
 REGION_ALIAS("sram_u_ram",     "ram_high");
 REGION_ALIAS("bitband_ram",    "ram_high");
-
-

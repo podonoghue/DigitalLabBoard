@@ -48,7 +48,7 @@ void Oled::initialise() {
          MULTIPLE_COMMANDS,                    // Co = 0, D/C = 0
          SSD1306_DISPLAYOFF,                   // 0xAE
          SSD1306_SETDISPLAYCLOCKDIV,           // 0xD5
-         0x80,                                 // = Reset value
+         0x80,                                 // = Reset value (105Hz)
          SSD1306_SETMULTIPLEX,                 // 0xA8
          (HEIGHT - 1),
          SSD1306_SETDISPLAYOFFSET,             // 0xD3

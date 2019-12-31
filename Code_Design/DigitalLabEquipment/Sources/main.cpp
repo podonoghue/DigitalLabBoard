@@ -16,6 +16,7 @@
 #include "Power.h"
 #include "Traffic.h"
 #include "pit.h"
+#include "UsbCommandMessage.h"
 
 using namespace USBDM;
 
@@ -79,6 +80,21 @@ void Initialise::buttonPollTimerCallback() {
 }
 
 extern void pollUsb();
+
+struct BootInformation {
+   uint32_t reserved;
+   uint32_t softwareVersion;
+   uint32_t hardwareVersion;
+   uint32_t checksum;
+};
+
+__attribute__ ((section(".bootloader")))
+BootInformation const bootInformation = {
+      0,                   // reserved
+      1,                   // Software version
+      HW_LOGIC_BOARD_V3,   // Hardware version for this image
+      0,                   // Checksum - filled in by loader
+};
 
 int main() {
 
