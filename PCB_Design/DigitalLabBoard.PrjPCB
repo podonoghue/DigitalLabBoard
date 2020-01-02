@@ -28,7 +28,7 @@ DItemRevisionGUID=
 ReportSuppressedErrorsInMessages=0
 FSMCodingStyle=eFMSDropDownList_OneProcess
 FSMEncodingStyle=eFMSDropDownList_OneHot
-OutputPath=Project Outputs for DigitalLabBoard
+OutputPath=
 LogFolderPath=
 ManagedProjectGUID=
 IncludeDesignInRelease=0
@@ -55,23 +55,6 @@ GenerateClassCluster=0
 DocumentUniqueId=WHUQQBFX
 
 [Document2]
-DocumentPath=DigitalLabBoard.PcbDoc
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=DGTHOIFP
-
-[Document3]
 DocumentPath=DigitalLabBoard_Processor.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -88,7 +71,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=IOUAIYMI
 
-[Document4]
+[Document3]
 DocumentPath=DigitalLabBoard_Switches.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -105,7 +88,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=LLQMXHQG
 
-[Document5]
+[Document4]
 DocumentPath=DigitalLabBoard_LEDs.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -122,7 +105,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=DFUOSCXE
 
-[Document6]
+[Document5]
 DocumentPath=DigitalLabBoard_Die.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -139,7 +122,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=VOIETKQA
 
-[Document7]
+[Document6]
 DocumentPath=DigitalLabBoard_Stepper.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -156,7 +139,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=BJXIQECX
 
-[Document8]
+[Document7]
 DocumentPath=DigitalLabBoard.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -173,276 +156,59 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=
 
+[Document8]
+DocumentPath=DigitalLabBoard.PcbDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=YSTXFBRF
+
+[Document9]
+DocumentPath=DigitalLabBoard_Jig.PcbDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=DGTHOIFP
+
+[Document10]
+DocumentPath=DigitalLabBoard.IntLib
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=
+
 [GeneratedDocument1]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\Bill of Materials-DigitalLabBoard.xls
-DItemRevisionGUID=
-
-[GeneratedDocument2]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\Bill of Materials-DigitalLabBoard.xls
-DItemRevisionGUID=
-
-[GeneratedDocument3]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\Bill of Materials-DigitalLabBoard.xls
-DItemRevisionGUID=
-
-[GeneratedDocument4]
 DocumentPath=Project Outputs for DigitalLabBoard\Design Rule Check - DigitalLabBoard.html
-DItemRevisionGUID=
-
-[GeneratedDocument5]
-DocumentPath=DigitalLabBoard 21-10-2019 9-24-44 PM.WAS
-DItemRevisionGUID=
-
-[GeneratedDocument6]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard-RoundHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument7]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard-RoundHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument8]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard-RoundHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument9]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard-SlotHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument10]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard-SlotHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument11]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard-SlotHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument12]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.DRR
-DItemRevisionGUID=
-
-[GeneratedDocument13]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.DRR
-DItemRevisionGUID=
-
-[GeneratedDocument14]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.DRR
-DItemRevisionGUID=
-
-[GeneratedDocument15]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.EXTREP
-DItemRevisionGUID=
-
-[GeneratedDocument16]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.EXTREP
-DItemRevisionGUID=
-
-[GeneratedDocument17]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.EXTREP
-DItemRevisionGUID=
-
-[GeneratedDocument18]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GBL
-DItemRevisionGUID=
-
-[GeneratedDocument19]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GBL
-DItemRevisionGUID=
-
-[GeneratedDocument20]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GBL
-DItemRevisionGUID=
-
-[GeneratedDocument21]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GBO
-DItemRevisionGUID=
-
-[GeneratedDocument22]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GBO
-DItemRevisionGUID=
-
-[GeneratedDocument23]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GBO
-DItemRevisionGUID=
-
-[GeneratedDocument24]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GBS
-DItemRevisionGUID=
-
-[GeneratedDocument25]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GBS
-DItemRevisionGUID=
-
-[GeneratedDocument26]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GBS
-DItemRevisionGUID=
-
-[GeneratedDocument27]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GKO
-DItemRevisionGUID=
-
-[GeneratedDocument28]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GKO
-DItemRevisionGUID=
-
-[GeneratedDocument29]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GKO
-DItemRevisionGUID=
-
-[GeneratedDocument30]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GM1
-DItemRevisionGUID=
-
-[GeneratedDocument31]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GM1
-DItemRevisionGUID=
-
-[GeneratedDocument32]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GM1
-DItemRevisionGUID=
-
-[GeneratedDocument33]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GM13
-DItemRevisionGUID=
-
-[GeneratedDocument34]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GM13
-DItemRevisionGUID=
-
-[GeneratedDocument35]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GM13
-DItemRevisionGUID=
-
-[GeneratedDocument36]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GM15
-DItemRevisionGUID=
-
-[GeneratedDocument37]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GM15
-DItemRevisionGUID=
-
-[GeneratedDocument38]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GM15
-DItemRevisionGUID=
-
-[GeneratedDocument39]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GPB
-DItemRevisionGUID=
-
-[GeneratedDocument40]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GPB
-DItemRevisionGUID=
-
-[GeneratedDocument41]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GPB
-DItemRevisionGUID=
-
-[GeneratedDocument42]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GPT
-DItemRevisionGUID=
-
-[GeneratedDocument43]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GPT
-DItemRevisionGUID=
-
-[GeneratedDocument44]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GPT
-DItemRevisionGUID=
-
-[GeneratedDocument45]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GTL
-DItemRevisionGUID=
-
-[GeneratedDocument46]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GTL
-DItemRevisionGUID=
-
-[GeneratedDocument47]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GTL
-DItemRevisionGUID=
-
-[GeneratedDocument48]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GTO
-DItemRevisionGUID=
-
-[GeneratedDocument49]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GTO
-DItemRevisionGUID=
-
-[GeneratedDocument50]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GTO
-DItemRevisionGUID=
-
-[GeneratedDocument51]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GTP
-DItemRevisionGUID=
-
-[GeneratedDocument52]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GTP
-DItemRevisionGUID=
-
-[GeneratedDocument53]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GTP
-DItemRevisionGUID=
-
-[GeneratedDocument54]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.GTS
-DItemRevisionGUID=
-
-[GeneratedDocument55]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.GTS
-DItemRevisionGUID=
-
-[GeneratedDocument56]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.GTS
-DItemRevisionGUID=
-
-[GeneratedDocument57]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.LDP
-DItemRevisionGUID=
-
-[GeneratedDocument58]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.LDP
-DItemRevisionGUID=
-
-[GeneratedDocument59]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.LDP
-DItemRevisionGUID=
-
-[GeneratedDocument60]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.REP
-DItemRevisionGUID=
-
-[GeneratedDocument61]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.REP
-DItemRevisionGUID=
-
-[GeneratedDocument62]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.REP
-DItemRevisionGUID=
-
-[GeneratedDocument63]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\DigitalLabBoard.RUL
-DItemRevisionGUID=
-
-[GeneratedDocument64]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\DigitalLabBoard.RUL
-DItemRevisionGUID=
-
-[GeneratedDocument65]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\DigitalLabBoard.RUL
-DItemRevisionGUID=
-
-[GeneratedDocument66]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-38-18 PM\Pick Place for DigitalLabBoard.csv
-DItemRevisionGUID=
-
-[GeneratedDocument67]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 2-40-07 PM\Pick Place for DigitalLabBoard.csv
-DItemRevisionGUID=
-
-[GeneratedDocument68]
-DocumentPath=DigitalLabBoard_V3 31-12-2019 12-30-46 PM\Pick Place for DigitalLabBoard.csv
 DItemRevisionGUID=
 
 [Parameter1]
@@ -460,7 +226,7 @@ ContentTypeGUID=CB6F2064-E317-11DF-B822-12313F0024A2
 ConfigurationType=Source
 
 [Generic_EDE]
-OutputDir=Project Outputs for DigitalLabBoard
+OutputDir=
 
 [OutputGroup1]
 Name=Netlist Outputs
