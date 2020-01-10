@@ -190,30 +190,17 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=DGTHOIFP
 
-[Document10]
-DocumentPath=DigitalLabBoard.IntLib
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=
-
 [GeneratedDocument1]
 DocumentPath=Project Outputs for DigitalLabBoard\Design Rule Check - DigitalLabBoard.html
 DItemRevisionGUID=
 
 [Parameter1]
+Name=
+Value=
+
+[Parameter2]
 Name=Version
-Value=3.0
+Value=4.0
 
 [Configuration1]
 Name=Sources
