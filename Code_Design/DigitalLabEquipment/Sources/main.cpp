@@ -8,6 +8,7 @@
  ============================================================================
  */
 #include "Configure.h"
+#include "stringFormatter.h"
 #include "FunctionQueue.h"
 #include "PCA9555.h"
 #include "FrequencyGenerator.h"
@@ -16,7 +17,9 @@
 #include "Power.h"
 #include "Traffic.h"
 #include "pit.h"
+#include "rcm.h"
 #include "UsbCommandMessage.h"
+#include "xsf_usb_player.h"
 
 using namespace USBDM;
 
@@ -26,7 +29,6 @@ using namespace USBDM;
 class Initialise {
 
    static void buttonPollTimerCallback();
-
    PitChannelNum channel = PitChannelNum_None;
 
 public:
@@ -58,6 +60,7 @@ public:
    }
 };
 
+// Must be first object created
 static Initialise           initialise;
 
 static Power                powerControl{};
@@ -79,8 +82,6 @@ void Initialise::buttonPollTimerCallback() {
    traffic.pollButtons();
 }
 
-extern void pollUsb();
-
 struct BootInformation {
    uint32_t reserved;
    uint32_t softwareVersion;
@@ -88,21 +89,31 @@ struct BootInformation {
    uint32_t checksum;
 };
 
+static constexpr unsigned HARDWARE_VERSION = HW_LOGIC_BOARD_V3;
+
 __attribute__ ((section(".bootloader")))
-BootInformation const bootInformation = {
+static BootInformation const bootInformation = {
       0,                   // reserved
       1,                   // Software version
-      HW_LOGIC_BOARD_V3,   // Hardware version for this image
+      HARDWARE_VERSION,    // Hardware version for this image
       0,                   // Checksum - filled in by loader
 };
 
 int main() {
+   // Enable Reset filter
+   Rcm::configure(RcmResetPinRunWaitFilter_LowPowerOscillator, RcmResetPinStopFilter_LowPowerOscillator, 24);
 
-   // Execute functions from the function queue
+   // Set power-on message
+   StringFormatter_T<22> sf;
+   sf.write("SW:V").write(bootInformation.softwareVersion).write("\nHW:").write(getHardwareVersion<HARDWARE_VERSION>());
+   frequencyGenerator.setStartupMessage(sf.toString());
+
    for(;;) {
+      // Poll USB
       initialise.disablePolling();
       pollUsb();
       initialise.enablePolling();
+      // Execute functions from the function queue
       if (!functionQueue.isEmpty()) {
          auto f = functionQueue.deQueue();
          if (f != nullptr) {

@@ -161,11 +161,7 @@ void FrequencyGenerator::displayFrequency(unsigned frequency) {
    }
    oled.resetFormat();
 
-   static auto f = []() {
-      This->oled.refreshImage();
-   };
-
-   functionQueue.enQueueDiscardOnFull(f);
+   refreshOled();
 }
 
 /**
@@ -236,11 +232,22 @@ void FrequencyGenerator::pollButtons() {
  */
 void FrequencyGenerator::softPowerOn() {
 
+   setFrequency(savedFrequency);
    powerOn = true;
 
    oled.initialise();
-   setFrequency(savedFrequency);
-   displayFrequency(currentFrequency);
+
+   if (startupMessage != nullptr) {
+      // Display startup message once only
+      oled.setFont(fontLarge);
+      oled.write(startupMessage);
+      startupMessage = nullptr;
+      refreshOled();
+      return;
+   }
+   else {
+      displayFrequency(currentFrequency);
+   }
 }
 
 /**

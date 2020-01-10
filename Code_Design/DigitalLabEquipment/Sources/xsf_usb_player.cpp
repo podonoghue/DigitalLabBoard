@@ -152,6 +152,9 @@ private:
          }
       }
       byteCounter++;
+      if ((byteCounter % 1000) == 0) {
+         ProgrammerBusyLed::toggle();
+      }
       return command.data[blockByteCounter++];
    }
 
@@ -188,12 +191,17 @@ public:
 
 enum UsbState {UsbStartUp, UsbIdle, UsbWaiting};
 
+/**
+ * Poll USB interface for activity
+ *
+ * If active the return may be very much delayed e.g. programming of a device.
+ */
 void pollUsb() {
 
    static UsbState usbState = UsbStartUp;
 
    static auto cb = [](const UsbImplementation::UserEvent) {
-      // Restart transfers on reset etc.
+      // Restart USB transfers on reset etc.
       usbState = UsbIdle;
       return E_NO_ERROR;
    };
@@ -201,6 +209,11 @@ void pollUsb() {
    if (usbState == UsbStartUp) {
       // 1st time - Initialise hardware
       ProgrammerBusyLed::setOutput(
+            PinDriveStrength_High,
+            PinDriveMode_PushPull,
+            PinSlewRate_Slow);
+      // 1st time - Initialise hardware
+      ProgrammerOkLed::setOutput(
             PinDriveStrength_High,
             PinDriveMode_PushPull,
             PinSlewRate_Slow);
@@ -240,6 +253,9 @@ void pollUsb() {
    // *****************************
    // We have a message to process
    // *****************************
+
+   ProgrammerBusyLed::on();
+   ProgrammerOkLed::off();
 
    // Default to Failed small response
    ResponseMessage    response;
@@ -314,6 +330,10 @@ void pollUsb() {
             continue;
       }
    } while (false);
+
+   ProgrammerBusyLed::write(response.status != UsbCommandStatus_OK);
+   ProgrammerOkLed::write(response.status == UsbCommandStatus_OK);
+
    Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
    usbState = UsbIdle;
 }

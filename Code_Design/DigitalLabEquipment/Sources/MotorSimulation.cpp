@@ -89,7 +89,7 @@ void MotorSimulator::timerCallback() {
       return;
    }
 
-   uint8_t input = 0;//MotorPhases::read();
+   uint8_t input = MotorPhases::read();
 
    // Wait until input is stable for 1 sample period
    if (input != lastInput) {
@@ -207,10 +207,10 @@ void MotorSimulator::softPowerOn() {
          PinFilter_None,
          PinSlewRate_Slow);
 
-//   MotorPhases::setInput(
-//         PinPull_None,
-//         PinAction_None,
-//         PinFilter_None);
+   MotorPhases::setInput(
+         PinPull_None,
+         PinAction_None,
+         PinFilter_None);
 
    auto cb = []() {
       This->timerCallback();

@@ -33,6 +33,12 @@ private:
    /// Queue for serialised function execution
    FunctionQueue &functionQueue;
 
+   /// Whether interface is powered
+   bool powerOn = false;
+
+   /// Optional message to display on initial power-up
+   const char *startupMessage = nullptr;
+
    /**
     * Table of available frequencies
     */
@@ -66,9 +72,6 @@ private:
     */
    unsigned getFrequency();
 
-   /// Whether interface is powered
-   bool powerOn = false;
-
    /**
     * Notification that soft power-on has occurred
     */
@@ -80,6 +83,14 @@ private:
    virtual void softPowerOff() override;
 
    void ftmCallback(uint8_t status);
+
+   void refreshOled() {
+      // Updating OLED is time consuming and uses shared I2C so done on function queue
+      static auto f = []() {
+         This->oled.refreshImage();
+      };
+      functionQueue.enQueueDiscardOnFull(f);
+   }
 
 public:
    /// Used to indicate generator off
@@ -113,6 +124,17 @@ public:
     * Test loop for debug
     */
    void testLoop();
+
+   /**
+    * Display message on OLED
+    *
+    * @param msg Message to display
+    *
+    * @note This can only be done BEFORE the signal generator is enabled.
+    */
+   void setStartupMessage(const char *msg) {
+      startupMessage = msg;
+   }
 };
 
 #endif /* SOURCES_FREQUENCYGENERATOR_H_ */

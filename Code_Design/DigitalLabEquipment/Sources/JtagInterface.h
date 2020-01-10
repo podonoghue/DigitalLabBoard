@@ -13,7 +13,7 @@ class JtagInterface {
 
 private:
 //   using Jtag = USBDM::GpioDField<3,0>;
-   using Jtag = USBDM::GpioCField<7,4>;
+   using Jtag = USBDM::GpioDField<3,0>;
    using Tms  = Jtag::Bit<3>;
    using Tdi  = Jtag::Bit<2>;
    using Tdo  = Jtag::Bit<1>;
@@ -21,8 +21,7 @@ private:
 
 
    using Adc  = USBDM::Adc0;
-//   using Vref = Adc::Channel<0>;
-   using Vref = Adc::Channel<7>;
+   using Vref = Adc::Channel<0>;
 
    static constexpr unsigned TMS_MASK = (1<<(Tms::BITNUM-Jtag::RIGHT));
    static constexpr unsigned TDI_MASK = (1<<(Tdi::BITNUM-Jtag::RIGHT));
