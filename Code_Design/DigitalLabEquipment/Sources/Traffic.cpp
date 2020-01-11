@@ -49,17 +49,6 @@ void Traffic::updateSwitches() {
 
    uint8_t ledMask = trafficLedsEncode(northSouthLights(lightInputs), eastWestLights(lightInputs));
 
-//   static const uint8_t lightTable[] = {
-//         RED_LED_MASK,           // Red
-//         AMBER_LED_MASK,         // Amber
-//         GREEN_LED_MASK,         // Green
-//         PEDESTRIAN_LED_MASK,    // Green + Walk
-//   };
-//
-//   uint8_t ledMask = 0;
-//   ledMask |= lightTable[northSouthLights(lightInputs)]<<NS_LED_OFFSET;
-//   ledMask |= lightTable[eastWestLights(lightInputs)]<<EW_LED_OFFSET;
-
    // Update LEDs
    trafficGpio.writeData1(ledMask);
 }

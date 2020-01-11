@@ -22,8 +22,10 @@ using I2cInterface = USBDM::I2c0;
  */
 /// Motor simulator - Charlieplexed LEDs
 using CharliePlexing = USBDM::GpioCField<4,0,USBDM::ActiveHigh>;
+
 /// Motor simulator - Phase inputs from user
 using MotorPhases    = USBDM::GpioCField<7,4,USBDM::ActiveHigh>;
+
 /// Motor simulator - PIT channel
 //using MotorPitChannel = USBDM::Pit::Channel<0>;
 
@@ -113,8 +115,8 @@ static constexpr inline unsigned trafficLedsEncode(unsigned nsLights, unsigned e
    };
 
    // Offsets for LEDs (GPIO expander outputs IO1_(7..4)/IO1_(3..0))
-   constexpr unsigned NS_LED_OFFSET = 0;
-   constexpr unsigned EW_LED_OFFSET = 4;
+   constexpr unsigned EW_LED_OFFSET = 0;
+   constexpr unsigned NS_LED_OFFSET = 4;
 
    return (lightTable[nsLights]<<NS_LED_OFFSET)|(lightTable[ewLights]<<EW_LED_OFFSET);
 }
