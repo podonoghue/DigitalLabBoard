@@ -24,7 +24,7 @@
 using namespace USBDM;
 
 /**
- * Used to initialise some hardware before static declarations
+ * Used to initialise shared hardware before static declarations
  */
 class Initialise {
 
@@ -71,6 +71,7 @@ static MotorSimulator       motorSimulator(functionQueue, powerControl);
 static FrequencyGenerator   frequencyGenerator(oled, functionQueue, powerControl);
 static Switches             switches(i2c, functionQueue, powerControl);
 static Traffic              traffic(i2c, functionQueue, powerControl);
+static UsbXsvfInterface     usbXsvfInterface(powerControl);
 
 /**
  * Timer call-back to poll buttons @ 5ms interval
@@ -89,30 +90,33 @@ struct BootInformation {
    uint32_t checksum;
 };
 
-static constexpr unsigned HARDWARE_VERSION = HW_LOGIC_BOARD_V3;
+static constexpr unsigned HARDWARE_VERSION = HW_LOGIC_BOARD_V4;
 
 __attribute__ ((section(".bootloader")))
+__attribute__((used))
 static BootInformation const bootInformation = {
-      0,                   // reserved
+      0,                   // Reserved
       1,                   // Software version
       HARDWARE_VERSION,    // Hardware version for this image
       0,                   // Checksum - filled in by loader
 };
 
 int main() {
-   // Enable Reset filter
+   // Enable Reset pin filter
    Rcm::configure(RcmResetPinRunWaitFilter_LowPowerOscillator, RcmResetPinStopFilter_LowPowerOscillator, 24);
 
    // Set power-on message
    StringFormatter_T<22> sf;
-   sf.write("SW:V").write(bootInformation.softwareVersion).write("\nHW:").write(getHardwareVersion<HARDWARE_VERSION>());
+   sf.write("SW:V").writeln(bootInformation.softwareVersion)
+     .write("HW:").write(getHardwareVersion<HARDWARE_VERSION>());
    frequencyGenerator.setStartupMessage(sf.toString());
 
    for(;;) {
       // Poll USB
       initialise.disablePolling();
-      pollUsb();
+      usbXsvfInterface.pollUsb();
       initialise.enablePolling();
+
       // Execute functions from the function queue
       if (!functionQueue.isEmpty()) {
          auto f = functionQueue.deQueue();

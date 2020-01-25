@@ -36,7 +36,7 @@ static constexpr unsigned DEBOUNCE_INTERVAL_COUNT = 20/5;
 static constexpr unsigned LATCHED_INTERVAL_COUNT = 2000/5;
 
 /// Interval x5ms for power switch delay
-static constexpr unsigned POWER_BUTTON_DELAY_COUNT = 500/5;
+static constexpr unsigned POWER_BUTTON_DELAY_COUNT = 200/5;
 
 /// Interval x5ms for power-up delay before power checks start (ADC)
 static constexpr unsigned POWER_ON_ADC_DELAY_COUNT = 20/5;
@@ -158,6 +158,5 @@ static constexpr uint8_t BUTTON_I2C_ADDRESS  = 0b000;
 // Programmer LEDs
 using ProgrammerOkLed   = USBDM::GpioD<4>;
 using ProgrammerBusyLed = USBDM::GpioD<7>;
-
 
 #endif /* SOURCES_CONFIGURE_H_ */

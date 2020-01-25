@@ -45,10 +45,13 @@ private:
 
    static constexpr USBDM::AdcResolution adcResolution = USBDM::AdcResolution_8bit_se;
 
+   Power(Power const&)              = delete;
+   Power& operator=(Power const&)   = delete;
+
    /**
     * Notifies all devices that soft power-on has occurred
     *
-    * @note This is done after the power-on
+    * @note This is done after power-on
     */
    void powerOnNotify() {
       for (unsigned index=0; index<powerSubscriberCount; index++) {
@@ -59,7 +62,7 @@ private:
    /**
     * Notifies all devices that soft power-off has occurred
     *
-    * @note This is done before the power-off
+    * @note This is done before power-off
     */
    void powerOffNotify() {
       for (unsigned index=0; index<powerSubscriberCount; index++) {
@@ -123,7 +126,7 @@ public:
    /**
     * Add an object to be notified of soft power-on and power-off events
     *
-    * @param powerSubscriber
+    * @param powerSubscriber to notify
     */
    void addPowerSubscriber(PowerSubscriber *powerSubscriber) {
       powerSubscribers[powerSubscriberCount++] = powerSubscriber;

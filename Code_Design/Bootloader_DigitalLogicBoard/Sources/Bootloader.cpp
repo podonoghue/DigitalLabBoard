@@ -236,7 +236,7 @@ void pollUsb() {
          {
             BootInformation *bootInformation = getBootInformation();
 
-            response.bootHardwareVersion  = HW_LOGIC_BOARD_V3;
+            response.bootHardwareVersion  = HW_LOGIC_BOARD_V4;
             response.bootSoftwareVersion  = BOOTLOADER_V1;
             response.flashStart           = FLASH_BUFFER_START;
             response.flashSize            = FLASH_BUFFER_SIZE;

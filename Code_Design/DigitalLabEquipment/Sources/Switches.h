@@ -32,9 +32,6 @@ private:
    /// GPIO used for shared LEDs/buttons pins and user outputs
    USBDM::Pca9555 switchGpio;
 
-   /// Power object
-   Power          &power;
-
    /// Queue for serialised function execution
    FunctionQueue  &functionQueue;
 
@@ -67,7 +64,7 @@ public:
     * @param power            Power object
     */
    Switches(USBDM::I2c &i2c, FunctionQueue &functionQueue, Power &power) :
-      switchGpio(USBDM::Pca9555(i2c,  BUTTON_I2C_ADDRESS)), power(power), functionQueue(functionQueue) {
+      switchGpio(USBDM::Pca9555(i2c,  BUTTON_I2C_ADDRESS)), functionQueue(functionQueue) {
       usbdm_assert((This == nullptr), "Only single instance of Switches allowed");
       This = this;
 

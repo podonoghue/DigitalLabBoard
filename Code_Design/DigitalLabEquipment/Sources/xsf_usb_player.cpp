@@ -15,9 +15,12 @@
 #include "usb.h"
 #include "UsbCommandMessage.h"
 #include "JtagInterface.h"
+#include "xsf_usb_player.h"
 
 // Allow access to USBDM methods
 using namespace USBDM;
+
+UsbCommandMessage UsbXsvfInterface::command;
 
 /**
  * Report command to console
@@ -33,8 +36,7 @@ static void writeCommandMessage(UsbCommandMessage &message) {
    console.writeln();
 }
 
-
-bool execute(unsigned xsvd_size, uint8_t *xsvf_data, uint32_t &result) {
+bool UsbXsvfInterface::execute(unsigned xsvd_size, uint8_t *xsvf_data, uint32_t &result) {
 
    XsvfPlayer_Array xsvf(xsvd_size, xsvf_data);
    if (xsvf.playAll()) {
@@ -57,7 +59,7 @@ bool execute(unsigned xsvd_size, uint8_t *xsvf_data, uint32_t &result) {
  * @return false  => Success. IDCODE has value
  * @return true   => Failed to read IDCODE
  */
-bool readIdcode(uint32_t &idcode) {
+bool UsbXsvfInterface::readIdcode(uint32_t &idcode) {
 
    #define BYTES32(x) (0xFF&((x)>>24)),(0xFF&((x)>>16)),(0xFF&((x)>>8)),(0xFF&(x))
 
@@ -187,16 +189,12 @@ public:
    }
 };
 
-   static UsbCommandMessage command;
-
-enum UsbState {UsbStartUp, UsbIdle, UsbWaiting};
-
 /**
  * Poll USB interface for activity
  *
  * If active the return may be very much delayed e.g. programming of a device.
  */
-void pollUsb() {
+void UsbXsvfInterface::pollUsb() {
 
    static UsbState usbState = UsbStartUp;
 
@@ -207,17 +205,6 @@ void pollUsb() {
    };
 
    if (usbState == UsbStartUp) {
-      // 1st time - Initialise hardware
-      ProgrammerBusyLed::setOutput(
-            PinDriveStrength_High,
-            PinDriveMode_PushPull,
-            PinSlewRate_Slow);
-      // 1st time - Initialise hardware
-      ProgrammerOkLed::setOutput(
-            PinDriveStrength_High,
-            PinDriveMode_PushPull,
-            PinSlewRate_Slow);
-
       // Start USB
       UsbImplementation::initialise();
       UsbImplementation::setUserCallback(cb);

@@ -21,9 +21,6 @@ private:
    /// GPIO used for LEDs and user I/O
    USBDM::Pca9555 trafficGpio;
 
-   /// Power object
-   Power          &power;
-
    /// Queue for serialised function execution
    FunctionQueue  &functionQueue;
 
@@ -59,7 +56,7 @@ public:
     * @param power            Power object
     */
    Traffic(USBDM::I2c &i2c, FunctionQueue &functionQueue, Power &power) :
-      trafficGpio(USBDM::Pca9555(i2c,  TRAFFIC_I2C_ADDRESS)), power(power), functionQueue(functionQueue) {
+      trafficGpio(USBDM::Pca9555(i2c,  TRAFFIC_I2C_ADDRESS)), functionQueue(functionQueue) {
 
       usbdm_assert((This == nullptr), "Only single instance of Traffic allowed");
       This = this;
