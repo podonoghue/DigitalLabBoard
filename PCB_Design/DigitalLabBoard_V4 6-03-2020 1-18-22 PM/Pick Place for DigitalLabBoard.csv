@@ -1,0 +1,239 @@
+Altium Designer Pick and Place Locations
+C:\Users\podonoghue\Documents\Development\DigitalLabBoard\PCB_Design\DigitalLabBoard_V4 6-03-2020 1-18-22 PM\Pick Place for DigitalLabBoard.csv
+
+========================================================================================================================
+File Design Information:
+
+Date:       06/03/20
+Time:       13:18
+Revision:   fc5928c950f66233d0763c738c6b4f68bac3f9e7
+Variant:    No variations
+Units used: mil
+
+"Designator","Comment","Layer","Footprint","Center-X(mil)","Center-Y(mil)","Rotation","Description"
+"M8","OLED_Surround","TopLayer","OLED_SURROUND","964.567","3909.528","0",""
+"R45","100R","TopLayer","CR1608-0603","-338.000","1614.000","0","Resistor SMT 0603"
+"R44","100R","TopLayer","CR1608-0603","-338.000","1669.000","0","Resistor SMT 0603"
+"R43","100R","TopLayer","CR1608-0603","-338.000","1724.000","0","Resistor SMT 0603"
+"R42","100R","TopLayer","CR1608-0603","-338.000","1779.000","0","Resistor SMT 0603"
+"R28","33R","TopLayer","CR1608-0603","3170.000","526.000","360","Resistor SMT 0603"
+"C8","2.2uF","TopLayer","CCNP1608-0603","3170.000","428.000","360","Capacitor"
+"R39","1K","TopLayer","CR1608-0603","-425.000","2959.960","180","Resistor SMT 0603"
+"D_Pass","LED Green","TopLayer","LED1608-0603-GREEN","-425.000","2902.165","360","LED 0603 Green"
+"R41","1K","TopLayer","CR1608-0603","-430.000","2736.000","180","Resistor SMT 0603"
+"D_Fail","LED Red","TopLayer","LED1608-0603-RED","-430.000","2681.000","360","LED 0603 Red"
+"RN19","1K","TopLayer","CR1206-0603_X4_N","3861.012","1172.000","270","SMT x4 Resistor Array"
+"R37","10K","TopLayer","CR1608-0603","-310.000","2515.000","180","Resistor SMT 0603"
+"Z11","CM1293A-04SO","TopLayer","SOT457_N","-343.000","1468.000","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"P9","Header, 6-Pin","TopLayer","HDR1X6S","-334.331","2154.960","90","Header, 6-Pin"
+"RN15","470R","TopLayer","CR1206-0603_X4_N","3674.953","920.141","270","SMT x4 Resistor Array"
+"C14","100nF","TopLayer","CCNP1608-0603","1208.000","3430.000","270","Capacitor non-polar SMT 0603"
+"Z10","CM1293A-04SO","TopLayer","SOT457_N","1590.000","3350.000","0","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"Z4","CM1293A-04SO","TopLayer","SOT457_N","1362.417","4019.960","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"Z3","CM1293A-04SO","TopLayer","SOT457_N","1362.417","3839.960","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"RN12","470R","TopLayer","CR1206-0603_X4_N","3668.417","3589.960","270","SMT x4 Resistor Array"
+"Z5","CM1293A-04SO","TopLayer","SOT457_N","3299.417","3779.960","0","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"R31","33R","TopLayer","CR1608-0603","3170.000","477.000","360","Resistor SMT 0603"
+"M6","Plastic Bumper","BottomLayer","BUMPER_RBS-2","-1335.583","-1060.040","180","Plastic bumper/foot"
+"M2","Plastic Bumper","BottomLayer","BUMPER_RBS-2","-1335.583","-1060.040","180","Plastic bumper/foot"
+"R40","470R","TopLayer","CR1608-0603","3284.000","739.560","360","Resistor SMT 0603"
+"U2","PCA9555PW,118","TopLayer","TSSOP24_N","3583.417","1569.960","270","16-bit I2C I/O Expander (TSSOP24)
+PUPs on I/O pins"
+"C13","100nF","TopLayer","CCNP1608-0603","222.685","742.960","90","Capacitor non-polar SMT 0603"
+"P1","Header 2x8","TopLayer","HDR2X8S","3865.984","3389.960","90","Header 2x8"
+"D_AEW","LED Yellow","TopLayer","LED1608-0603-YELLOW","5095.992","3099.960","90","LED 0603 Yellow"
+"D_ANS","LED Yellow","TopLayer","LED1608-0603-YELLOW","5085.992","3689.960","180","LED 0603 Yellow"
+"D_GEW","LED Green","TopLayer","LED1608-0603-GREEN","5145.992","3099.960","90","LED 0603 Green"
+"D_GNS","LED Green","TopLayer","LED1608-0603-GREEN","5085.992","3739.960","180","LED 0603 Green"
+"D_PEW","LED Green","TopLayer","LED1608-0603-GREEN","4975.992","2954.960","90","LED 0603 Green"
+"D_PNS","LED Green","TopLayer","LED1608-0603-GREEN","4360.992","3209.960","360","LED 0603 Green"
+"D_REW","LED Red","TopLayer","LED1608-0603-RED","5045.992","3099.960","90","LED 0603 Red"
+"D_RNS","LED Red","TopLayer","LED1608-0603-RED","5085.992","3639.960","180","LED 0603 Red"
+"S_CNW","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","4905.992","3839.960","270","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S_CEW","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","5245.992","3279.960","180","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S_PNS","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","4365.992","3779.960","360","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S_PEW","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","4405.992","2959.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"R20","1K","TopLayer","CR1608-0603","5045.992","2971.771","90","Resistor SMT 0603"
+"R21","560R","TopLayer","CR1608-0603","5095.992","2971.771","90","Resistor SMT 0603"
+"R22","1K","TopLayer","CR1608-0603","5145.992","2971.771","90","Resistor SMT 0603"
+"R23","1K","TopLayer","CR1608-0603","4940.992","2854.960","360","Resistor SMT 0603"
+"R24","1K","TopLayer","CR1608-0603","5214.181","3639.960","180","Resistor SMT 0603"
+"R25","560R","TopLayer","CR1608-0603","5214.181","3689.960","180","Resistor SMT 0603"
+"R26","1K","TopLayer","CR1608-0603","5214.181","3739.960","180","Resistor SMT 0603"
+"R27","1K","TopLayer","CR1608-0603","4260.992","3244.960","270","Resistor SMT 0603"
+"DIE_LED_A","LED Red","TopLayer","LED1608-0603-RED","5050.992","2089.960","270","LED 0603 Red"
+"DIE_LED_B1","LED Red","TopLayer","LED1608-0603-RED","4850.992","2289.960","270","LED 0603 Red"
+"DIE_LED_B2","LED Red","TopLayer","LED1608-0603-RED","5250.992","1889.960","270","LED 0603 Red"
+"DIE_LED_C1","LED Red","TopLayer","LED1608-0603-RED","5250.992","2289.960","270","LED 0603 Red"
+"DIE_LED_C2","LED Red","TopLayer","LED1608-0603-RED","4850.992","1889.960","270","LED 0603 Red"
+"DIE_LED_D1","LED Red","TopLayer","LED1608-0603-RED","4850.992","2089.960","270","LED 0603 Red"
+"DIE_LED_D2","LED Red","TopLayer","LED1608-0603-RED","5250.992","2089.960","270","LED 0603 Red"
+"RN10","1K","TopLayer","CR1206-0603_X4_N","4608.992","2005.952","270","SMT x4 Resistor Array"
+"RN8","1K","TopLayer","CR1206-0603_X4_N","4608.992","2175.952","270","SMT x4 Resistor Array"
+"Step_LED1","LED Red","TopLayer","LED1608-0603-RED","4870.992","1290.960","0","LED 0603 Red"
+"Step_LED2","LED Red","TopLayer","LED1608-0603-RED","4680.992","1240.050","30","LED 0603 Red"
+"Step_LED3","LED Red","TopLayer","LED1608-0603-RED","4541.902","1100.960","60","LED 0603 Red"
+"Step_LED4","LED Red","TopLayer","LED1608-0603-RED","4490.992","910.960","90","LED 0603 Red"
+"Step_LED5","LED Red","TopLayer","LED1608-0603-RED","4541.902","704.960","120","LED 0603 Red"
+"Step_LED6","LED Red","TopLayer","LED1608-0603-RED","4680.992","581.870","150","LED 0603 Red"
+"Step_LED7","LED Red","TopLayer","LED1608-0603-RED","4870.992","530.960","180","LED 0603 Red"
+"Step_LED8","LED Red","TopLayer","LED1608-0603-RED","5060.992","581.870","210","LED 0603 Red"
+"Step_LED9","LED Red","TopLayer","LED1608-0603-RED","5200.082","720.960","240","LED 0603 Red"
+"Step_LED10","LED Red","TopLayer","LED1608-0603-RED","5250.992","910.960","270","LED 0603 Red"
+"Step_LED11","LED Red","TopLayer","LED1608-0603-RED","5200.082","1100.960","300","LED 0603 Red"
+"Step_LED12","LED Red","TopLayer","LED1608-0603-RED","5060.992","1240.050","330","LED 0603 Red"
+"RN14","470R","TopLayer","CR1206-0603_X4_N","3848.000","520.000","270","SMT x4 Resistor Array"
+"P6","Header 2x4","TopLayer","HDR2X4S","3865.992","894.960","90","Header 2x4"
+"RN17","10K","TopLayer","CR1206-0603_X4_N","4093.000","1172.000","270","SMT x4 Resistor Array"
+"M5","Plastic Bumper","BottomLayer","BUMPER_RBS-2","-1335.583","-1060.040","180","Plastic bumper/foot"
+"M1","Plastic Bumper","BottomLayer","BUMPER_RBS-2","-1335.583","-1060.040","180","Plastic bumper/foot"
+"P5","Header 2x4","TopLayer","HDR2X4S","3865.992","2089.960","90","Header 2x4"
+"P2","Header 2x8","TopLayer","HDR2X8S","2524.417","879.960","180","Header 2x8"
+"P3","Header 2x8","TopLayer","HDR2X8S","1724.417","879.960","180","Header 2x8"
+"R38","10K","TopLayer","CR1608-0603","3589.417","99.960","360","Resistor SMT 0603"
+"POWER_BTN","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","935.417","518.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"M4","Plastic Bumper","BottomLayer","BUMPER_RBS-2","-1335.583","-1060.040","180","Plastic bumper/foot"
+"M3","Plastic Bumper","BottomLayer","BUMPER_RBS-2","-1335.583","-1060.040","180","Plastic bumper/foot"
+"M7","Plastic Bumper","BottomLayer","BUMPER_RBS-2","-1335.583","-1060.040","180","Plastic bumper/foot"
+"P11","Header 2x2","TopLayer","HDR2X2S","3199.417","3029.960","270","Header 2x2"
+"R35","10K","TopLayer","CR1608-0603","382.685","633.960","90","Resistor SMT 0603"
+"C12","10nF","TopLayer","CCNP1608-0603","498.835","633.960","90","Capacitor"
+"C11","10uF","TopLayer","CCNP2012-0805","585.685","763.960","90","Capacitor"
+"C10","10uF","TopLayer","CCNP2012-0805","466.685","933.960","180","Capacitor"
+"Z9","CM1293A-04SO","TopLayer","SOT457_N","95.685","773.960","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"U6","SPX3819M5-L-3-3/TR","TopLayer","SOT-23-5_L","443.834","763.960","180","3.3V LDO with enable"
+"C9","1uF","TopLayer","CCNP1608-0603","3159.417","301.771","90","Capacitor"
+"B1","Breadboard - 300 Hole","TopLayer","BREADBOARD_-_300_HOLES","-1335.583","-1060.040","0",""
+"R36","100R","TopLayer","CR1608-0603","1258.000","3430.000","270","Resistor SMT 0603"
+"R33","10K","TopLayer","CR1608-0603","15.000","3795.000","360","Resistor SMT 0603"
+"OLED","OLED_Display","TopLayer","OLED_DISPLAY_128X32","275.591","3909.528","360","OLED Display 128x32 pixels, I2C interface"
+"S_FREQ_UP","SMD-SW-4_5.1x5.1x3.5_M","TopLayer","SMD-SW-4_5.1X5.1X3.5_M","-157.480","3948.898","270","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S_FREQ_DOWN","SMD-SW-4_5.1x5.1x3.5_M","TopLayer","SMD-SW-4_5.1X5.1X3.5_M","-157.480","3594.567","270","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"R34","10K","TopLayer","CR1608-0603","15.000","3745.000","360","Resistor SMT 0603"
+"R32","1K","TopLayer","CR1608-0603","1450.000","3430.000","270","Resistor SMT 0603"
+"P7","Header 2x3","TopLayer","HDR2X3S","1017.208","3425.000","180","Header 2x3"
+"D_CLOCK","LED Red","TopLayer","LED1608-0603-RED","1350.000","3430.000","270","LED 0603 Red"
+"RN16","10K","TopLayer","CR1206-0603_X4_N","3668.417","3384.960","270","SMT x4 Resistor Array"
+"R19","1K","TopLayer","CR1608-0603","1097.417","728.960","270","Resistor SMT 0603"
+"D17","LED Red","TopLayer","LED1608-0603-RED","935.417","785.810","0","LED 0603 Red"
+"C7","100nF","TopLayer","CCNP1608-0603","3589.417","150.960","180","Capacitor non-polar SMT 0603"
+"C3","100nF","TopLayer","CCNP1608-0603","3209.417","301.771","90","Capacitor non-polar SMT 0603"
+"C2","100nF","TopLayer","CCNP1608-0603","3170.000","587.960","360","Capacitor non-polar SMT 0603"
+"U1","MK20DX128VLF5","TopLayer","TSQFP50P900X900-48M","3469.417","439.960","270","Kinetis K20: 50MHz Cortex-M4 Performance MCU, 160KB Flash, 16KB SRAM, Full-Speed USB, 48-LQFP"
+"Z8","CM1293A-04SO","TopLayer","SOT457_N","3625.417","765.960","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"RN13","10K","TopLayer","CR1206-0603_X4_N","3545.417","919.960","270","SMT x4 Resistor Array"
+"USB1","USB4085-GF-A","TopLayer","USB4085-GF-A","-132.825","779.270","0","USB-C, USB 2.0 Receptacle Connector 16 Position Through Hole, Right Angle"
+"R30","5.1K","TopLayer","CR1608-0603","70.685","643.960","360","Resistor SMT 0603"
+"R29","5.1K","TopLayer","CR1608-0603","70.685","896.090","360","Resistor SMT 0603"
+"F1","SMD0805-050","TopLayer","SMD0805-050","215.685","933.960","360","PTC Resetable Fuse 0805 0.5A hold"
+"C6","100nF","TopLayer","CCNP1608-0603","1637.244","4099.960","180","Capacitor non-polar SMT 0603"
+"U5","74HC541PW,118","TopLayer","TSSOP20_N","3551.417","2448.960","270","Octal 3-State Buffer/Line Driver/LineReceiver"
+"C5","100nF","TopLayer","CCNP1608-0603","3544.417","2630.960","360","Capacitor non-polar SMT 0603"
+"Z7","CM1293A-04SO","TopLayer","SOT457_N","3498.945","2126.133","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"RN9","470R","TopLayer","CR1206-0603_X4_N","3664.417","2099.960","270","SMT x4 Resistor Array"
+"RN7","10K","TopLayer","CR1206-0603_X4_N","3329.417","2494.960","270","SMT x4 Resistor Array"
+"Z6","CM1293A-04SO","TopLayer","SOT457_N","3299.417","3978.960","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"U4","PCA9535PW,118","TopLayer","TSSOP24_N","3543.417","3905.512","270","16-bit I2C I/O Expander (TSSOP24)
+NO PUPs on I/O pins"
+"RN11","470R","TopLayer","CR1206-0603_X4_N","3668.417","3189.960","270","SMT x4 Resistor Array"
+"C4","100nF","TopLayer","CCNP1608-0603","3597.417","4113.960","360","Capacitor non-polar SMT 0603"
+"C1","100nF","TopLayer","CCNP1608-0603","3620.417","1777.960","360","Capacitor non-polar SMT 0603"
+"D4","LED Red","TopLayer","LED1608-0603-RED","2239.417","474.960","0","LED 0603 Red"
+"R3","1K","TopLayer","CR1608-0603","1319.417","424.960","180","Resistor SMT 0603"
+"R4","1K","TopLayer","CR1608-0603","1549.417","424.960","180","Resistor SMT 0603"
+"R5","1K","TopLayer","CR1608-0603","1779.417","424.960","180","Resistor SMT 0603"
+"R6","1K","TopLayer","CR1608-0603","2009.417","424.960","180","Resistor SMT 0603"
+"R7","1K","TopLayer","CR1608-0603","2239.417","424.960","180","Resistor SMT 0603"
+"R8","1K","TopLayer","CR1608-0603","2469.417","424.960","180","Resistor SMT 0603"
+"R9","1K","TopLayer","CR1608-0603","2699.417","424.960","180","Resistor SMT 0603"
+"R10","1K","TopLayer","CR1608-0603","2929.417","424.960","180","Resistor SMT 0603"
+"RN2","470R","TopLayer","CR1206-0603_X4_N","3154.417","1459.960","270","SMT x4 Resistor Array"
+"RN1","470R","TopLayer","CR1206-0603_X4_N","3154.417","1624.960","270","SMT x4 Resistor Array"
+"S3","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","2469.417","189.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S4","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","2239.417","189.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S7","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","1549.417","189.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S8","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","1319.417","189.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"Z1","CM1293A-04SO","TopLayer","SOT457_N","3316.417","1454.960","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"Z2","CM1293A-04SO","TopLayer","SOT457_N","3316.417","1633.117","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"D8","LED Red","TopLayer","LED1608-0603-RED","1319.417","474.960","0","LED 0603 Red"
+"U3","74HC541PW,118","TopLayer","TSSOP20_N","1640.417","3929.960","270","Octal 3-State Buffer/Line Driver/LineReceiver"
+"Y1","16 MHz","TopLayer","CRYSTAL_SMD_3.2X2.5","3734.417","199.960","270","Crystal SMD 3.2 x 2.5 x 0.7 mm"
+"RN3","10K","TopLayer","CR1206-0603_X4_N","737.598","3836.724","270","SMT x4 Resistor Array"
+"RN4","10K","TopLayer","CR1206-0603_X4_N","737.598","4022.291","270","SMT x4 Resistor Array"
+"R18","1K","TopLayer","CR1608-0603","1920.953","4078.945","180","Resistor SMT 0603"
+"R17","1K","TopLayer","CR1608-0603","2070.953","4078.945","180","Resistor SMT 0603"
+"R16","1K","TopLayer","CR1608-0603","2220.953","4078.945","180","Resistor SMT 0603"
+"R15","1K","TopLayer","CR1608-0603","2370.953","4078.945","180","Resistor SMT 0603"
+"R14","1K","TopLayer","CR1608-0603","2520.953","4078.945","180","Resistor SMT 0603"
+"R13","1K","TopLayer","CR1608-0603","2670.953","4078.945","180","Resistor SMT 0603"
+"R12","1K","TopLayer","CR1608-0603","2820.953","4078.945","180","Resistor SMT 0603"
+"R11","1K","TopLayer","CR1608-0603","2970.953","4078.945","180","Resistor SMT 0603"
+"RN6","470R","TopLayer","CR1206-0603_X4_N","1893.417","3529.960","270","SMT x4 Resistor Array"
+"RN5","470R","TopLayer","CR1206-0603_X4_N","1893.417","3382.960","270","SMT x4 Resistor Array"
+"P4","Header 2x8","TopLayer","HDR2X8S","2444.417","3425.000","180","Header 2x8"
+"LED_7","LED Red","TopLayer","LED1608-0603-RED","1920.953","4128.945","0","LED 0603 Red"
+"LED_6","LED Red","TopLayer","LED1608-0603-RED","2070.953","4128.945","0","LED 0603 Red"
+"LED_5","LED Red","TopLayer","LED1608-0603-RED","2220.953","4128.945","0","LED 0603 Red"
+"LED_4","LED Red","TopLayer","LED1608-0603-RED","2370.953","4128.945","0","LED 0603 Red"
+"LED_3","LED Red","TopLayer","LED1608-0603-RED","2520.953","4128.945","0","LED 0603 Red"
+"LED_2","LED Red","TopLayer","LED1608-0603-RED","2670.953","4128.945","0","LED 0603 Red"
+"LED_1","LED Red","TopLayer","LED1608-0603-RED","2820.953","4128.945","0","LED 0603 Red"
+"LED_0","LED Red","TopLayer","LED1608-0603-RED","2970.953","4128.945","0","LED 0603 Red"
+"P10","Header 2x2","TopLayer","HDR2X2S","3199.417","1279.960","270","Header 2x2"
+"S6","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","1779.417","189.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S5","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","2009.417","189.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"D7","LED Red","TopLayer","LED1608-0603-RED","1549.417","474.960","0","LED 0603 Red"
+"D6","LED Red","TopLayer","LED1608-0603-RED","1779.417","474.960","0","LED 0603 Red"
+"D5","LED Red","TopLayer","LED1608-0603-RED","2009.417","474.960","0","LED 0603 Red"
+"D3","LED Red","TopLayer","LED1608-0603-RED","2469.417","474.960","0","LED 0603 Red"
+"D2","LED Red","TopLayer","LED1608-0603-RED","2699.417","474.960","0","LED 0603 Red"
+"D1","LED Red","TopLayer","LED1608-0603-RED","2929.417","474.173","0","LED 0603 Red"
+"R1","4.7K","TopLayer","CR1608-0603","3255.417","3433.960","180","Resistor SMT 0603"
+"R2","4.7K","TopLayer","CR1608-0603","3255.417","3384.960","180","Resistor SMT 0603"
+"S2","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","2699.417","189.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"
+"S1","SMD-SW-4_5.1x5.1x2.0_M","TopLayer","SMD-SW-4_5.1X5.1X2.0_M","2929.417","189.960","90","Tactile Switch SPST 5.10mm X 5.10mm
+(1.5mm=C318884)
+(2.0mm=C318888)
+(3.5mm=C318886)"

@@ -1,0 +1,10 @@
+Output: Generates pick and place files
+Type  : Pick Place
+From  : Variant [[No Variations]] of PCB Document [DigitalLabBoard.PcbDoc]
+   Generated File[Pick Place for DigitalLabBoard.csv]
+
+
+Files Generated   : 1
+Documents Printed : 0
+
+Finished Output Generation At 1:18:43 PM On 6/03/2020

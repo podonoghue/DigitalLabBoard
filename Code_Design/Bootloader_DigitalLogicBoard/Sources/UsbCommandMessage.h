@@ -10,9 +10,11 @@
 
 #include <stdint.h>
 
+// Each unique hardware should define a new number here
 static constexpr uint16_t HW_LOGIC_BOARD_V2 = 1;
 static constexpr uint16_t HW_LOGIC_BOARD_V3 = 2;
 static constexpr uint16_t HW_LOGIC_BOARD_V4 = 3;
+
 static constexpr uint16_t BOOTLOADER_V1     = 1;
 
 template<int version>
