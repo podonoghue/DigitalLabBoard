@@ -34,10 +34,8 @@ static void writeCommandMessage(UsbCommandMessage &message) {
       console.
       WRITE(" [0x").WRITE(message.startAddress, Radix_16).
       WRITE("..0x").WRITE(message.startAddress+message.byteLength-1, Radix_16).
-      WRITELN("]");
+      WRITE("]");
       //   console.writeArray(message.data, message.byteLength, message.startAddress);
-   }
-   else {
    }
    console.WRITELN();
 }
@@ -196,7 +194,6 @@ void pollUsb() {
 
    // UsbWaiting
 
-   // Check if we have received a message
    size = Usb0::pollReceiveBulkData();
    if (size < 0) {
       // No message - USB still ready
@@ -213,7 +210,6 @@ void pollUsb() {
    response.byteLength = 0;
    unsigned responseSize = sizeof(ResponseStatus);
 
-   writeCommandMessage(command);
    do {
       if (size < (int)sizeof(command.command)) {
          // Empty message?
@@ -237,7 +233,7 @@ void pollUsb() {
             BootInformation *bootInformation = getBootInformation();
 
             response.bootHardwareVersion  = HW_LOGIC_BOARD_V4;
-            response.bootSoftwareVersion  = BOOTLOADER_V1;
+            response.bootSoftwareVersion  = BOOTLOADER_V2;
             response.flashStart           = FLASH_BUFFER_START;
             response.flashSize            = FLASH_BUFFER_SIZE;
             if (bootInformation != nullptr) {
@@ -278,11 +274,15 @@ void pollUsb() {
    } while (false);
 
    // Send response
-   Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
+   ErrorCode rc = Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
+   if (rc != 0) {
+      console.WRITE("sendBulkData() failed, rc =").WRITELN(rc);
+   }
    usbState = UsbIdle;
 }
 
 int main() {
+   console.setBaudRate(115200);
    for(;;) {
       pollUsb();
    }

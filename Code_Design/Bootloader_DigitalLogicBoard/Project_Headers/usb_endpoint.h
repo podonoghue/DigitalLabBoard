@@ -33,7 +33,7 @@ namespace USBDM {
 extern volatile EndpointBdtEntry endPointBdts[];
 
 /** BDTs as simple array */
-constexpr BdtEntry *bdts() { return (BdtEntry *)endPointBdts; }
+static BdtEntry *bdts() { return (BdtEntry *)endPointBdts; }
 
 /** Endpoint state values */
 enum EndpointState {

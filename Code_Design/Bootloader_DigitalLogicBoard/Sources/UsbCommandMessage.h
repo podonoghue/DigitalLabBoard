@@ -16,6 +16,7 @@ static constexpr uint16_t HW_LOGIC_BOARD_V3 = 2;
 static constexpr uint16_t HW_LOGIC_BOARD_V4 = 3;
 
 static constexpr uint16_t BOOTLOADER_V1     = 1;
+static constexpr uint16_t BOOTLOADER_V2     = 2;
 
 template<int version>
 constexpr const char *getHardwareVersion() {

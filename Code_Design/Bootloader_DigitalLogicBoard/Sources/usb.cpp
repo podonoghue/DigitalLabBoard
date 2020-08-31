@@ -144,6 +144,16 @@ const char *UsbBase::getTokenName(unsigned token) {
    }
    return rc;
 }
+/**
+ * Get name of USB end-point state
+ *
+ * @param[in]  state End-point state
+ *
+ * @return Pointer to static string
+ */
+const char *UsbBase::getStateName(EndpointState state) {
+   return Endpoint::getStateName(state);
+}
 
 /**
  * Get name of USB request
