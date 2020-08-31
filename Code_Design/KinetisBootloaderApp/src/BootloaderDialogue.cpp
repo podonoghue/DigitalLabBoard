@@ -35,8 +35,15 @@ void BootloaderDialogue::onLoadFile(wxCommandEvent &event) {
    wxString filePath = openFileDialog.GetPath();
    wxString fileName = openFileDialog.GetFilename();
 
-   flashImage = FlashImageFactory::createFlashImage(T_ARM);
-   USBDM_ErrorCode rc = flashImage->loadFile(filePath.ToStdString(), true);
+   USBDM_ErrorCode rc = PROGRAMMING_RC_ERROR_INTERNAL_CHECK_FAILED;
+   try {
+      flashImage = FlashImageFactory::createFlashImage(T_ARM);
+      rc = flashImage->loadFile(filePath.ToStdString(), true);
+   } catch (MyException &e) {
+      fprintf(stderr, "%s", e.what());
+      flashImage = nullptr;
+   };
+
    if (rc == SFILE_RC_OK) {
       loadedFile_static->SetLabel(fileName);
       programDevice_button->Enable(true);
@@ -74,10 +81,10 @@ void BootloaderDialogue::onCheckDevice(wxCommandEvent &event) {
             identity.flashStart,
             identity.flashStart+identity.flashSize-1
             );
-      checkDevice_textCtrl->SetLabel(status);
+      checkDevice_textCtrl->ChangeValue(status);
    }
    else {
-      checkDevice_textCtrl->SetLabel(msg);
+      checkDevice_textCtrl->ChangeValue(msg);
    }
 }
 

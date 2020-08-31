@@ -45,7 +45,8 @@ private:
    Bootloader& operator=(const Bootloader &other) = delete;
    Bootloader& operator=(Bootloader &&other) = delete;
 
-   libusb_device_handle *device = nullptr;
+   libusb_context *libusbContext = nullptr;
+   libusb_device_handle *deviceHandle = nullptr;
    uint32_t flashStart           = 0;
    uint32_t flashSize            = 0;
    uint16_t hardwareVersion      = 0;
@@ -60,7 +61,7 @@ private:
     * @return nullptr   => failed
     * @return !=nullptr => LIBUSB device handle
     */
-   static libusb_device_handle *findDevice();
+   libusb_device_handle *findDevice();
 
    /**
     * Reset device

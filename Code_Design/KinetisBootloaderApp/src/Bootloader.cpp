@@ -5,7 +5,7 @@
 
     \verbatim
     USBDM
-    Copyright (C) 20019 Peter O'Donoghue
+    Copyright (C) 2020 Peter O'Donoghue
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,49 +56,49 @@ Bootloader::~Bootloader() {
  */
 libusb_device_handle *Bootloader::findDevice() {
 
-   libusb_device **devs;
-   int rc;
-
-   ssize_t cnt = libusb_get_device_list(NULL, &devs);
-   if (cnt <= 0){
-      return nullptr;
-   }
-
    libusb_device_handle *device = nullptr;
-   libusb_device *dev;
-   unsigned i=0;
-   while ((dev = devs[i++]) != NULL) {
-      struct libusb_device_descriptor desc;
-      rc = libusb_get_device_descriptor(dev, &desc);
-      if (rc < 0) {
-         fprintf(stderr, "failed to get device descriptor");
-         return nullptr;
+   libusb_device **deviceList = nullptr;
+   ssize_t deviceCount = 0;
+   int rc = 0;
+
+   do {
+      deviceCount = libusb_get_device_list(libusbContext, &deviceList);
+      if (deviceCount <= 0){
+         fprintf(stderr, "No suitable devices found\n");
+         continue;
       }
-//      fprintf(stderr, "%04x:%04x (bus %d, device %d)\n",
-//            desc.idVendor, desc.idProduct,
-//            libusb_get_bus_number(dev), libusb_get_device_address(dev));
-      if ((desc.idVendor == VENDOR_ID) && (desc.idProduct == PRODUCT_ID)) {
-         rc = libusb_open(dev, &device);
-         break;
+      // Reserve device
+      device = libusb_open_device_with_vid_pid(libusbContext, VENDOR_ID, PRODUCT_ID);
+      if (device == nullptr) {
+         fprintf(stderr, "Device failed to open\n");
+         continue;
       }
-   }
-   if (device != nullptr) {
+      // Find out if kernel driver is attached
+      if(libusb_kernel_driver_active(device, 0) == 1) {
+         fprintf(stderr, "Kernel Driver Active\n");
+         // Detach it
+         if(libusb_detach_kernel_driver(device, 0) == 0) {
+            fprintf(stderr, "Kernel Driver Detached!\n");
+         }
+      }
       rc = libusb_set_configuration(device, 1);
       if (rc < 0) {
-         libusb_close(device);
-         device = nullptr;
+         fprintf(stderr, "Set configuration failed - %s\n", libusb_error_name(rc));
+         continue;
       }
       rc = libusb_claim_interface(device, 0);
       if (rc < 0) {
-         libusb_close(device);
-         device = nullptr;
+         fprintf(stderr, "Claim interface failed - %s\n", libusb_error_name(rc));
+         continue;
       }
-   }
-   if (cnt > 0) {
-      libusb_free_device_list(devs, 1);
-   }
-   if (device == nullptr) {
-      fprintf(stderr, "Device failed to open\n");
+   } while (false);
+
+   // We can now free the list
+   libusb_free_device_list(deviceList, true);
+
+   if (rc < 0) {
+      libusb_close(device);
+      device = nullptr;
    }
    return device;
 }
@@ -117,7 +117,7 @@ const char *Bootloader::programBlock(UsbCommandMessage &message) {
 
    int bytesSent   = 0;
    int bytesToSend = sizeof(SimpleCommandMessage)+message.byteLength;
-   rc = libusb_bulk_transfer(device, EP_OUT, (uint8_t*)&message, bytesToSend, &bytesSent, 10000);
+   rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&message, bytesToSend, &bytesSent, 10000);
    if (rc < 0) {
       return libusb_error_name(rc);
    }
@@ -128,7 +128,7 @@ const char *Bootloader::programBlock(UsbCommandMessage &message) {
    ResponseStatus response = {};
 
    int bytesReceived = 0;
-   rc = libusb_bulk_transfer(device, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 10000);
+   rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 10000);
    if (rc < 0) {
       return libusb_error_name(rc);
    }
@@ -159,7 +159,7 @@ const char *Bootloader::eraseFlash() {
    };
 
    int bytesSent = 0;
-   rc = libusb_bulk_transfer(device, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 10000);
+   rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 10000);
    if (rc < 0) {
       return libusb_error_name(rc);
    }
@@ -170,7 +170,7 @@ const char *Bootloader::eraseFlash() {
    ResponseStatus response = {};
 
    int bytesReceived = 0;
-   rc = libusb_bulk_transfer(device, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 10000);
+   rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 10000);
    if (rc < 0) {
       return libusb_error_name(rc);
    }
@@ -201,7 +201,7 @@ const char *Bootloader::resetDevice() {
    };
 
    int bytesSent = 0;
-   rc = libusb_bulk_transfer(device, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 10000);
+   rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 10000);
    if (rc < 0) {
       return libusb_error_name(rc);
    }
@@ -229,8 +229,9 @@ const char *Bootloader::queryDeviceInformation(ResponseIdentify &identity) {
    };
 
    int bytesSent = 0;
-   int rc = libusb_bulk_transfer(device, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 10000);
+   int rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 5000);
    if (rc < 0) {
+      fprintf(stderr, "Bulk transfer (OUT) failed - %s\n", libusb_error_name(rc));
       return libusb_error_name(rc);
    }
    if ((unsigned)bytesSent != sizeof(command)) {
@@ -238,8 +239,9 @@ const char *Bootloader::queryDeviceInformation(ResponseIdentify &identity) {
    }
 
    int bytesReceived = 0;
-   rc = libusb_bulk_transfer(device, EP_IN, (uint8_t*)&identity, sizeof(identity), &bytesReceived, 10000);
+   rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&identity, sizeof(identity), &bytesReceived, 5000);
    if (rc < 0) {
+      fprintf(stderr, "Bulk transfer (IN) failed - %s\n", libusb_error_name(rc));
       return libusb_error_name(rc);
    }
    if ((unsigned)bytesReceived < sizeof(identity)) {
@@ -345,12 +347,12 @@ const char *Bootloader::download(FlashImagePtr flashImage) {
 
    const char *errorMessage = nullptr;
 
-   int rc = libusb_init(NULL);
+   int rc = libusb_init(&libusbContext);
    if (rc < 0) {
       return "Libusb failed initialisation";
    }
-   device = findDevice();
-   if (device == nullptr) {
+   deviceHandle = findDevice();
+   if (deviceHandle == nullptr) {
       return "Device not found";
    }
    do {
@@ -360,7 +362,7 @@ const char *Bootloader::download(FlashImagePtr flashImage) {
          break;
       }
       if ((flashImage->getFirstAllocatedAddress()<flashStart) ||
-          (flashImage->getLastAllocatedAddress()>(flashStart+flashSize-1))) {
+            (flashImage->getLastAllocatedAddress()>(flashStart+flashSize-1))) {
          errorMessage = "Flash image extends beyond target flash memory";
          break;
       }
@@ -378,12 +380,11 @@ const char *Bootloader::download(FlashImagePtr flashImage) {
       }
    } while(false);
 
-   if (device != nullptr) {
-      libusb_close(device);
-      device = nullptr;
-   }
+   libusb_close(deviceHandle);
+   deviceHandle = nullptr;
 
-   libusb_exit(nullptr);
+   libusb_exit(libusbContext);
+   libusbContext = nullptr;
 
    return errorMessage;
 }
@@ -400,12 +401,14 @@ const char *Bootloader::getDeviceInformation(ResponseIdentify &identity) {
 
    const char *errorMessage = nullptr;
 
-   int rc = libusb_init(NULL);
+   int rc = libusb_init(&libusbContext);
    if (rc < 0) {
       return "Libusb failed initialisation";
    }
-   device = findDevice();
-   if (device == nullptr) {
+   // Set verbosity level to 3, as suggested in the documentation
+   libusb_set_debug(libusbContext, 3);
+   deviceHandle = findDevice();
+   if (deviceHandle == nullptr) {
       return "Device not found";
    }
    do {
@@ -418,13 +421,11 @@ const char *Bootloader::getDeviceInformation(ResponseIdentify &identity) {
       fflush(stderr);
    } while (false);
 
-   if (device != nullptr) {
-      libusb_close(device);
-      device = nullptr;
-   }
+   libusb_close(deviceHandle);
+   deviceHandle = nullptr;
 
-   libusb_exit(nullptr);
+   libusb_exit(libusbContext);
+   libusbContext = nullptr;
 
    return errorMessage;
 }
-

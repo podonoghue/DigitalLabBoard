@@ -5,3 +5,6 @@ SRC += BootloaderDialogueSkeleton.cpp
 SRC += crc32b.cpp
 SRC += KinetisBootloader.cpp
 SRC += Version.rc
+SRC += ErrorMessages.cpp
+SRC += UsbdmSystem.cpp
+SRC += UsbdmSystemLinux.cpp
