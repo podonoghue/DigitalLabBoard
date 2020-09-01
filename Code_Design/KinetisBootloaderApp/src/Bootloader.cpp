@@ -380,6 +380,11 @@ const char *Bootloader::download(FlashImagePtr flashImage) {
       }
    } while(false);
 
+   rc = libusb_release_interface(deviceHandle, 0);
+   if (rc < 0) {
+      fprintf(stderr, "Release interface failed - %s\n", libusb_error_name(rc));
+   }
+
    libusb_close(deviceHandle);
    deviceHandle = nullptr;
 
