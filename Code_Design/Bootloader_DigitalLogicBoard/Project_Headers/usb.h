@@ -125,9 +125,10 @@ public:
     * Events for user callback
     */
    enum UserEvent {
-      UserEvent_Suspend,  //!< USB has been suspended
-      UserEvent_Resume,   //!< USB has been resumed
-      UserEvent_Reset,    //!< USB has been reset
+      UserEvent_Suspend,   //!< USB has been suspended
+      UserEvent_Resume,    //!< USB has been resumed
+      UserEvent_Reset,     //!< USB has been reset
+      UserEvent_Configure, //!< USB has been configureds
    };
 
    /**
@@ -1461,6 +1462,7 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetConfiguration() {
    if (configChanged) {
    // Initialise non-control end-points
       UsbImplementation::initialiseEndpoints();
+      fUserCallbackFunction(UserEvent::UserEvent_Configure);
    }
 
    // Tx empty Status transaction

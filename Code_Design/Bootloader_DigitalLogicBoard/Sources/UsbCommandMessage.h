@@ -36,12 +36,12 @@ constexpr const char *getHardwareVersion() {
  * Commands available
  */
 enum UsbCommand : uint32_t {
-   UsbCommand_Nop,            //! No operation
-   UsbCommand_Identify,       //! Identify boot-loader and hardware versions etc
-   UsbCommand_EraseFlash,     //! Erase all of flash image
-   UsbCommand_ReadBlock,      //! Read block from flash
-   UsbCommand_ProgramBlock,   //! Program block to flash
-   UsbCommand_Reset,          //! Reset device
+   UsbCommand_Nop,            //!< No operation
+   UsbCommand_Identify,       //!< Identify boot-loader and hardware versions etc
+   UsbCommand_EraseFlash,     //!< Erase all of flash image
+   UsbCommand_ReadBlock,      //!< Read block from flash
+   UsbCommand_ProgramBlock,   //!< Program block to flash
+   UsbCommand_Reset,          //!< Reset device
 };
 
 /**
@@ -52,6 +52,7 @@ enum UsbCommandStatus : uint32_t {
    UsbCommandStatus_Failed,      //!< Failed
 };
 
+/** Maximum size of data in message e.g. flash data block */
 static constexpr unsigned MAX_MESSAGE_DATA = 1024;
 
 /**
@@ -101,25 +102,26 @@ static inline const char *getHardwareType(uint16_t hardwareVersion) {
    return name;
 }
 
+// USB messages are packed data in LE (native) format
 #pragma pack(push, 1)
 
 /**
  * General USB command message
  */
 struct UsbCommandMessage {
-   UsbCommand  command;              // Command to execute
-   uint32_t startAddress;            // Target memory address
-   uint32_t byteLength;              // Size of data
-   uint8_t  data[MAX_MESSAGE_DATA];  // Data (up to 1 flash block)
+   UsbCommand  command;                 // Command to execute
+   uint32_t    startAddress;            // Target memory address
+   uint32_t    byteLength;              // Size of data
+   uint8_t     data[MAX_MESSAGE_DATA];  // Data (up to 1 flash block)
 };
 
 /**
- * Simple USB command message
+ * Simple USB command message (no data)
  */
 struct SimpleCommandMessage {
-   UsbCommand  command;    // Command to execute
-   uint32_t startAddress;  // Target memory address
-   uint32_t byteLength;    // Size of data
+   UsbCommand  command;       // Command to execute
+   uint32_t    startAddress;  // Target memory address
+   uint32_t    byteLength;    // Size of data
 };
 
 /**

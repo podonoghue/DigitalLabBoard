@@ -259,8 +259,8 @@ const char *UsbBase::getSetupPacketDescription(SetupPacket *p) {
 void reportLineState(uint8_t value) {
    (void)value;
    console.
-   writeln("Line state: RTS=").write((value&(1<<1))?1:0).
-   write("DTR=").writeln((value&(1<<0))?1:0);
+      writeln("Line state: RTS=").write((value&(1<<1))?1:0).
+      write("DTR=").writeln((value&(1<<0))?1:0);
 }
 
 /**

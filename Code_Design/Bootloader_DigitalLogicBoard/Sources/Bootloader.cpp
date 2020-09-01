@@ -13,14 +13,13 @@
 #include "UsbCommandMessage.h"
 #include "flash.h"
 #include "crc.h"
-// Allow access to USBDM methods
+
 using namespace USBDM;
 
-/*
- * ICP CONTROL
- */
-/// Power - Enable button - also ICP button during power-on
+/** ICP button - checked during boot */
 using IcpButton = GpioA<4,  USBDM::ActiveLow>;
+
+/** Debug pin */
 using DebugPin  = GpioD<4,  USBDM::ActiveLow>;
 
 /**
@@ -46,13 +45,20 @@ static constexpr unsigned FLASH_BUFFER_START =  0x4000;
 /** Size of Flash region being used for image */
 static constexpr unsigned FLASH_BUFFER_SIZE  = 0x1C000;
 
+/**
+ * Calculates CRC32 over a range of memory
+ *
+ * @param start Start address
+ * @param size  Size of region to run CRC over
+ *
+ * @return 32-bit CRC value
+ */
 uint32_t calcuateCRC32(uint8_t *start, uint32_t size) {
    using Crc = Crc0;
 
    // Calculate CRC32
    Crc::configure_Crc32();
-   uint32_t crc = Crc::calculateCrc((uint32_t *)start, size);
-   return crc;
+   return Crc::calculateCrc((uint32_t *)start, size);
 }
 
 /**
@@ -62,8 +68,13 @@ uint32_t calcuateCRC32(uint8_t *start, uint32_t size) {
  * @return false => CRC  is invalid i.e. Flash image is not verified
  */
 bool isFlashValid() {
+   // CRC value in Flash to verify against
    uint32_t flashCrc = *((uint32_t *)(FLASH_BUFFER_START+FLASH_BUFFER_SIZE-4));
+
+   // Calculate current CRC
    uint32_t calculatedCrc = calcuateCRC32((uint8_t *)FLASH_BUFFER_START, FLASH_BUFFER_SIZE-4);
+
+   // Should agree
    return calculatedCrc == flashCrc;
 }
 
@@ -90,26 +101,23 @@ bool programFlash(UsbCommandMessage command) {
    return true;
 }
 
-//void toggleDebug() {
-//   DebugPin::setOutput();
-//   for (int i=0; i<100; i++) {
-//      DebugPin::toggle();
-//      waitUS(100);
-//   }
-//}
-
+/**
+ * Boot into user program mode if:
+ *  - Flash image is valid and
+ *  - ICP button not pressed
+ *
+ *  @note Does not return if ICP mode is not detected
+ *  @note Called from system code before peripherals are initialised
+ */
 void checkICP() {
    IcpButton::setInput(PinPull_Up);
-   //   toggleDebug();
 
    if (isFlashValid() && IcpButton::isReleased()) {
-      //      console.WRITELN("Flash is valid - calling flash image via relocated vector table");
 
       // Find the reset code */
       void (*f)() = (void (*)())(((uint32_t *)FLASH_BUFFER_START)[1]);
 
       // Call it
-      //      console.WRITE("Calling startup @0x").WRITELN((uint32_t*)f);
       f();
    }
 }
@@ -118,6 +126,9 @@ void checkICP() {
 #define SCB_AIRCR_VECTKEY(x) (((x)<<SCB_AIRCR_VECTKEY_Pos)&SCB_AIRCR_VECTKEY_Msk)
 #endif
 
+/**
+ * Reset system
+ */
 static void resetSystem() {
 
    /* Request system reset */
@@ -129,6 +140,9 @@ static void resetSystem() {
    }
 }
 
+/**
+ * Structure of Boot information in Flash memory
+ */
 struct BootInformation {
    uint32_t reserved;
    uint32_t softwareVersion;
@@ -136,6 +150,12 @@ struct BootInformation {
    uint32_t checksum;
 };
 
+/**
+ * Get Boot information from fixed Flash location in loaded image
+ *
+ * @return Non-nullptr => Pointer to read-only structure in Flash
+ * @return nullptr     => Loaded flash image is not valid
+ */
 static BootInformation *getBootInformation() {
 
    if (isFlashValid()) {
@@ -143,12 +163,13 @@ static BootInformation *getBootInformation() {
             ((BootInformation *)(FLASH_BUFFER_START+FLASH_BUFFER_SIZE-sizeof(BootInformation)));
       return imageVersion;
    }
-   return 0;
+   return nullptr;
 }
 
+/** Buffer for USB command */
 static UsbCommandMessage command;
 
-enum UsbState {UsbStartUp, UsbIdle, UsbWaiting};
+enum UsbState {UsbStartUp, UsbIdle};
 
 void pollUsb() {
 
@@ -157,10 +178,8 @@ void pollUsb() {
 
    static UsbState usbState = UsbStartUp;
 
-   // Call-back to record resets
+   // Call-back to record USB user events
    static auto cb = [](const UsbImplementation::UserEvent) {
-      // Restart transfers on reset etc.
-      usbState = UsbIdle;
       return E_NO_ERROR;
    };
 
@@ -174,27 +193,17 @@ void pollUsb() {
       usbState = UsbIdle;
       return;
    }
+
    // Check for USB connection
    if (!UsbImplementation::isConfigured()) {
-//      console.WRITELN("not isConfigured");
+      console.WRITELN("Not configured");
       // No connection
       return;
    }
 
    int size;
 
-   if (usbState != UsbWaiting) {
-      // UsbIdle
-      // Set up to receive a message
-//      console.WRITELN("startReceiveBulkData");
-      Usb0::startReceiveBulkData(sizeof(command), (uint8_t *)&command);
-      usbState = UsbWaiting;
-      return;
-   }
-
-   // UsbWaiting
-
-   size = Usb0::pollReceiveBulkData();
+   size = Usb0::pollReceiveBulkData(sizeof(command), (uint8_t *)&command);
    if (size < 0) {
       // No message - USB still ready
       return;
@@ -212,11 +221,12 @@ void pollUsb() {
 
    do {
       if (size < (int)sizeof(command.command)) {
-         // Empty message?
-         console.WRITELN("Empty command");
+         // Incomplete command?
+         console.WRITELN("Incomplete command");
          response.status = UsbCommandStatus_Failed;
          continue;
       }
+      // Report message on console
       writeCommandMessage(command);
 
       switch(command.command) {
@@ -247,6 +257,7 @@ void pollUsb() {
             responseSize = command.byteLength + sizeof(ResponseIdentify);
             continue;
          }
+
          case UsbCommand_EraseFlash:
             if (Flash::eraseRange((uint8_t *)FLASH_BUFFER_START, FLASH_BUFFER_SIZE) != FLASH_ERR_OK) {
                response.status = UsbCommandStatus_Failed;
@@ -261,7 +272,12 @@ void pollUsb() {
             continue;
 
          case UsbCommand_ReadBlock:
-            response.status      = UsbCommandStatus_OK;
+            if (response.byteLength > sizeof(command.data)) {
+               // Illegal block size
+               response.status = UsbCommandStatus_Failed;
+               console.WRITELN("Read block too large");
+               continue;
+            }
             response.byteLength  = command.byteLength;
             responseSize         = command.byteLength + sizeof(ResponseStatus);
             memcpy(response.data, (uint8_t *)(command.startAddress), command.byteLength);
@@ -276,7 +292,7 @@ void pollUsb() {
    // Send response
    ErrorCode rc = Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
    if (rc != 0) {
-      console.WRITE("sendBulkData() failed, rc =").WRITELN(rc);
+      console.WRITE("sendBulkData() failed, reason = ").WRITELN(getErrorMessage(rc));
    }
    usbState = UsbIdle;
 }

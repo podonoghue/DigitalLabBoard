@@ -248,7 +248,22 @@ ErrorCode Usb0::startReceiveBulkData(uint16_t size, uint8_t *buffer) {
    return E_NO_ERROR;
 }
 
-int Usb0::pollReceiveBulkData() {
+/**
+ * Poll for receive data on USB.
+ * If the interface is idle it is set up for reception using the parameters provided.
+ * This is non-blocking.
+ *
+ * @param size    Size of buffer
+ * @param buffer  Buffer for data
+ *
+ * @return  <0  => No data available
+ * @return  >=0 => Data has been received and copied to buffer
+ */
+int Usb0::pollReceiveBulkData(uint16_t size, uint8_t *buffer) {
+   if (epBulkOut.getState() == EPIdle) {
+      epBulkOut.startRxStage(EPDataOut, size, buffer);
+      return -1;
+   }
    if (epBulkOut.getState() != EPComplete) {
       return -1;
    }
@@ -267,8 +282,7 @@ int Usb0::pollReceiveBulkData() {
  *   @note Doesn't return until some bytes have been received or timeout
  */
 ErrorCode Usb0::receiveBulkData(uint16_t &size, uint8_t *buffer) {
-   startReceiveBulkData(size, buffer);
-   while (pollReceiveBulkData() < 0) {
+   while (pollReceiveBulkData(size, buffer) < 0) {
       __WFI();
    }
    setActive();
