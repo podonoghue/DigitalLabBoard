@@ -4,7 +4,6 @@
     Bootloader.cpp
 
     \verbatim
-    USBDM
     Copyright (C) 2020 Peter O'Donoghue
 
     This program is free software; you can redistribute it and/or modify
