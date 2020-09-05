@@ -149,7 +149,7 @@ void XsvfPlayer::shiftOut(unsigned size, bool tdi_value, uint8_t *tdo_value, boo
    uint8_t mask = 0b1;
 
    // Start at Least Significant byte
-   tdo_value += sizeInBytes-1;
+   tdo_value  += sizeInBytes-1;
 
    JtagInterface::setTMS(0);
    while(size-->0) {
@@ -343,8 +343,8 @@ bool XsvfPlayer::shiftIn(unsigned size, uint8_t *tdi_value, uint8_t *tdo_value, 
    uint8_t mask = 0b1;
 
    // Start at Least Significant byte
-   tdi_value += sizeInBytes-1;
-   tdo_value += sizeInBytes-1;
+   tdi_value  += sizeInBytes-1;
+   tdo_value  += sizeInBytes-1;
 
    JtagInterface::setTMS(0);
    while(size-->0) {
@@ -487,6 +487,9 @@ bool XsvfPlayer::play() {
 
    switch(command) {
       case XCOMPLETE   :
+         /*
+          * End of sequence
+          */
          console.WRITELN("XCOMPLETE,");
          return true;
 

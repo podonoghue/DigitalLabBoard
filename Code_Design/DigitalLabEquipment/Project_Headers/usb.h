@@ -125,9 +125,10 @@ public:
     * Events for user callback
     */
    enum UserEvent {
-      UserEvent_Suspend,  //!< USB has been suspended
-      UserEvent_Resume,   //!< USB has been resumed
-      UserEvent_Reset,    //!< USB has been reset
+      UserEvent_Suspend,   //!< USB has been suspended
+      UserEvent_Resume,    //!< USB has been resumed
+      UserEvent_Reset,     //!< USB has been reset
+      UserEvent_Configure, //!< USB has been configureds
    };
 
    /**
@@ -542,16 +543,20 @@ protected:
     * Set configures state
     *
     * @param[in]  config The number of the configuration to set
+    *
+    * @return true  => configuration changed
+    * @return false => configuration unchanged
     */
-   static void setUSBconfiguredState( uint8_t config ) {
+   static bool setUSBconfiguredState( uint8_t config ) {
       if (config == 0) {
          // unconfigure
          setUSBaddressedState(fUsb().ADDR);
+         return true;
       }
-      else {
-         fConnectionState      = USBconfigured;
-         fDeviceConfiguration  = config;
-      }
+      bool changed = (fConnectionState != USBconfigured) || (fDeviceConfiguration != config);
+      fConnectionState      = USBconfigured;
+      fDeviceConfiguration  = config;
+      return changed;
    }
 
    /**
@@ -1452,10 +1457,13 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetConfiguration() {
       fControlEndpoint.stall();
       return;
    }
-   setUSBconfiguredState(fEp0SetupBuffer.wValue.lo());
+   bool configChanged = setUSBconfiguredState(fEp0SetupBuffer.wValue.lo());
 
+   if (configChanged) {
    // Initialise non-control end-points
-   UsbImplementation::initialiseEndpoints();
+      UsbImplementation::initialiseEndpoints();
+      fUserCallbackFunction(UserEvent::UserEvent_Configure);
+   }
 
    // Tx empty Status transaction
    fControlEndpoint.startTxStatus();
@@ -1517,12 +1525,14 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
       if ((pendingInterruptFlags&USB_ISTAT_TOKDNE_MASK) != 0) {
          // Get endpoint status
          UsbStat usbStat = (UsbStat)fUsb().STAT;
-         // console.WRITE("(").WRITE(usbStat.endp).WRITE(usbStat.tx?",T,":",R,").WRITE(usbStat.odd?"O,":"E,").WRITE("),");
-
          // Token complete interrupt
-         if (!handleTokenComplete(usbStat)) {
-            //            console.WRITELN("Tc not handled");
+         if (usbStat.endp == fControlEndpoint.fEndpointNumber) {
+            handleTokenComplete(usbStat);
+         }
+         else {
             // Pass to extension routine
+//            console.WRITE("(").WRITE(usbStat.endp).WRITE(usbStat.tx?",T,":",R,").WRITE(usbStat.odd?"O,":"E,").WRITE("),");
+//            console.WRITELN(UsbImplementation::epBulkOut.getStateName());
             UsbImplementation::handleTokenComplete(usbStat);
          }
       }

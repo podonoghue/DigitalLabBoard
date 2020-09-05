@@ -60,6 +60,7 @@ const char *getErrorMessage(ErrorCode err) {
 #endif
 }
 
+#ifdef DEBUG_BUILD
 void abort(const char *msg __attribute__((unused))) {
 #if USE_CONSOLE
    console.writeln(msg);
@@ -69,7 +70,6 @@ void abort(const char *msg __attribute__((unused))) {
    }
 }
 
-#ifdef DEBUG_BUILD
 /**
  * Check for error code being set (drastically!)
  * This routine does not return if there is an error

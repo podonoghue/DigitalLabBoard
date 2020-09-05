@@ -3,7 +3,6 @@
  *
  *   Wrapper for JTAG pins being used
  */
-
 #ifndef SOURCES_JTAGINTERFACE_H_
 #define SOURCES_JTAGINTERFACE_H_
 
@@ -12,13 +11,12 @@
 class JtagInterface {
 
 private:
-//   using Jtag = USBDM::GpioDField<3,0>;
+   /** Hardware used for JTAG Interface */
    using Jtag = USBDM::GpioDField<3,0>;
    using Tms  = Jtag::Bit<3>;
    using Tdi  = Jtag::Bit<2>;
    using Tdo  = Jtag::Bit<1>;
    using Tck  = Jtag::Bit<0>;
-
 
    using Adc  = USBDM::Adc0;
    using Vref = Adc::Channel<0>;
