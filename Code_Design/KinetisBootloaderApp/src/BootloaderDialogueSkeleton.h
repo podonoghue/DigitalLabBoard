@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Oct 26 2018)
+// C++ code generated with wxFormBuilder (version 3.9.0 Sep  6 2020)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -9,12 +9,12 @@
 
 #include <wx/artprov.h>
 #include <wx/xrc/xmlres.h>
+#include <wx/button.h>
 #include <wx/string.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/icon.h>
 #include <wx/gdicmn.h>
-#include <wx/button.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
@@ -36,7 +36,7 @@ class BootloaderDialogueSkeleton : public wxDialog
 	protected:
 		wxButton* loadFile_button;
 		wxStaticText* loadedFile_static;
-		wxButton* CheckDevice_button;
+		wxButton* checkDevice_button;
 		wxTextCtrl* checkDevice_textCtrl;
 		wxButton* programDevice_button;
 		wxStaticText* programAction_static;
@@ -49,7 +49,7 @@ class BootloaderDialogueSkeleton : public wxDialog
 
 	public:
 
-		BootloaderDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Kinetis Bootloader"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 446,300 ), long style = wxDEFAULT_DIALOG_STYLE );
+		BootloaderDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Kinetis Bootloader"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 464,298 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~BootloaderDialogueSkeleton();
 
 };

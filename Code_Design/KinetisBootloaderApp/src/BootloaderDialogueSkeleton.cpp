@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version Oct 26 2018)
+// C++ code generated with wxFormBuilder (version 3.9.0 Sep  6 2020)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -31,21 +31,21 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 	sbSizer1->Add( loadedFile_static, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 
 
-	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
+	bSizer1->Add( sbSizer1, 1, wxALL|wxEXPAND, 5 );
 
-	wxStaticBoxSizer* sbSizer31;
-	sbSizer31 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Device Information") ), wxHORIZONTAL );
+	wxStaticBoxSizer* sbSizer2;
+	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Device Information") ), wxHORIZONTAL );
 
-	CheckDevice_button = new wxButton( sbSizer31->GetStaticBox(), wxID_ANY, wxT("Check Device"), wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizer31->Add( CheckDevice_button, 0, wxALL|wxEXPAND, 5 );
+	checkDevice_button = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Check Device"), wxDefaultPosition, wxDefaultSize, 0 );
+	sbSizer2->Add( checkDevice_button, 0, wxALL|wxEXPAND, 5 );
 
-	checkDevice_textCtrl = new wxTextCtrl( sbSizer31->GetStaticBox(), wxID_ANY, wxT("-- no information --"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	checkDevice_textCtrl->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
+	checkDevice_textCtrl = new wxTextCtrl( sbSizer2->GetStaticBox(), wxID_ANY, wxT("-- no information --"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
+	checkDevice_textCtrl->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
 
-	sbSizer31->Add( checkDevice_textCtrl, 1, wxALL|wxEXPAND, 5 );
+	sbSizer2->Add( checkDevice_textCtrl, 1, wxALL|wxEXPAND, 5 );
 
 
-	bSizer1->Add( sbSizer31, 2, wxEXPAND, 5 );
+	bSizer1->Add( sbSizer2, 2, wxALL|wxEXPAND, 5 );
 
 	wxStaticBoxSizer* sbSizer3;
 	sbSizer3 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Programming") ), wxHORIZONTAL );
@@ -63,7 +63,7 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 	sbSizer3->Add( programAction_static, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 
 
-	bSizer1->Add( sbSizer3, 1, wxEXPAND, 5 );
+	bSizer1->Add( sbSizer3, 1, wxALL|wxEXPAND, 5 );
 
 
 	this->SetSizer( bSizer1 );
@@ -73,7 +73,7 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 
 	// Connect Events
 	loadFile_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onLoadFile ), NULL, this );
-	CheckDevice_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onCheckDevice ), NULL, this );
+	checkDevice_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onCheckDevice ), NULL, this );
 	programDevice_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onProgramDevice ), NULL, this );
 }
 
@@ -81,7 +81,7 @@ BootloaderDialogueSkeleton::~BootloaderDialogueSkeleton()
 {
 	// Disconnect Events
 	loadFile_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onLoadFile ), NULL, this );
-	CheckDevice_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onCheckDevice ), NULL, this );
+	checkDevice_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onCheckDevice ), NULL, this );
 	programDevice_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( BootloaderDialogueSkeleton::onProgramDevice ), NULL, this );
 
 }
