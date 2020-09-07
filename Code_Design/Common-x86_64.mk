@@ -27,7 +27,7 @@ SHARED_LIBDIRS := ../Shared/$(MULTIARCH)
 
 #===========================================================
 # Where to find private libraries on linux
-USBDM_LIBDIR="/usr/lib/$(MULTIARCH)/usbdm"
+#USBDM_LIBDIR="/usr/lib/$(MULTIARCH)/usbdm"
 
 #===========================================================
 # Where to build
@@ -242,7 +242,7 @@ else
 endif
 
 ifneq ($(OS),Windows_NT)
-   LDFLAGS += -Wl,-rpath,${USBDM_LIBDIR}
+#   LDFLAGS += -Wl,-rpath,${USBDM_LIBDIR}
    LDFLAGS += -Wl,-rpath-link,${TARGET_LIBDIR}
 
    ifeq ($(UNAME_M),x86)

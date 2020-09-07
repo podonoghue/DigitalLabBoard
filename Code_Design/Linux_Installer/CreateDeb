@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Version Information
+MAJOR=1
+MINOR=0
+MICRO=0
+NANO=0
+DEBIAN_VERSION=1
+VERSION=${MAJOR}.${MINOR}.${MICRO}.${NANO}
+
+ARCH=`uname -m`
+
+SOURCE_DIRECTORY=.
+
+DATE=`date +"%Y%m%d%H%M%S"`
+
+#======================================================
+# Create DEB file
+#
+makeDebFile() {
+
+#   CP="cp -pv"
+#   MKDIR="mkdir -pv"
+#   RM="rm -f"
+#   MV="mv -v"
+
+   CP="cp -p"
+   MKDIR="mkdir -p"
+   RM="rm -f"
+   MV="mv"
+
+   # Where to construct the install tree
+   DUMMY_ROOT="../kinetis_bootloader_${VERSION}-${DEBIAN_VERSION}-${ARCH}"
+
+   if [[ -e ${DUMMY_ROOT} ]]; then
+      ${RM} -R ${DUMMY_ROOT}
+   fi
+   
+   ${MKDIR} ${DUMMY_ROOT}
+   ${CP} -r "${SOURCE_DIRECTORY}/image/." ${DUMMY_ROOT}   
+   ${CP} -r "${SOURCE_DIRECTORY}/../PackageFiles/bin/x86_64-linux-gnu/KinetisBootloaderApp" "${DUMMY_ROOT}/usr/bin/kinetisbootloader"   
+
+   # Fix permissions
+   find ${DUMMY_ROOT}   -type d -exec chmod 755 {} \;
+   find ${DUMMY_ROOT}   -type f ! -executable -exec chmod 644 {} \;
+   find ${DUMMY_ROOT}   -type f -name \*.so\* -exec chmod 644 {} \; -exec strip {} \;
+   find ${DUMMY_ROOT}   -type f -executable -exec chmod 755 {} \; -exec strip {} \;
+   find ${DUMMY_ROOT}   -type f -name \*.map\* -exec chmod 644 {} \;
+      
+   echo fakeroot dpkg-deb --build ${DUMMY_ROOT}
+   fakeroot dpkg-deb --build ${DUMMY_ROOT}
+
+   echo lintian ${DUMMY_ROOT}.deb   
+   lintian ${DUMMY_ROOT}.deb 
+
+   if [[ -e ${DUMMY_ROOT} ]]; then
+      ${RM} -R ${DUMMY_ROOT}
+   fi   
+}
+
+# Build for native ARCH
+makeDebFile
+
+exit
+
+
