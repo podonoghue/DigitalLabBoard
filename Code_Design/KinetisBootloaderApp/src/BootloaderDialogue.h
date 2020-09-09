@@ -9,7 +9,7 @@
 #define BOOTLOADERDIALOGUE_H_
 
 #include "BootloaderDialogueSkeleton.h"
-#include "FlashImageFactory.h"
+#include "FlashImage.h"
 #include "Bootloader.h"
 
 class BootloaderDialogue : public BootloaderDialogueSkeleton {

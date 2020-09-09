@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version Information
-MAJOR=1
+MAJOR=2
 MINOR=0
 MICRO=0
 NANO=0
@@ -14,6 +14,9 @@ SOURCE_DIRECTORY=.
 
 DATE=`date +"%Y%m%d%H%M%S"`
 
+PACKAGE_NAME="kinetisbootloader"
+APP_NAME="kinetisbootloader"
+
 #======================================================
 # Create DEB file
 #
@@ -23,14 +26,22 @@ makeDebFile() {
 #   MKDIR="mkdir -pv"
 #   RM="rm -f"
 #   MV="mv -v"
+#  GZIP="gzip -v"
 
    CP="cp -p"
    MKDIR="mkdir -p"
    RM="rm -f"
    MV="mv"
-
+   GZIP="gzip"
+   
    # Where to construct the install tree
-   DUMMY_ROOT="../kinetis_bootloader_${VERSION}-${DEBIAN_VERSION}-${ARCH}"
+   DUMMY_ROOT="../${PACKAGE_NAME}_${VERSION}-${DEBIAN_VERSION}-${ARCH}"
+   
+   # Shared document files
+   SHARED_DOC_DIR="${DUMMY_ROOT}/usr/share/doc/${PACKAGE_NAME}"
+   
+   BIN_DIR="${DUMMY_ROOT}/usr/bin"
+   LIB_DIR="${DUMMY_ROOT}/usr/lib/${ARCH}-linux-gnu/${PACKAGE_NAME}"
 
    if [[ -e ${DUMMY_ROOT} ]]; then
       ${RM} -R ${DUMMY_ROOT}
@@ -38,14 +49,19 @@ makeDebFile() {
    
    ${MKDIR} ${DUMMY_ROOT}
    ${CP} -r "${SOURCE_DIRECTORY}/image/." ${DUMMY_ROOT}   
-   ${CP} -r "${SOURCE_DIRECTORY}/../PackageFiles/bin/x86_64-linux-gnu/KinetisBootloaderApp" "${DUMMY_ROOT}/usr/bin/kinetisbootloader"   
+   ${CP} -rp "${SOURCE_DIRECTORY}/../PackageFiles/bin/${ARCH}-linux-gnu/KinetisBootloaderApp" "${BIN_DIR}/${APP_NAME}"   
+   ${CP} -rp "${SOURCE_DIRECTORY}/../Shared/${ARCH}-linux-gnu/." "${LIB_DIR}"   
+
+   ${MKDIR} ${SHARED_DOC_DIR}
+   ${GZIP} -n -9 -k -c "${SOURCE_DIRECTORY}/../PackageFiles"/changelog >${SHARED_DOC_DIR}/changelog.gz
+   ${CP}                          "${SOURCE_DIRECTORY}/../PackageFiles"/copyright             ${SHARED_DOC_DIR}
 
    # Fix permissions
    find ${DUMMY_ROOT}   -type d -exec chmod 755 {} \;
+   find ${DUMMY_ROOT}   -type f -name \*.map\* -exec chmod 644 {} \;
    find ${DUMMY_ROOT}   -type f ! -executable -exec chmod 644 {} \;
    find ${DUMMY_ROOT}   -type f -name \*.so\* -exec chmod 644 {} \; -exec strip {} \;
    find ${DUMMY_ROOT}   -type f -executable -exec chmod 755 {} \; -exec strip {} \;
-   find ${DUMMY_ROOT}   -type f -name \*.map\* -exec chmod 644 {} \;
       
    echo fakeroot dpkg-deb --build ${DUMMY_ROOT}
    fakeroot dpkg-deb --build ${DUMMY_ROOT}

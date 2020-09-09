@@ -316,13 +316,13 @@ public:
        */
       static void enableTimestamping(bool enable=true) {(void)enable;}
    };
-   //! Enable loggin in function
+   //! Enable logging in function
    #define LOGGING_Q UsbdmSystem::Log log
-   //! Enable loggin in function & log entry
+   //! Enable logging in function & log entry
    #define LOGGING_E UsbdmSystem::Log log
-   //! Enable loggin in function & log exit
+   //! Enable logging in function & log exit
    #define LOGGING_X UsbdmSystem::Log log
-   //! Enable loggin in function & log entry and exit
+   //! Enable logging in function & log entry and exit
    #define LOGGING   UsbdmSystem::Log log
 #endif
 

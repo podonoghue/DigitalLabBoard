@@ -1,4 +1,4 @@
-Version: 1.0.0
+Version: 2.0.0
 Source: kinetisbootloader
 Section: contrib/devel
 Architecture: amd64
@@ -7,4 +7,5 @@ Maintainer: P O'Donoghue <1848579+podonoghue@users.noreply.github.com>
 Homepage: https://github.com/podonoghue/DigitalLabBoard
 Package: kinetisbootloader
 Depends: libwxbase3.0-0v5,libwxgtk3.0-gtk3-0v5,libc6
-Description: Bootloader application for use with custom kinetis USB bootloader.
+Description: Bootloader application
+ For use with custom Kinetis USB bootloader.

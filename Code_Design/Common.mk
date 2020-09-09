@@ -5,6 +5,8 @@ MAJOR_VERSION := 1
 MINOR_VERSION := 0
 MICRO_VERSION := 0
 
+PKG_NAME = kinetisbootloader
+
 # Used as prefix with the above when in build directory $(DUMMY_CHILD)/$(SHARED_SRC) = PackageFiles/src
 DUMMY_CHILD    := PackageFiles
 
@@ -27,7 +29,7 @@ SHARED_LIBDIRS := ../Shared/$(MULTIARCH)
 
 #===========================================================
 # Where to find private libraries on linux
-#USBDM_LIBDIR="/usr/lib/$(MULTIARCH)/usbdm"
+PKG_LIBDIR="/usr/lib/$(MULTIARCH)/${PKG_NAME}"
 
 #===========================================================
 # Where to build
@@ -242,7 +244,11 @@ else
 endif
 
 ifneq ($(OS),Windows_NT)
-#   LDFLAGS += -Wl,-rpath,${USBDM_LIBDIR}
+   # Executable will look here for libraries
+   LDFLAGS += -Wl,-rpath,${PKG_LIBDIR}
+   
+   # Linker will look here
+   LDFLAGS += -Wl,-rpath-link,${SHARED_LIBDIRS}
    LDFLAGS += -Wl,-rpath-link,${TARGET_LIBDIR}
 
    ifeq ($(UNAME_M),x86)

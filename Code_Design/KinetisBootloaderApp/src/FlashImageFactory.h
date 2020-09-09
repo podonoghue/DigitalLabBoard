@@ -27,13 +27,12 @@
 #ifndef SOURCE_FLASHIMAGEFACTORY_H_
 #define SOURCE_FLASHIMAGEFACTORY_H_
 
-#include "PluginFactory.h"
 #include "FlashImage.h"
 
 /**
  * Factory class for flash images
  */
-class FlashImageFactory : public PluginFactory<FlashImage> {
+class FlashImageFactory {
 private:
    FlashImageFactory() {}
    ~FlashImageFactory() {}
@@ -45,8 +44,8 @@ public:
     * @param targetType Type of target for which image is to be created
     */
    static FlashImagePtr createFlashImage(TargetType_t targetType) {
-      LOGGING;
-      FlashImagePtr pp = createPlugin(DLL_NAME("usbdm-flash-image"), "createPluginInstance");
+      FlashImagePtr pp(new FlashImage{});
+//      FlashImagePtr pp = createPlugin(DLL_NAME("usbdm-flash-image"), "createPluginInstance");
       pp->setTargetType(targetType);
       return pp;
    }

@@ -9,6 +9,7 @@
 #include "wx/filedlg.h"
 #include "wx/msgdlg.h"
 #include "FlashImageFactory.h"
+#include "MyException.h"
 
 BootloaderDialogue::BootloaderDialogue() : BootloaderDialogueSkeleton(nullptr) {
 }

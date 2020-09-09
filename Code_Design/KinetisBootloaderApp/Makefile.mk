@@ -1,4 +1,4 @@
-include ../Common-$(ARCH).mk
+include ../Common.mk
 
 TARGET = KinetisBootloaderApp
 MODULE = module

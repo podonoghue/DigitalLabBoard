@@ -14,7 +14,7 @@ TARGET ?= $(BUILDDIR)
 TARGET_DLL=$(LIB_PREFIX)$(TARGET)$(LIB_SUFFIX)
 TARGET_EXE=$(TARGET)$(EXE_SUFFIX)
 
-include ../Common-$(ARCH).mk
+include ../Common.mk
 
 VPATH      := src $(BUILDDIR) 
 SOURCEDIRS := src

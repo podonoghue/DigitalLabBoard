@@ -1,5 +1,5 @@
 /** \file
-    \brief Header file for FlashImage
+    \brief Header file for FlashImage.cpp
 
     \verbatim
     Copyright (C) 2015  Peter O'Donoghue
@@ -23,54 +23,26 @@
    |    May 2015 | Created
    +====================================================================
     \endverbatim
-*/
-
+ */
 #ifndef  FLASHIMAGE_H_
 #define  FLASHIMAGE_H_
 
-#if !defined(CPP_DLL_LOCAL)
-   #ifdef _WIN32
-      //! Functions exported from a library
-      #define CPP_DLL_EXPORT __declspec(dllexport)
-      //! Functions imported from a library
-      #define CPP_DLL_IMPORT __declspec(dllimport)
-      //! Functions local to a library
-      #define CPP_DLL_LOCAL
-   #else
-      //! Functions exported from a library
-      #define CPP_DLL_EXPORT __attribute__ ((visibility ("default")))
-      //! Functions imported from a library
-      #define CPP_DLL_IMPORT __attribute__ ((visibility ("default")))
-      //! Functions local to a library
-      #define CPP_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
-   #endif
-#endif
-
-#if defined(COMPILE_FLASH_IMAGE_DLL)
-// Buiding Library
-#define USBDM_FLASHIMAGE_DECLSPEC CPP_DLL_EXPORT
-// Incorporating library directly
-#elif defined(LINK_USBDM_FLASH_DLL)
-//! Link to routines directly
-#define USBDM_FLASHIMAGE_DECLSPEC CPP_DLL_LOCAL
-#else
-// Dynamically linking to library
-#define USBDM_FLASHIMAGE_DECLSPEC CPP_DLL_IMPORT
-#endif
-
 #include <memory>
 #include <stdint.h>
-#include <string>
-
+#include <stdio.h>
+#include <map>
 #include "USBDM_API.h"
+#include "UsbdmSystem.h"
+#include "Elf.h"
+#include "FlashImage.h"
 
+class  MemoryPage;
+class  EnumeratorImp;
+typedef std::shared_ptr<MemoryPage> MemoryPagePtr;
 /**
  * Represents a memory image containing loaded file(s)
  */
-class USBDM_FLASHIMAGE_DECLSPEC FlashImage {
-
-public:
-   static const uint32_t DataOffset    =  (0x02000000UL);  // Offset used for DSC Data region
+class FlashImage {
 
    /**
     *  Class to enumerate the occupied locations within the memory image
@@ -122,23 +94,101 @@ public:
        */
       virtual void       lastValid() = 0;
    };
-   typedef std::shared_ptr<FlashImage::Enumerator> EnumeratorPtr;
+
+   template <typename T> class MallocWrapper {
+   private:
+      T *&ptr;
+   public:
+      static const uint32_t DataOffset    =  (0x02000000UL);  // Offset used for DSC Data region
+
+      typedef std::shared_ptr<Enumerator> EnumeratorPtr;
+
+      MallocWrapper(T *&ptr) : ptr(ptr) {
+      }
+
+      T *alloc(size_t size) {
+         free();
+         ptr = (T*)malloc(size);
+         UsbdmSystem::Log::print("Allocated %ld @0x%p\n", (long)size, ptr);
+         return ptr;
+      }
+      void free() {
+         if (ptr != 0) {
+            UsbdmSystem::Log::print("Freeing @0x%p\n", ptr);
+            ::free(ptr);
+            ptr = 0;
+         }
+      }
+      ~MallocWrapper() {
+         free();
+      }
+   };
+
+   class Openfile {
+   private:
+      FILE *fp;
+   public:
+      Openfile(const char* filePath, const char* modes) {
+         fp = fopen(filePath, modes);
+         UsbdmSystem::Log::print("Opened %s (fp=%p)\n", filePath, fp);
+      }
+      FILE *getfp() {
+         return  fp;
+      }
+      ~Openfile() {
+         //         UsbdmSystem::Log::print("Closing file (fp=%p)\n", fp);
+         if (fp != 0) {
+            fclose(fp);
+         }
+      }
+   };
+
+   friend MemoryPage;
+   friend EnumeratorImp;
 
 protected:
+   static const int                  PAGE_BIT_OFFSET =  (15-sizeof(uint8_t));  // 2**14 = 16K pages
+   static const unsigned             PAGE_SIZE       =  (1U<<PAGE_BIT_OFFSET);
+   static const int                  PAGE_MASK       =  (PAGE_SIZE-1U);
+   static const int                  MAX_SREC_SIZE   =  (1<<4);//! Maximum size of a S-record (2^N)
+
+protected:
+   TargetType_t                      targetType;
+   bool                              wordAddresses;
+   std::map<uint32_t,MemoryPagePtr>  memoryPages;            //!< Pointers to occupied memory pages
+   unsigned                          firstAllocatedAddress;  //!< First used memory locations
+   unsigned                          lastAllocatedAddress;   //!< Last used memory locations
+   uint16_t                          lastPageNumAccessed;    //!< Page # of last page accessed
+   MemoryPagePtr                     lastMemoryPageAccessed; //!< Last page accessed
+   unsigned                          elementCount;           //!< Count of occupied bytes
+   bool                              littleEndian;           //!< Target is little-endian
+   std::string                       sourceFilename;         //!< Name of last file loaded
+   std::string                       sourcePath;             //!< Path of last file loaded
+   bool                              allowOverwrite;
+   FILE                             *fp;
+   bool                              discardFF;
+   bool                              printHeader;
+   Elf32_Ehdr                        elfHeader;
+   Elf32_Shdr                        stringSectionHeader;
+   Elf32_Phdr                       *programHeaders;
+   char                             *symTable;
+
+public:
    /**
     *   Constructor - creates an empty Flash image
     */
-   FlashImage() {};
-
-public:
-   virtual ~FlashImage() {};
+   FlashImage();
+   /*
+    * Destructor
+    */
+   virtual ~FlashImage();
 
    /**
     *   Set target type of image
     *
     *   @param targetType - Target type to set
     */
-   virtual void                 setTargetType(TargetType_t targetType) = 0;
+   virtual void                  setTargetType(TargetType_t targetType);
    /**
     * Get string describing the error code
     *
@@ -146,7 +196,7 @@ public:
     *
     * @return String describing the error
     */
-   virtual char const          *getErrorString(USBDM_ErrorCode rc) = 0;
+   virtual char const           *getErrorString(USBDM_ErrorCode rc);
    /**
     *  Load a S19 or ELF file into the buffer. \n
     *
@@ -155,7 +205,7 @@ public:
     *
     *  @return error code see \ref USBDM_ErrorCode
     */
-   virtual USBDM_ErrorCode      loadFile(const std::string &filePath, bool clearBuffer=true) = 0;
+   virtual USBDM_ErrorCode       loadFile(const std::string &filePath, bool clearBuffer=true);
    /**
     *  Save image buffer as a S19 file. \n
     *
@@ -164,18 +214,18 @@ public:
     *
     *  @return error code see \ref USBDM_ErrorCode
     */
-   virtual USBDM_ErrorCode      saveFile(const std::string &filePath, bool discardFF=true) = 0;
+   virtual USBDM_ErrorCode       saveFile(const std::string &filePath, bool discardFF=true);
    /**
     *  Initialises the memory to empty
     */
-   virtual void clear() = 0;
+   virtual void                  clear();
    /**
     * Check if image is entirely empty (never written to)
     *
     * @return true=>image is entirely empty,\n
     *               image is not empty
     */
-   virtual bool isEmpty() const = 0;
+   virtual bool                  isEmpty() const;
    /**
     *  Checks if the memory location is valid (has been written to)
     *
@@ -185,11 +235,11 @@ public:
     *          true   => location has been previously written to \n
     *          false  => location is invalid
     */
-   virtual bool isValid(uint32_t address) = 0;
+   virtual bool                  isValid(uint32_t address);
    /**
     *  Returns an approximate count of occupied bytes
     */
-   virtual unsigned getByteCount() const = 0;
+   virtual unsigned              getByteCount() const;
    /**
     *  Obtain the value of a Flash memory location
     *
@@ -197,8 +247,7 @@ public:
     *
     *  @return - uint8_t value (a dummy value of 0xFF is quietly returned for unallocated locations)
     */
-   virtual uint8_t  getValue(uint32_t address) = 0;
-
+   virtual uint8_t               getValue(uint32_t address);
    /**
     *   Set a Flash memory location
     *
@@ -207,27 +256,29 @@ public:
     *
     *   @note Allocates a memory location if necessary
     */
-   virtual void setValue(uint32_t address, uint8_t value) = 0;
+   virtual void                  setValue(uint32_t address, uint8_t value);
    /**
     * Remove a Flash memory location (set to unprogrammed)
     *
     * @param address - 32-bit memory address
     */
-   virtual void                 remove(uint32_t address) = 0;
+   virtual void                  remove(uint32_t address);
+
+   typedef std::shared_ptr<FlashImage::Enumerator> EnumeratorPtr;
+
    /**
     *   Gets an enumerator for the memory
     *   The enumerator is positioned at the 1st valid location after the given address
     */
-   virtual EnumeratorPtr       getEnumerator(uint32_t address = 0) = 0;
-
+   virtual EnumeratorPtr         getEnumerator(uint32_t address = 0);
    /**
     *  Prints a summary of the Flash memory allocated/used.
     */
-   virtual void                 printMemoryMap() = 0;
+   virtual void                  printMemoryMap();
    /**
     *  Get pathname of last file loaded
     */
-   virtual const std::string   &getSourcePathname() const = 0;
+   virtual const std::string    &getSourcePathname() const;
    /**
     *  Dump the contents of a range of memory to log file
     *
@@ -235,7 +286,7 @@ public:
     * @param endAddress   - end of range
     *
     */
-   virtual void                 dumpRange(uint32_t startAddress, uint32_t endAddress) = 0;
+   virtual void                  dumpRange(uint32_t startAddress, uint32_t endAddress);
    /**
     * Load data into Flash image
     *
@@ -244,7 +295,7 @@ public:
     * @param data          - data to load
     * @param dontOverwrite - produce error if overwriting existing data
     */
-   virtual USBDM_ErrorCode      loadData(uint32_t bufferSize, uint32_t address, const uint8_t  data[], bool dontOverwrite = false) = 0;
+   virtual USBDM_ErrorCode       loadData(uint32_t bufferSize, uint32_t address, const uint8_t  data[], bool dontOverwrite = false);
    /**
     * Load data into Flash image from byte array
     *
@@ -255,21 +306,20 @@ public:
     *
     * @note This is only of use if uint8_t is not a byte
     */
-   virtual USBDM_ErrorCode      loadDataBytes(uint32_t bufferSize, uint32_t address, const uint8_t data[], bool dontOverwrite = false) = 0;
-
+   virtual USBDM_ErrorCode       loadDataBytes(uint32_t bufferSize, uint32_t address, const uint8_t data[], bool dontOverwrite = false);
    /**
     * Get first allocated address
     *
     * @return - first allocated address
     */
-   virtual unsigned getFirstAllocatedAddress() = 0;
+   virtual unsigned              getFirstAllocatedAddress() { return firstAllocatedAddress; }
 
    /**
     * Get last allocated address
     *
     * @return - last allocated address
     */
-   virtual unsigned getLastAllocatedAddress() = 0;
+   virtual unsigned              getLastAllocatedAddress()  { return lastAllocatedAddress; }
 
    /**
     *  Fills a range of memory with a value
@@ -278,7 +328,7 @@ public:
     *  @param size      - size of range to fill
     *  @param address   -  start address of range
     */
-   virtual void fill(uint32_t size, uint32_t address, uint8_t fillValue = 0xFF) = 0;
+   virtual void                  fill(uint32_t size, uint32_t address, uint8_t fillValue = 0xFF);
    /**
     *  Fills unused bytes within a range of memory with a value
     *
@@ -286,7 +336,40 @@ public:
     *  @param size      - size of range to fill
     *  @param address   -  start address of range
     */
-   virtual void fillUnused(uint32_t size, uint32_t address, uint8_t fillValue = 0xFF) = 0;
+   virtual void                  fillUnused(uint32_t size, uint32_t address, uint8_t fillValue = 0xFF);
+
+protected:
+   virtual MemoryPagePtr   getmemoryPage(uint32_t pageNum);
+   virtual MemoryPagePtr   allocatePage(uint32_t pageNum);
+   uint32_t                targetToNative(uint32_t &);
+   uint16_t                targetToNative(uint16_t &);
+   int32_t                 targetToNative(int32_t &);
+   int16_t                 targetToNative(int16_t &);
+
+   void                    fixElfHeaderSex(Elf32_Ehdr *elfHeader);
+   void                    printElfHeader(Elf32_Ehdr *elfHeader);
+   void                    printElfProgramHeader(Elf32_Phdr *programHeader, uint32_t loadAddress=-1);
+   void                    printElfSectionHeader(Elf32_Shdr *programHeader);
+   const char *            getElfString(unsigned index);
+
+   void                    fixElfProgramHeaderSex(Elf32_Phdr *programHeader);
+   void                    fixElfSectionHeaderSex(Elf32_Shdr *elfsHeader);
+   USBDM_ErrorCode         loadElfBlock(FILE *fp, long fOffset, Elf32_Word size, Elf32_Addr addr);
+   USBDM_ErrorCode         loadElfBlockByProgramHeader(Elf32_Phdr *programHeader);
+   Elf32_Phdr              *findRelatedProgramHeader(Elf32_Shdr *sectionHeader);
+
+   USBDM_ErrorCode         loadElfBlockBySectionHeader(Elf32_Shdr *sectionHeader);
+   USBDM_ErrorCode         recordElfProgramBlock(Elf32_Phdr *programHeader);
+   USBDM_ErrorCode         loadElfFile(const std::string &fileName);
+   USBDM_ErrorCode         checkTargetType(Elf32_Half e_machine, TargetType_t targetType);
+   USBDM_ErrorCode         loadS1S9File(const std::string &fileName);
+   USBDM_ErrorCode         loadAbsoluteFile(const std::string &fileName);
+
+   static void             addressToPageOffset(uint32_t address, uint16_t &pageNum, uint16_t &offset);
+   static uint32_t         pageOffsetToAddress(uint16_t pageNum, uint16_t offset);
+   void                    writeSrec(uint8_t *buffer, uint32_t address, unsigned size);
+   void                    writeData(uint8_t *buffer, uint32_t address, unsigned size);
+   Elf32_Addr              getLoadAddress(Elf32_Shdr *sectionHeader);
 };
 
 typedef std::shared_ptr<FlashImage> FlashImagePtr;

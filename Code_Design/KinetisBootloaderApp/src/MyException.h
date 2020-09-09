@@ -25,11 +25,6 @@ public:
       UsbdmSystem::Log::print("Exception: %s\n", this->what());
 #endif
    }
-   MyException(USBDM_ErrorCode rc) : runtime_error(USBDM_GetErrorString(rc)) {
-#ifdef LOG
-      UsbdmSystem::Log::print("Exception: %s\n", this->what());
-#endif
-   }
 };
 
 #ifdef __GNUC__
