@@ -17,7 +17,7 @@
 		<link>
 			<name>Readme-Overall.md</name>
 			<type>1</type>
-			<locationURI>PARENT-1-WORKSPACE_LOC/Readme.md</locationURI>
+			<locationURI>WORKSPACE_LOC/Readme.md</locationURI>
 		</link>
 		<link>
 			<name>Readme-Software.md</name>

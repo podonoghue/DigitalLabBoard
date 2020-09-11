@@ -1389,7 +1389,7 @@ void UsbBase_T<Info, EP0_SIZE>::handleGetDescriptor() {
          dataSize = sizeof(UsbImplementation::otherDescriptors);
          break;
       case DT_DEVICEQUALIFIER: // Get Device Qualifier Descriptor
-         //      console.WRITELN("getDescriptor-deviceQ - ");
+//         console.WRITELN("getDescriptor-deviceQ - ");
          fControlEndpoint.stall();
          return;
       case DT_STRING: // Get String Desc.- 3

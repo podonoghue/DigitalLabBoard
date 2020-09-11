@@ -71,7 +71,7 @@ const uint8_t *const Usb0::stringDescriptors[] = {
 const DeviceDescriptor Usb0::deviceDescriptor = {
       /* bLength             */ sizeof(DeviceDescriptor),
       /* bDescriptorType     */ DT_DEVICE,
-      /* bcdUSB              */ nativeToLe16(0x0200),           // USB specification release No. [BCD = 2.00]
+      /* bcdUSB              */ nativeToLe16(0x0101),           // USB specification release No. [BCD = 1.10]
       /* bDeviceClass        */ 0xFF,                           // Class code        [none]
       /* bDeviceSubClass     */ 0xFF,                           // Sub Class code    [none]
       /* bDeviceProtocol     */ 0xFF,                           // Protocol          [none]

@@ -196,7 +196,7 @@ void pollUsb() {
 
    // Check for USB connection
    if (!UsbImplementation::isConfigured()) {
-      console.WRITELN("Not configured");
+//      console.WRITELN("Not configured");
       // No connection
       return;
    }

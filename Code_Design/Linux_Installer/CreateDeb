@@ -50,7 +50,7 @@ makeDebFile() {
    ${MKDIR} ${DUMMY_ROOT}
    ${CP} -r "${SOURCE_DIRECTORY}/image/." ${DUMMY_ROOT}   
    ${CP} -rp "${SOURCE_DIRECTORY}/../PackageFiles/bin/${ARCH}-linux-gnu/KinetisBootloaderApp" "${BIN_DIR}/${APP_NAME}"   
-   ${CP} -rp "${SOURCE_DIRECTORY}/../Shared/${ARCH}-linux-gnu/." "${LIB_DIR}"   
+#   ${CP} -rp "${SOURCE_DIRECTORY}/../Shared/${ARCH}-linux-gnu/." "${LIB_DIR}"   
 
    ${MKDIR} ${SHARED_DOC_DIR}
    ${GZIP} -n -9 -k -c "${SOURCE_DIRECTORY}/../PackageFiles"/changelog >${SHARED_DOC_DIR}/changelog.gz

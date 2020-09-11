@@ -71,7 +71,7 @@ const uint8_t *const Usb0::stringDescriptors[] = {
 const DeviceDescriptor Usb0::deviceDescriptor = {
       /* bLength             */ sizeof(DeviceDescriptor),
       /* bDescriptorType     */ DT_DEVICE,
-      /* bcdUSB              */ nativeToLe16(0x0200),           // USB specification release No. [BCD = 2.00]
+      /* bcdUSB              */ nativeToLe16(0x0101),           // USB specification release No. [BCD = 1.10]
       /* bDeviceClass        */ 0xFF,                           // Class code        [none]
       /* bDeviceSubClass     */ 0xFF,                           // Sub Class code    [none]
       /* bDeviceProtocol     */ 0xFF,                           // Protocol          [none]
@@ -248,6 +248,14 @@ ErrorCode Usb0::startReceiveBulkData(uint16_t size, uint8_t *buffer) {
    return E_NO_ERROR;
 }
 
+/**
+ * Poll for receive data on USB.
+ * If the interface is idle it is set up for reception using the parameters provided.
+ * This is non-blocking.
+ *
+ * @return  <0  => No data available
+ * @return  >=0 => Data has been received and copied to buffer
+ */
 int Usb0::pollReceiveBulkData() {
    if (epBulkOut.getState() != EPComplete) {
       return -1;

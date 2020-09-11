@@ -4965,9 +4965,9 @@ public:
 } // End namespace USBDM
 
 
+#include "gpio.h"
 #include "adc.h"
 #include "ftm.h"
-#include "gpio.h"
 
 /**
  * Namespace enclosing USBDM classes

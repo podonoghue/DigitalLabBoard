@@ -10,10 +10,13 @@
 
 #include <stdint.h>
 
+// Each unique hardware should define a new number here
 static constexpr uint16_t HW_LOGIC_BOARD_V2 = 1;
 static constexpr uint16_t HW_LOGIC_BOARD_V3 = 2;
 static constexpr uint16_t HW_LOGIC_BOARD_V4 = 3;
+
 static constexpr uint16_t BOOTLOADER_V1     = 1;
+static constexpr uint16_t BOOTLOADER_V2     = 2;
 
 template<int version>
 constexpr const char *getHardwareVersion() {
@@ -50,6 +53,7 @@ enum UsbCommandStatus : uint32_t {
    UsbCommandStatus_Failed,      //!< Failed
 };
 
+/** Maximum size of data in message e.g. flash data block */
 static constexpr unsigned MAX_MESSAGE_DATA = 1024;
 
 /**
