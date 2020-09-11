@@ -21,6 +21,12 @@ private:
 
    FlashImagePtr flashImage;
 
+   // Last file opened
+   wxString defaultFilename;
+
+   // Last directory used
+   wxString currentDirectory;
+
 public:
    BootloaderDialogue();
    virtual ~BootloaderDialogue();
