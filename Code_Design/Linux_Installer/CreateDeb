@@ -15,7 +15,6 @@ SOURCE_DIRECTORY=.
 DATE=`date +"%Y%m%d%H%M%S"`
 
 PACKAGE_NAME="digitallabboard"
-APP_NAME="kinetisbootloader"
 
 #======================================================
 # Create DEB file
@@ -40,18 +39,35 @@ makeDebFile() {
    # Shared document files
    SHARED_DOC_DIR="${DUMMY_ROOT}/usr/share/doc/${PACKAGE_NAME}"
    
+   DEB_DIR="${DUMMY_ROOT}/DEBIAN"
+   RULES_DIR="${DUMMY_ROOT}/lib/udev/rules.d"
    BIN_DIR="${DUMMY_ROOT}/usr/bin"
-   LIB_DIR="${DUMMY_ROOT}/usr/lib/${ARCH}-linux-gnu/${PACKAGE_NAME}"
-
+#   LIB_DIR="${DUMMY_ROOT}/usr/lib"
+#   LIB_PKG_DIR="${LIB_DIR}/${ARCH}-linux-gnu/${PACKAGE_NAME}"
+   APPS_DIR="${DUMMY_ROOT}/usr/share/applications"
+   APP_DIR="${DUMMY_ROOT}/usr/share/${PACKAGE_NAME}"   
+   PIX_DIR="${DUMMY_ROOT}/usr/share/pixmaps"      
    if [[ -e ${DUMMY_ROOT} ]]; then
       ${RM} -R ${DUMMY_ROOT}
    fi
    
-   ${MKDIR} ${DUMMY_ROOT}
-   ${CP} -r "${SOURCE_DIRECTORY}/image/." ${DUMMY_ROOT}   
-   ${CP} -r "${SOURCE_DIRECTORY}/../PackageFiles/bin/${ARCH}-linux-gnu/KinetisBootloaderApp" "${BIN_DIR}/${APP_NAME}"   
-#   ${CP} -rp "${SOURCE_DIRECTORY}/../Shared/${ARCH}-linux-gnu/." "${LIB_DIR}"   
+   ${MKDIR} ${DEB_DIR}
+   ${MKDIR} ${RULES_DIR}
+   ${MKDIR} ${BIN_DIR}
+#  ${MKDIR} ${LIB_PKG_DIR}
+   ${MKDIR} ${APPS_DIR}
+   ${MKDIR} ${APP_DIR}
+   ${MKDIR} ${PIX_DIR}
 
+   ${CP} "${SOURCE_DIRECTORY}"/control ${DEB_DIR}  
+   ${CP} "${SOURCE_DIRECTORY}"/*.rules ${RULES_DIR}   
+   ${CP} -r "${SOURCE_DIRECTORY}/../PackageFiles/bin/${ARCH}-linux-gnu/." "${BIN_DIR}" 
+#   ${CP} -rp "${SOURCE_DIRECTORY}/../Shared/${ARCH}-linux-gnu/." "${LIB_PKG_DIR}"   
+   ${CP} -r "${SOURCE_DIRECTORY}"/*.desktop ${APPS_DIR}   
+   ${CP} -r "${SOURCE_DIRECTORY}"/*.map ${APP_DIR}   
+   ${CP} -r "${SOURCE_DIRECTORY}"/*.png ${PIX_DIR}   
+   
+ 
    ${MKDIR} ${SHARED_DOC_DIR}
    ${GZIP} -n -9 -k -c "${SOURCE_DIRECTORY}/../PackageFiles"/changelog >${SHARED_DOC_DIR}/changelog.gz
    ${CP}    "${SOURCE_DIRECTORY}/../PackageFiles"/copyright             ${SHARED_DOC_DIR}
@@ -63,8 +79,8 @@ makeDebFile() {
    find ${DUMMY_ROOT}   -type f -name \*.so\* -exec chmod 644 {} \; -exec strip {} \;
    find ${DUMMY_ROOT}   -type f -executable -exec chmod 755 {} \; -exec strip {} \;
    
-   echo "ln -s ./${ARCH}-linux-gnu/${PACKAGE_NAME} ${DUMMY_ROOT}/usr/lib/${PACKAGE_NAME}"
-   ln -s ${ARCH}-linux-gnu/${PACKAGE_NAME} ${DUMMY_ROOT}/usr/lib/${PACKAGE_NAME}
+#   echo "ln -s ./${ARCH}-linux-gnu/${PACKAGE_NAME} ${DUMMY_ROOT}/usr/lib/${PACKAGE_NAME}"
+#   ln -s ${ARCH}-linux-gnu/${PACKAGE_NAME} ${LIB_DIR}/${PACKAGE_NAME}
 
    echo fakeroot dpkg-deb --build ${DUMMY_ROOT}
    fakeroot dpkg-deb --build ${DUMMY_ROOT}

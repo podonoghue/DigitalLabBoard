@@ -15,7 +15,7 @@
 
 #if (linux == 1)
 /** Path to read-only data files on Linux */
-static const char *LINUX_DATA_PATH = "/usr/share/cpldprogrammer/";
+static const char *LINUX_DATA_PATH = "/usr/share/digitallabboard/";
 #endif
 
 /**

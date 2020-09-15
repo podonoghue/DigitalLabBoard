@@ -1,0 +1,6 @@
+[ProjectGroup]
+Version=1.0
+[Project1]
+ProjectPath=CPLD_Programmer\CPLD_Programmer.PrjPcb
+[Project2]
+ProjectPath=DigitalLabBoard\DigitalLabBoard.PrjPCB

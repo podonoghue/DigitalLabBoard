@@ -7,6 +7,5 @@ SRC += KinetisBootloader.cpp
 SRC += Version.rc
 SRC += ErrorMessages.cpp
 SRC += UsbdmSystem.cpp
-SRC += UsbdmSystemLinux.cpp
 SRC += FlashImage.cpp
 SRC += Utils.cpp

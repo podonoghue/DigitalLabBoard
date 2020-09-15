@@ -1,0 +1,11 @@
+#  Should be placed in /lib/udev/rules.d/47-digital-lab.rules
+#  Note: HEX numbers must be lower case - yes really!!!!
+#
+SUBSYSTEM!="usb", GOTO="iscan_rules_end"
+
+# Allow unrestricted access to digital lab board in bootloader and user modes
+ATTR{idVendor}=="16d0", ATTR{idProduct}=="4327", MODE:="0666", SYMLINK+="usbdm-bootloader%n"
+ATTR{idVendor}=="16d0", ATTR{idProduct}=="4331", MODE:="0666", SYMLINK+="digital-lab-board%n"
+#
+LABEL="iscan_rules_end"
+

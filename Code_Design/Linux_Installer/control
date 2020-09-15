@@ -1,0 +1,13 @@
+Version: 2.0.0
+Source: digitallabboard
+Section: contrib/devel
+Architecture: amd64
+Priority: optional
+Maintainer: P O'Donoghue <1848579+podonoghue@users.noreply.github.com>
+Homepage: https://github.com/podonoghue/DigitalLabBoard
+Package: digitallabboard
+Depends: libwxbase3.0-0v5,libwxgtk3.0-gtk3-0v5,libc6
+Description: Software for Digital Lab board 
+ Bootloader application for updating board firmware in flash.
+ CPLD programmer only supports Xilinx XC2C64A.
+ Intended for undergraduate lab use.
