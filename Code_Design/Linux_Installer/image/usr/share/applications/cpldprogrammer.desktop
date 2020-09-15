@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=CPLD Programmer
+Comment=Programmer for Xilinx XC2C64A CPLD
+TryExec=cpldprogrammer
+Exec=cpldprogrammer
+Icon=cpldprogrammer.png
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=Development;
+StartupNotify=true

@@ -3,8 +3,8 @@
 
    <?define Manufacturer="pgo" ?>
    <?define ProductName="EEE20001 Lab Software" ?>
-   <?define ProductCode="6c26a075-c77b-44ad-a1d1-5998e3b95d25" ?>
-   <?define UpgradeCode="5c20f247-c544-4bb0-bf2b-e3d6a1c195e0" ?>
+   <?define ProductCode="dd759ebd-de0f-4392-8b3e-5c3311d9387f" ?>
+   <?define UpgradeCode="e6e189d4-d2c6-468a-af8a-3dd29811c471" ?>
  
    <Product
       Name="$(var.ProductName)"
@@ -34,7 +34,7 @@
       <WixVariable Id="WixUILicenseRtf" Value="GNU General Public License - GNU Project - Free Software Foundation (FSF).rtf" />
 
       <Property Id='ARPCOMMENTS'>$(var.PrimaryAppName)</Property>
-      <Property Id='ARPURLINFOABOUT'>https://github.com/podonoghue/CPLD_Programmer</Property>
+      <Property Id='ARPURLINFOABOUT'>https://github.com/podonoghue/DigitalLabBoard</Property>
       <Property Id='DiskPrompt' Value="$(var.ProductName) $(var.ProductVersion) Installation" />
 
       <!-- Per machine -->
@@ -46,7 +46,7 @@
          <Directory Id='ProgramFiles64Folder' Name='PFiles'>
             <Directory Id='MANUFACTURER_FOLDER' Name="$(var.Manufacturer)">
                <Directory Id='INSTALLDIR' Name="$(var.ProductName)">
-                  <Component Id='C.ProductKey' Guid='3fe6786b-5395-4342-a2ec-d13b36634d13' Win64="yes">
+                  <Component Id='C.ProductKey' Guid='44abded9-7f03-4945-830b-cf933b1af2dd' Win64="yes">
                      <RegistryValue Root='HKLM' Key="Software\$(var.Manufacturer)\$(var.ProductName)"
                                     Type='string' Name='InstallationDirectory' Value="[INSTALLDIR]" KeyPath='yes' />
                   </Component>
@@ -79,10 +79,19 @@
       <!--====================================================== -->
       <!--         Application Components & shortcuts            -->
       <DirectoryRef Id='INSTALLDIR'>
-         <Component Id="C.CPLD_Programmer" Guid='0630772b-1702-4941-8103-1170430adefe' Win64="yes">
+         <Component Id="C.CPLD_Programmer" Guid='9b9ec8ea-cc6b-40cd-b5aa-00a4f8a08932' Win64="yes">
             <File Id='F.CPLD_Programmer' DiskId='1' Source='CPLD_ProgrammerApp.exe' KeyPath="yes">
                <Shortcut Id="Sc.CPLD_Programmer" 
                   Name="CPLD Programmer"
+                  Directory='D.ProgramMenuDir'
+                  Description="CPLD Programmer"
+                  WorkingDirectory='INSTALLDIR' Icon="Hardware_Chip.exe" IconIndex="0" Advertise="yes"  />
+            </File>
+         </Component>
+         <Component Id="C.KinetisBootloader" Guid='97e86a5e-2f51-42b8-b986-3861c20aace4' Win64="yes">
+            <File Id='F.KinetisBootloader' DiskId='1' Source='KinetisBootloaderApp.exe' KeyPath="yes">
+               <Shortcut Id="Sc.KinetisBootloader" 
+                  Name="Kinetis Bootloader"
                   Directory='D.ProgramMenuDir'
                   Description="CPLD Programmer"
                   WorkingDirectory='INSTALLDIR' Icon="Hardware_Chip.exe" IconIndex="0" Advertise="yes"  />
@@ -101,13 +110,20 @@
                Title='EEE20001 Lab Software'
                Description='EEE20001 Lab Software'
                AllowAdvertise="no"
-               Display='expand'
+               Display='collapse'
                Level='1'
                ConfigurableDirectory='INSTALLDIR'>
          <ComponentRef Id='C.ProgramMenuFolder' />
          <ComponentRef Id="C.CPLD_Programmer" />
          <ComponentRef Id="C.ProductKey" />
          <ComponentGroupRef Id="Cg.eee20001_software" />
+         <Feature Id="F.Bootloader" 
+                  Title='Bootloader'
+                  Description='Bootloader used to update firmware on board'
+                  Level="10" 
+                  AllowAdvertise="no" >
+            <ComponentRef Id="C.KinetisBootloader" />
+         </Feature>
       </Feature>
 
       <UIRef Id="WixUI_FeatureTree" />

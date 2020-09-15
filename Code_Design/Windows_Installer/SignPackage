@@ -1,8 +1,11 @@
 #!/bin/bash
 
+# Assumes file is in executable directory - not current!
+cd `dirname $0`
+#pwd
+
 signwindowsfiles -n "EEE20001_Lab_Software"  EEE20001-Lab-Software-2020-01.msi
 
-pwd
-
+# Pause to see result
 read -p "Press [Enter] to close"
 
