@@ -14,7 +14,7 @@ SOURCE_DIRECTORY=.
 
 DATE=`date +"%Y%m%d%H%M%S"`
 
-PACKAGE_NAME="kinetisbootloader"
+PACKAGE_NAME="digitallabboard"
 APP_NAME="kinetisbootloader"
 
 #======================================================

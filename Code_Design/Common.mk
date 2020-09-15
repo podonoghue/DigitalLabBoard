@@ -5,7 +5,7 @@ MAJOR_VERSION := 1
 MINOR_VERSION := 0
 MICRO_VERSION := 0
 
-PKG_NAME = kinetisbootloader
+PKG_NAME = digitallabboard
 
 # Used as prefix with the above when in build directory $(DUMMY_CHILD)/$(SHARED_SRC) = PackageFiles/src
 DUMMY_CHILD    := PackageFiles
@@ -14,8 +14,8 @@ ifeq ($(OS),Windows_NT)
     UNAME_S := Windows
     UNAME_M := x86_64
     MULTIARCH := x86_64-win-gnu
-    CFLAGS += -D_WIN32
-    CFLAGS += -DWIN32 
+#    CFLAGS += -D_WIN32
+#    CFLAGS += -DWIN32 
 else
     UNAME_S   := $(shell uname -s)
     UNAME_M   := $(shell uname -m)
@@ -64,7 +64,7 @@ ifeq ($(UNAME_S),Windows)
    TOUCH    := $(MSYSBIN)/touch
    MKDIR    := $(MSYSBIN)/mkdir -p
    CP       := $(MSYSBIN)/cp
-   MAKE     := $(MSYSBIN)/make
+   GCC      := $(MINGWBIN)/make
    GCC      := $(MINGWBIN)/gcc
    GPP      := $(MINGWBIN)/g++
    WINDRES  := $(MINGWBIN)/windres
@@ -129,18 +129,20 @@ endif
 
 # WXWIDGETS
 ifeq ($(UNAME_S),Windows)
-   WXWIDGETS_INSTALL_DIR=C:/Apps/wxWidgets-3.1.3
-   WXWIDGETS_VERSION_NUM=313u
-   WXWIDGETS_INC     := -I$(WXWIDGETS_INSTALL_DIR)/lib/gcc810_x64_dll/mswu -I$(WXWIDGETS_INSTALL_DIR)/include 
+   WXWIDGETS_INSTALL_DIR=C:\Apps\wxWidgets-3.1.4
+   WXWIDGETS_VERSION_NUM=314u
+   WXWIDGETS_INC     := -I$(WXWIDGETS_INSTALL_DIR)\include -I$(WXWIDGETS_INSTALL_DIR)\lib\gcc810_x64_dll\mswu
    WXWIDGETS_DEFS    := -DuseWxWidgets -D__WXMSW__ -D__GNUWIN32__ -D_UNICODE -DUNICODE
 
    # Pick up shared DLLs from Shared_V4/lib
-   WXWIDGETS_SHARED_LIBDIRS :=
+   WXWIDGETS_SHARED_LIBDIRS := 
+#   WXWIDGETS_SHARED_LIBDIRS := -L$(WXWIDGETS_INSTALL_DIR)/lib/gcc810_x64_dll
+
    WXWIDGETS_SHARED_LIBS    := \
       -lwxbase$(WXWIDGETS_VERSION_NUM)_gcc810_x64              \
-      -lwxmsw$(WXWIDGETS_VERSION_NUM)_core_gcc810_x64          \
-      -lwxmsw$(WXWIDGETS_VERSION_NUM)_adv_gcc810_x64           \
-      -lwxbase$(WXWIDGETS_VERSION_NUM)_net_gcc810_x64
+      -lwxmsw$(WXWIDGETS_VERSION_NUM)_core_gcc810_x64
+#      -lwxmsw$(WXWIDGETS_VERSION_NUM)_adv_gcc810_x64           \
+#      -lwxbase$(WXWIDGETS_VERSION_NUM)_net_gcc810_x64
 
 #-lwxbase$(WXWIDGETS_VERSION_NUM)_xml_gcc810_x64          \
 #-lwxmsw$(WXWIDGETS_VERSION_NUM)_aui_gcc810_x64           \

@@ -46,17 +46,8 @@
    #endif
 #endif
 
-#if defined(COMPILE_USBDM_SYSTEM_DLL)
-// Buiding Library
-#define USBDM_SYSTEM_DECLSPEC CPP_DLL_EXPORT
-// Incorprating library directly
-#elif defined(LINK_USBDM_SYSTEM_DLL)
 //! Link to routines directly
 #define USBDM_SYSTEM_DECLSPEC CPP_DLL_LOCAL
-#else
-// Dynamically linking to library
-#define USBDM_SYSTEM_DECLSPEC CPP_DLL_IMPORT
-#endif
 
 #include <stdint.h>
 #include <string>
@@ -76,76 +67,7 @@ private:
    virtual ~UsbdmSystem() = 0;
 
 public:
-   /**
-    * Obtain the path of a file within the application directory
-    *
-    * @param path to append to directory
-    *
-    * @return path or NULL if failed
-    */
-   static std::string getApplicationPath(const std::string &path);
-   /**
-    * Obtain the path of a file within the resource directory
-    *
-    * @param path to append to directory
-    *
-    * @return path or NULL if failed
-    */
-   static std::string getResourcePath(const std::string &path);
-   /**
-    * Obtain the path of a file within the configuration directory
-    * This is a per-user read/write directory for configurations
-    *
-    * @param path to append to directory
-    *
-    * @return path or NULL if failed
-    *
-    * @note The configuration directory will be created if it doesn't already exist.
-    */
-   static std::string getConfigurationPath(const std::string &path);
-   /**
-    * Open a file within the application directory - read-only
-    *
-    * @param path to append to directory
-    *
-    * @return directory or NULL if failed
-    */
-   static FILE *openApplicationFile(const std::string &path);
-   /**
-    * Open a file within the resource directory - read-only
-    *
-    * @param path to append to directory
-    *
-    * @return directory or NULL if failed
-    */
-   static FILE *openResourceFile(const std::string &path);
-   /**
-    * Open a file within the configuration directory - read-write
-    * This is a per-user read/write directory for configurations
-    *
-    * @param path  Path to append to configuration directory
-    * @param mode  Mode to open file in
-    *
-    * @return directory or NULL if failed
-    */
-   static FILE *openConfigurationFile(const std::string &path, const std::string &mode);
-   /**
-    * Check if a file exists
-    *
-    * @param path - Path to file
-    *
-    * @return true/false
-    */
    static bool fileExists(const std::string &path);
-   /**
-    * Obtain the path of a file within the same directory as the module
-    * (Used on windows only)
-    *
-    * @param path to append to directory
-    *
-    * @return directory or NULL if failed
-    */
-   static std::string getModulePath(const std::string &path);
    /**
     *  Sleep for given number of milliseconds (or longer!)
     *

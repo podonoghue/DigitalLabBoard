@@ -1,0 +1,92 @@
+#####################################
+#                                   #
+#  Pin Assignments for CPLD Module  #
+#                                   #
+#####################################
+
+#  The Module Pin numbers are shown in the COMMENTS 
+#  e.g. Module-P35 is pin 35 of the module and is (usually) used for the Clock input
+
+#========================================================================
+# System level constraints
+
+# CLOCK
+#========================================================================
+# The following 3 CPLD pins have special on-chip Clock buffers
+# Usually uncomment one Clock line as required
+# Make sure use doesn't conflict with I/O use!
+
+NET "Clock"  LOC = "p1"|IOSTANDARD=LVCMOS33;   # Module-P35 - GCK2, Global Clock input
+#NET "Clock"  LOC = "p44"|IOSTANDARD=LVCMOS33;  # Module-P34 - GCK1, Global Clock input, May be used for I/O
+#NET "Clock"  LOC = "p43"|IOSTANDARD=LVCMOS33;  # Module-P33 - GCK0, Global Clock input, May be used for I/O
+
+# Uncomment all three of the following lines to enable clock pin for synchronous circuits
+NET "Clock"  SCHMITT_TRIGGER;
+NET "Clock"  TNM_NET = Clock;
+Timespec TS_Clock = PERIOD Clock 500 ns; # adjust to suit (maximum) Clock
+
+# RESET
+#========================================================================
+# Convenient location for Reset pin - Connects to onboard switch
+#NET "Reset" LOC = "p30"|IOSTANDARD=LVCMOS33; # Module-P18 - GSR, Global Set/Reset
+#NET "Reset" TIG; # No timing constraint on system reset
+#NET "Reset" SCHMITT_TRIGGER;
+
+# DEBUG LED
+#========================================================================
+# Convenient location for Debug LED - Connects to onboard LED
+#NET "DebugLED" LOC = "p31"|IOSTANDARD=LVCMOS33; # Module-P22 - GTS2, Global Tristate control
+
+# Pins in convenient order
+#
+# The pins below are located bottom (left to right)
+# This is convenient for Switches and other inputs
+#========================================================================
+NET "LEDS<0>" LOC = "p12"|IOSTANDARD=LVCMOS33; # Module-P1  - I/O
+NET "LEDS<1>" LOC = "p13"|IOSTANDARD=LVCMOS33; # Module-P2  - I/O
+NET "LEDS<2>" LOC = "p14"|IOSTANDARD=LVCMOS33; # Module-P3  - I/O
+NET "LEDS<3>" LOC = "p16"|IOSTANDARD=LVCMOS33; # Module-P4  - I/O
+#  N/C                                   # Module-P5  - N/C
+#  N/C                                   # Module-P6  - N/C
+#  N/C                                   # Module-P7  - N/C
+#  N/C                                   # Module-P8  - N/C
+NET "LEDS<4>" LOC = "p18"|IOSTANDARD=LVCMOS33; # Module-P9  - I/O
+NET "LEDS<5>" LOC = "p19"|IOSTANDARD=LVCMOS33; # Module-P10 - I/O
+NET "LEDS<6>" LOC = "p20"|IOSTANDARD=LVCMOS33; # Module-P11 - I/O
+NET "LEDS<7>" LOC = "p21"|IOSTANDARD=LVCMOS33; # Module-P12 - I/O
+NET "LEDS<8>" LOC = "p22"|IOSTANDARD=LVCMOS33; # Module-P13 - I/O
+NET "LEDS<9>" LOC = "p23"|IOSTANDARD=LVCMOS33; # Module-P14 - I/O
+NET "LEDS<10>" LOC = "p27"|IOSTANDARD=LVCMOS33; # Module-P15 - I/O
+NET "LEDS<11>" LOC = "p28"|IOSTANDARD=LVCMOS33; # Module-P16 - I/O
+NET "LEDS<12>" LOC = "p29"|IOSTANDARD=LVCMOS33; # Module-P17 - I/O
+NET "LEDS<13>" LOC = "p30"|IOSTANDARD=LVCMOS33; # Module-P18 - I/O, GSR, Global Set/Reset
+
+#  RESET - See top of file               # Module-P18 - GSR, Global Set/Reset
+#  N/C                                   # Module-P19 - N/C
+#  Vdd = Vcc = 3.3V                      # Module-P20 - Vcc
+
+# The pins below are located top (left to right)
+# This is convenient for LEDs and other outputs
+#========================================================================
+NET "LEDS<14>" LOC = "p8"|IOSTANDARD=LVCMOS33;  # Module-P40 - I/O
+NET "LEDS<15>" LOC = "p6"|IOSTANDARD=LVCMOS33;  # Module-P39 - I/O
+NET "LEDS<16>" LOC = "p5"|IOSTANDARD=LVCMOS33;  # Module-P38 - I/O
+NET "LEDS<17>" LOC = "p3"|IOSTANDARD=LVCMOS33;  # Module-P37 - I/O
+NET "LEDS<18>" LOC = "p2"|IOSTANDARD=LVCMOS33;  # Module-P36 - I/O
+
+# Global Clock input - see top of file   # Module-P35 - I/O, GCK1
+NET "LEDS<19>" LOC = "p44"|IOSTANDARD=LVCMOS33; # Module-P34 - GCK1, Global Clock input, May be used for I/O
+NET "LEDS<20>" LOC = "p43"|IOSTANDARD=LVCMOS33; # Module-P33 - GCK0, Global Clock input, May be used for I/O
+NET "LEDS<21>" LOC = "p42"|IOSTANDARD=LVCMOS33; # Module-P32 - I/O
+NET "LEDS<22>" LOC = "p41"|IOSTANDARD=LVCMOS33; # Module-P31 - I/O
+NET "LEDS<23>" LOC = "p40"|IOSTANDARD=LVCMOS33; # Module-P30 - I/O
+NET "LEDS<24>" LOC = "p39"|IOSTANDARD=LVCMOS33; # Module-P29 - I/O
+NET "LEDS<25>" LOC = "p38"|IOSTANDARD=LVCMOS33; # Module-P28 - I/O
+NET "LEDS<26>" LOC = "p37"|IOSTANDARD=LVCMOS33; # Module-P27 - I/O
+NET "LEDS<27>" LOC = "p36"|IOSTANDARD=LVCMOS33; # Module-P26 - I/O
+NET "LEDS<28>" LOC = "p34"|IOSTANDARD=LVCMOS33; # Module-P25 - GTS1, Global Tristate control
+NET "LEDS<29>" LOC = "p33"|IOSTANDARD=LVCMOS33; # Module-P24 - GTS0, Global Tristate control
+NET "LEDS<30>" LOC = "p32"|IOSTANDARD=LVCMOS33; # Module-P23 - GTS3, Global Tristate control
+NET "LEDS<31>" LOC = "p31"|IOSTANDARD=LVCMOS33; # Module-P22 - GTS2, Global Tristate control
+
+#  Gnd = 0V                              # Module-P21 - Gnd

@@ -1,0 +1,3 @@
+Layer Pairs Export File for PCB: C:\Users\podonoghue\Documents\Development\CPLD_Programmer\Hardware\CPLD_Programmer.PcbDoc
+LayersSetName=Top_Bot_Thru_Holes|DrillFile=cpld_programmer-roundholes.txt|DrillLayers=gtl,gbl
+LayersSetName=Top_Bot_Slot_Holes|DrillFile=cpld_programmer-slotholes.txt|DrillLayers=gtl,gbl

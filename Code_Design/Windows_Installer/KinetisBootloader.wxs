@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+   <?define Manufacturer="pgo" ?>
+   <?define ProductName="EEE20001 Lab Software" ?>
+   <?define ProductCode="5e3e839c-10ca-4550-a623-b562758a2459" ?>
+   <?define UpgradeCode="693eca93-da85-4faa-8530-4de538516b8b" ?>
+ 
+   <Product
+      Name="$(var.ProductName)"
+      Id="$(var.ProductCode)"
+      UpgradeCode="$(var.UpgradeCode)"
+      Version="$(var.ProductVersion)"
+      Manufacturer="$(var.Manufacturer)"
+      Language='1033'
+      Codepage='1252' >
+
+      <Package
+         Id='*'
+         Keywords='Installer'
+         Description="$(var.ProductName) Installer"
+         Comments="$(var.ProductName) Package"
+         Manufacturer="$(var.Manufacturer)"
+         InstallerVersion='200' Languages='1033' Compressed='yes' SummaryCodepage='1252'
+         Platform="x64" />
+
+      <Media Id='1' Cabinet='disk1.cab' EmbedCab='yes' DiskPrompt="Source Folder" />
+
+      <MajorUpgrade
+         AllowDowngrades="no"
+         MigrateFeatures="yes"
+         DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
+
+      <WixVariable Id="WixUILicenseRtf" Value="GNU General Public License - GNU Project - Free Software Foundation (FSF).rtf" />
+
+      <Property Id='ARPCOMMENTS'>$(var.PrimaryAppName)</Property>
+      <Property Id='ARPURLINFOABOUT'>https://github.com/podonoghue/KinetisBootloader</Property>
+      <Property Id='DiskPrompt' Value="$(var.ProductName) $(var.ProductVersion) Installation" />
+
+      <!-- Per machine -->
+      <Property Id="ALLUSERS"><![CDATA[2]]></Property>
+
+      <!--====================================================== -->
+      <!--           Directory structure                         -->
+      <Directory Id='TARGETDIR' Name='SourceDir'>
+         <Directory Id='ProgramFiles64Folder' Name='PFiles'>
+            <Directory Id='MANUFACTURER_FOLDER' Name="$(var.Manufacturer)">
+               <Directory Id='INSTALLDIR' Name="$(var.ProductName)">
+                  <Component Id='C.ProductKey' Guid='eff7d9ac-a51a-45b1-94d9-7b7f55cc401e' Win64="yes">
+                     <RegistryValue Root='HKLM' Key="Software\$(var.Manufacturer)\$(var.ProductName)"
+                                    Type='string' Name='InstallationDirectory' Value="[INSTALLDIR]" KeyPath='yes' />
+                  </Component>
+               </Directory>
+            </Directory>
+         </Directory>
+
+         <!-- Program menu folder -->
+         <Directory Id="ProgramMenuFolder" Name="Programs">
+            <Directory Id="D.ProgramMenuDir" Name="$(var.ProductName) $(var.ProductVersion)" />
+         </Directory>
+
+         <!-- Desktop Folder -->
+         <Directory Id="DesktopFolder" Name="Desktop" />
+      </Directory>
+
+      <!--======================================================-->
+      <!--          Menu & Application components               -->
+      <!--======================================================-->
+      <!-- Program Menu Folder -->
+      <DirectoryRef Id="ProgramMenuFolder">
+         <Component Id="C.ProgramMenuFolder" Guid="*" Win64="yes">
+            <CreateFolder Directory='D.ProgramMenuDir'/>
+            <RemoveFolder Directory='D.ProgramMenuDir' Id="RemoveProgramMenuDir" On='uninstall' />
+            <RegistryValue Root='HKMU' Key="Software\$(var.Manufacturer)\$(var.ProductName)"
+                           Type='string' Name='Version' Value="$(var.ProductVersion)" KeyPath='yes' />
+         </Component>
+      </DirectoryRef>
+
+      <!--====================================================== -->
+      <!--         Application Components & shortcuts            -->
+      <DirectoryRef Id='INSTALLDIR'>
+         <Component Id="C.KinetisBootloader" Guid='382ef709-f4e7-4667-a916-6ddb262834d9' Win64="yes">
+            <File Id='F.KinetisBootloader' DiskId='1' Source='KinetisBootloaderApp.exe' KeyPath="yes">
+               <Shortcut Id="Sc.KinetisBootloader" 
+                  Name="Kinetis Bootloader"
+                  Directory='D.ProgramMenuDir'
+                  Description="CPLD Programmer"
+                  WorkingDirectory='INSTALLDIR' Icon="Hardware_Chip.exe" IconIndex="0" Advertise="yes"  />
+            </File>
+         </Component>
+      </DirectoryRef>
+
+      <!--======================================================
+               Components
+      =======================================================-->
+
+      <!--=================================================================================
+           Features
+      ==================================================================================-->
+      <Feature Id='F.Complete'
+               Title='Kinetis Bootloader'
+               Description='Kinetis Bootloader'
+               AllowAdvertise="no"
+               Display='expand'
+               Level='1'
+               ConfigurableDirectory='INSTALLDIR'>
+         <ComponentRef Id='C.ProgramMenuFolder' />
+         <ComponentRef Id="C.KinetisBootloader" />
+         <ComponentRef Id="C.ProductKey" />
+         <ComponentGroupRef Id="Cg.eee20001_software" />
+      </Feature>
+
+      <UIRef Id="WixUI_FeatureTree" />
+      <UIRef Id="WixUI_ErrorProgressText" />
+      <Icon Id="Hardware_Chip.exe" SourceFile="Hardware-Chip.ico" />
+   </Product>
+</Wix>

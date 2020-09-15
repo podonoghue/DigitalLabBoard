@@ -1,0 +1,8 @@
+#!/bin/bash
+
+signwindowsfiles -n "EEE20001_Lab_Software"  EEE20001-Lab-Software-2020-01.msi
+
+pwd
+
+read -p "Press [Enter] to close"
+

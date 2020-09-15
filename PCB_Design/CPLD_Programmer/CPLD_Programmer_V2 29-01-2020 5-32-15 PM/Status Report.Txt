@@ -1,0 +1,10 @@
+Output: Generates pick and place files
+Type  : Pick Place
+From  : PCB Document [CPLD_Programmer.PcbDoc]
+   Generated File[Pick Place for CPLD_Programmer.csv]
+
+
+Files Generated   : 1
+Documents Printed : 0
+
+Finished Output Generation At 5:32:25 PM On 29/01/2020

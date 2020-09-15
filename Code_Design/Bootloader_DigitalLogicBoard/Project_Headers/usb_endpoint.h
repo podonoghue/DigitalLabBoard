@@ -404,6 +404,9 @@ public:
     * @param[in]  bufPtr  Pointer to external buffer (may be NULL to indicate fDatabuffer is being used directly)
     */
    void startTxStage(EndpointState state, uint16_t bufSize=0, volatile const uint8_t *bufPtr=nullptr) {
+      if (fState == EPStall) {
+         return;
+      }
       // Pointer to data
       fDataPtr = (uint8_t*)bufPtr;
 
@@ -783,6 +786,9 @@ public:
     * Data Toggle = DATA1
     */
    void setupReceived() {
+//      if (fState == EPStall) {
+//         Endpoint::clearStall();
+//      }
       fState      = EPIdle;
       Endpoint::setDataToggle(DataToggle_1);
    }

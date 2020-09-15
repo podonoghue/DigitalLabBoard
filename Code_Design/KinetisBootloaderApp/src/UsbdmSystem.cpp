@@ -59,52 +59,6 @@
 #undef UNICODE
 #endif
 
-/* Open a file within the application directory - read-only
- *
- * @param path to append to directory
- *
- * @return directory or NULL if failed
- */
-FILE *UsbdmSystem::openApplicationFile(const std::string &path) {
-   std::string fullPath = getApplicationPath(path);
-   FILE *fp = fopen(fullPath.c_str(), "rt");
-   if (fp == NULL) {
-      // Try module directory
-      fullPath = getModulePath(path);
-      fp = fopen(fullPath.c_str(), "rt");
-   }
-   return fp;
-}
-
-/* Open a file within the resource directory - read-only
- *
- * @param path to append to directory
- *
- * @return directory or NULL if failed
- */
-FILE *UsbdmSystem::openResourceFile(const std::string &path) {
-   std::string fullPath = getResourcePath(path);
-   FILE *fp = fopen(fullPath.c_str(), "rt");
-   if (fp == NULL) {
-      // Try module directory
-      fullPath = getModulePath(path);
-      fp = fopen(fullPath.c_str(), "rt");
-   }
-   return fp;
-}
-
-/* Open a file within the configuration directory - read-write
- * This is a per-user read/write directory for configurations
- *
- * @param path to append to directory
- *
- * @return directory or NULL if failed
- */
-FILE *UsbdmSystem::openConfigurationFile(const std::string &path, const std::string &mode) {
-   std::string fullPath = getConfigurationPath(path);
-   return fopen(fullPath.c_str(), mode.c_str());
-}
-
 /**
  * Checks if a file exists
  */

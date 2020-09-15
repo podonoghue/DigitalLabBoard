@@ -39,7 +39,6 @@ LIBDIRS += $(WXWIDGETS_LIBDIRS)
 # Extra libraries
 LIBS += $(LIB_USB)
 LIBS += $(WXWIDGETS_LIBS)
-LIBS += -ldl
 
 # Each module will add to this
 SRC :=

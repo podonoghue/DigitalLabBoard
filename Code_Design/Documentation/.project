@@ -10,6 +10,16 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>Readme-Commandline.md</name>
+			<type>1</type>
+			<locationURI>PARENT-1-WORKSPACE_LOC/CommandLine/Readme.md</locationURI>
+		</link>
+		<link>
+			<name>Readme-Digital-Hardware.md</name>
+			<type>1</type>
+			<locationURI>PARENT-1-WORKSPACE_LOC/PCB_Design/DigitalLabBoard/Readme.md</locationURI>
+		</link>
+		<link>
 			<name>Readme-Hardware.md</name>
 			<type>1</type>
 			<locationURI>PARENT-1-WORKSPACE_LOC/PCB_Design/Readme.md</locationURI>
@@ -20,9 +30,19 @@
 			<locationURI>WORKSPACE_LOC/Readme.md</locationURI>
 		</link>
 		<link>
+			<name>Readme-Programmer-Hardware.md</name>
+			<type>1</type>
+			<locationURI>PARENT-1-WORKSPACE_LOC/PCB_Design/CPLD_Programmer/Readme.md</locationURI>
+		</link>
+		<link>
 			<name>Readme-Software.md</name>
 			<type>1</type>
 			<locationURI>PARENT-1-WORKSPACE_LOC/Code_Design/Readme.md</locationURI>
+		</link>
+		<link>
+			<name>Readme-VHDL.md</name>
+			<type>1</type>
+			<locationURI>PARENT-1-WORKSPACE_LOC/VHDL_TestHardware/Readme.md</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

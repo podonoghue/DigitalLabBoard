@@ -1,0 +1,40 @@
+Altium Designer Pick and Place Locations
+C:\Users\podonoghue\Documents\Development\CPLD_Programmer\Hardware\CPLD_Programmer_V2 29-01-2020 5-32-15 PM\Pick Place for CPLD_Programmer.csv
+
+========================================================================================================================
+File Design Information:
+
+Date:       29/01/20
+Time:       17:32
+Revision:   05e06933c998ebcaea8f54564b103f7b2e16dcd7
+Variant:    No variations
+Units used: mm
+
+"Designator","Comment","Layer","Footprint","Center-X(mm)","Center-Y(mm)","Rotation","Description"
+"C1","100nF","TopLayer","CCNP1608-0603_N","6.0452","-2.6670","360","Capacitor non-polar SMT 0603"
+"C6","100nF","TopLayer","CCNP1608-0603_N","16.5100","-8.2804","360","Capacitor non-polar SMT 0603"
+"C4","100nF","TopLayer","CCNP1608-0603_N","9.3726","-0.7620","360","Capacitor non-polar SMT 0603"
+"C3","100nF","TopLayer","CCNP1608-0603_N","9.3726","5.2070","360","Capacitor non-polar SMT 0603"
+"C5","100nF","TopLayer","CCNP1608-0603_N","9.3726","-2.6670","360","Capacitor non-polar SMT 0603"
+"R11","100R","TopLayer","CR1608-0603","21.9710","5.3340","360","Resistor SMT 0603"
+"R10","100R","TopLayer","CR1608-0603","21.9710","6.4770","360","Resistor SMT 0603"
+"R9","100R","TopLayer","CR1608-0603","21.9710","7.6200","360","Resistor SMT 0603"
+"R8","100R","TopLayer","CR1608-0603","21.9710","8.7630","360","Resistor SMT 0603"
+"R7","10K","TopLayer","CR1608-0603_N","22.8600","-0.7112","90","Resistor SMT 0603"
+"Y1","16 MHz","TopLayer","Crystal_SMD_3.2x2.5","19.7866","-7.5184","360","Crystal SMD 3.2 x 2.5 x 0.7 mm"
+"R6","1K","TopLayer","CR1608-0603_N","6.7310","7.7470","360","Resistor SMT 0603"
+"R5","1K","TopLayer","CR1608-0603_N","6.7310","6.4770","360","Resistor SMT 0603"
+"C2","2.2uF","TopLayer","CCNP1608-0603_N","9.3726","3.9370","360","Capacitor non-polar SMT 0603"
+"R1","330R","TopLayer","CR1608-0603_N","9.3726","2.5146","360","Resistor SMT 0603"
+"R2","330R","TopLayer","CR1608-0603_N","9.3726","1.3970","360","Resistor SMT 0603"
+"R4","5.1K","TopLayer","CR1608-0603_N","2.5400","7.7470","360","Resistor SMT 0603"
+"R3","5.1K","TopLayer","CR1608-0603_N","2.5400","6.4770","360","Resistor SMT 0603"
+"Z2","CM1293A-04SO","TopLayer","SOT457_N","16.4846","7.2136","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"Z1","CM1293A-04SO","TopLayer","SOT457_N","6.0960","0.0000","360","Ultra low capacitance quadruple rail-to-rail ESD protection"
+"J2","Header, 6-Pin","BottomLayer","SAMTEC-SMH-106-02-X-S","16.0909","0.0000","270","Header, 6-Pin"
+"D2","LED Green","TopLayer","LED1608-0603-GREEN_N","9.3980","7.7470","360","LED 0603 Green"
+"D1","LED Red","TopLayer","LED1608-0603-RED_N","9.3980","6.4770","360","LED 0603 Red"
+"ROM","LinkOpen","TopLayer","SolderBridge(Open)","22.8600","2.1590","270",""
+"U1","MK20DX128VLF5","TopLayer","TSQFP50P900X900-48M","16.4846","0.0635","270","Arm Cortex M4"
+"TP1","TP","TopLayer","TP","-0.0508","-7.9502","0","Test Point"
+"J1","USB4085-GF-A","TopLayer","USB4085-GF-A","1.2700","0.0000","0","USB-C, USB 2.0 Receptacle Connector 16 Position Through Hole, Right Angle"

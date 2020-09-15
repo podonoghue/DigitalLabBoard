@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+   <?define Manufacturer="pgo" ?>
+   <?define ProductName="EEE20001 Lab Software" ?>
+   <?define ProductCode="6c26a075-c77b-44ad-a1d1-5998e3b95d25" ?>
+   <?define UpgradeCode="5c20f247-c544-4bb0-bf2b-e3d6a1c195e0" ?>
+ 
+   <Product
+      Name="$(var.ProductName)"
+      Id="$(var.ProductCode)"
+      UpgradeCode="$(var.UpgradeCode)"
+      Version="$(var.ProductVersion)"
+      Manufacturer="$(var.Manufacturer)"
+      Language='1033'
+      Codepage='1252' >
+
+      <Package
+         Id='*'
+         Keywords='Installer'
+         Description="$(var.ProductName) Installer"
+         Comments="$(var.ProductName) Package"
+         Manufacturer="$(var.Manufacturer)"
+         InstallerVersion='200' Languages='1033' Compressed='yes' SummaryCodepage='1252'
+         Platform="x64" />
+
+      <Media Id='1' Cabinet='disk1.cab' EmbedCab='yes' DiskPrompt="Source Folder" />
+
+      <MajorUpgrade
+         AllowDowngrades="no"
+         MigrateFeatures="yes"
+         DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
+
+      <WixVariable Id="WixUILicenseRtf" Value="GNU General Public License - GNU Project - Free Software Foundation (FSF).rtf" />
+
+      <Property Id='ARPCOMMENTS'>$(var.PrimaryAppName)</Property>
+      <Property Id='ARPURLINFOABOUT'>https://github.com/podonoghue/CPLD_Programmer</Property>
+      <Property Id='DiskPrompt' Value="$(var.ProductName) $(var.ProductVersion) Installation" />
+
+      <!-- Per machine -->
+      <Property Id="ALLUSERS"><![CDATA[2]]></Property>
+
+      <!--====================================================== -->
+      <!--           Directory structure                         -->
+      <Directory Id='TARGETDIR' Name='SourceDir'>
+         <Directory Id='ProgramFiles64Folder' Name='PFiles'>
+            <Directory Id='MANUFACTURER_FOLDER' Name="$(var.Manufacturer)">
+               <Directory Id='INSTALLDIR' Name="$(var.ProductName)">
+                  <Component Id='C.ProductKey' Guid='3fe6786b-5395-4342-a2ec-d13b36634d13' Win64="yes">
+                     <RegistryValue Root='HKLM' Key="Software\$(var.Manufacturer)\$(var.ProductName)"
+                                    Type='string' Name='InstallationDirectory' Value="[INSTALLDIR]" KeyPath='yes' />
+                  </Component>
+               </Directory>
+            </Directory>
+         </Directory>
+
+         <!-- Program menu folder -->
+         <Directory Id="ProgramMenuFolder" Name="Programs">
+            <Directory Id="D.ProgramMenuDir" Name="$(var.ProductName) $(var.ProductVersion)" />
+         </Directory>
+
+         <!-- Desktop Folder -->
+         <Directory Id="DesktopFolder" Name="Desktop" />
+      </Directory>
+
+      <!--======================================================-->
+      <!--          Menu & Application components               -->
+      <!--======================================================-->
+      <!-- Program Menu Folder -->
+      <DirectoryRef Id="ProgramMenuFolder">
+         <Component Id="C.ProgramMenuFolder" Guid="*" Win64="yes">
+            <CreateFolder Directory='D.ProgramMenuDir'/>
+            <RemoveFolder Directory='D.ProgramMenuDir' Id="RemoveProgramMenuDir" On='uninstall' />
+            <RegistryValue Root='HKMU' Key="Software\$(var.Manufacturer)\$(var.ProductName)"
+                           Type='string' Name='Version' Value="$(var.ProductVersion)" KeyPath='yes' />
+         </Component>
+      </DirectoryRef>
+
+      <!--====================================================== -->
+      <!--         Application Components & shortcuts            -->
+      <DirectoryRef Id='INSTALLDIR'>
+         <Component Id="C.CPLD_Programmer" Guid='0630772b-1702-4941-8103-1170430adefe' Win64="yes">
+            <File Id='F.CPLD_Programmer' DiskId='1' Source='CPLD_ProgrammerApp.exe' KeyPath="yes">
+               <Shortcut Id="Sc.CPLD_Programmer" 
+                  Name="CPLD Programmer"
+                  Directory='D.ProgramMenuDir'
+                  Description="CPLD Programmer"
+                  WorkingDirectory='INSTALLDIR' Icon="Hardware_Chip.exe" IconIndex="0" Advertise="yes"  />
+            </File>
+         </Component>
+      </DirectoryRef>
+
+      <!--======================================================
+               Components
+      =======================================================-->
+
+      <!--=================================================================================
+           Features
+      ==================================================================================-->
+      <Feature Id='F.Complete'
+               Title='EEE20001 Lab Software'
+               Description='EEE20001 Lab Software'
+               AllowAdvertise="no"
+               Display='expand'
+               Level='1'
+               ConfigurableDirectory='INSTALLDIR'>
+         <ComponentRef Id='C.ProgramMenuFolder' />
+         <ComponentRef Id="C.CPLD_Programmer" />
+         <ComponentRef Id="C.ProductKey" />
+         <ComponentGroupRef Id="Cg.eee20001_software" />
+      </Feature>
+
+      <UIRef Id="WixUI_FeatureTree" />
+      <UIRef Id="WixUI_ErrorProgressText" />
+      <Icon Id="Hardware_Chip.exe" SourceFile="Hardware-Chip.ico" />
+   </Product>
+</Wix>
