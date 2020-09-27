@@ -1,7 +1,20 @@
+include ../Common.mk
 
-all:
-	$(MAKE) ARCH=x86_64 all -f Makefile.mk	
+TARGET = CPLD_ProgrammerApp
+MODULE = module
 
-clean:
-	$(MAKE) ARCH=x86_64 clean -f Makefile.mk	
-	
+EXE_DEFS = -DUSE_ICON
+
+$(TARGET):
+	@echo --
+	@echo -- Building $@
+	@echo ================================================================
+	$(MAKE) exe -f Target.mk BUILDDIR=$@$(BUILDDIR_SUFFIX) MODULE=$(MODULE) TARGET=$@ CDEFS='$(EXE_DEFS)'
+
+all: commonFiles $(TARGET)
+
+clean: 
+	${RMDIR} $(TARGET)$(BUILDDIR_SUFFIX)
+
+.PHONY: all clean
+.PHONY: $(TARGET)

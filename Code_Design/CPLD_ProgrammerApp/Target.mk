@@ -3,7 +3,6 @@
 #CDEFS     = -DLOG
 #MODULE    = module
 #TARGET    = BUILDDIR
-#ARCH      = i386/x86_64
 
 # Makefiles in subdirs used to collect targets (default 'module.mk')
 MODULE ?= module
@@ -31,10 +30,10 @@ DEFS += $(WXWIDGETS_DEFS)
 
 # Look for include files in each of the modules
 INCS := $(patsubst %,-I%,$(SOURCEDIRS))
-INCS += $(WXWIDGETS_INC)
+INCS += $(WXWIDGETS_CPPFLAGS)
 
 # Extra Library dirs
-LIBDIRS += $(WXWIDGETS_LIBDIRS)
+LIBDIRS += 
 
 # Extra libraries
 LIBS += $(LIB_USB)
@@ -128,10 +127,6 @@ $(TARGET_LIBDIR) :
     
 endif
 
-$(TARGET_BINDIR) :
-	@echo -- Making directory $(TARGET_BINDIR)
-	-$(MKDIR) $(TARGET_BINDIR)
-    
 $(TARGET_LIBDIR)/$(TARGET_DLL): | $(TARGET_LIBDIR)
 
 $(TARGET_BINDIR)/$(TARGET_EXE): | $(TARGET_BINDIR)

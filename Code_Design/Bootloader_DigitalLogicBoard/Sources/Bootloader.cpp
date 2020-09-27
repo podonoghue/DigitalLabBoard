@@ -62,7 +62,7 @@ uint32_t calcuateCRC32(uint8_t *start, uint32_t size) {
 }
 
 /**
- * Check is flash region has valid checksum
+ * Check if flash region has valid checksum
  *
  * @return true  => CRC  is valid i.e. Flash image is verified
  * @return false => CRC  is invalid i.e. Flash image is not verified
