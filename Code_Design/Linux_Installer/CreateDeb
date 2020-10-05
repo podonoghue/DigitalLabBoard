@@ -34,7 +34,7 @@ makeDebFile() {
    GZIP="gzip"
    
    # Where to construct the install tree
-   DUMMY_ROOT="../${PACKAGE_NAME}_${VERSION}-${DEBIAN_VERSION}-${ARCH}"
+   DUMMY_ROOT="${PACKAGE_NAME}_${VERSION}-${DEBIAN_VERSION}-${ARCH}"
    
    # Shared document files
    SHARED_DOC_DIR="${DUMMY_ROOT}/usr/share/doc/${PACKAGE_NAME}"

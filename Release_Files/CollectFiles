@@ -1,0 +1,16 @@
+#!/bin/bash
+
+Build_Folder=../Code_Design
+Files_to_collect="${Build_Folder}/Windows_Drivers/*.msi ${Build_Folder}/Windows_Installer/*.msi ${Build_Folder}/Linux_Installer/*.deb"
+
+#echo ${Files_to_collect}
+#exit
+
+for file in ${Files_to_collect} ; do
+   if [ -e $file ]; then
+      echo collecting $file
+      mv $file .
+   fi
+done
+   
+
