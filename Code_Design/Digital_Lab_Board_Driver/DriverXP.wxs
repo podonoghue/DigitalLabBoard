@@ -1,0 +1,110 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+     xmlns:difx='http://schemas.microsoft.com/wix/DifxAppExtension'>
+
+   <?define Manufacturer="pgo" ?>
+   <?define ProductName="DIG_LAB Drivers" ?>
+   <!--?define ProductVersion="1.0.0" ?-->                        <!-- Defined on command line -->
+   <?define ProductCode="*" ?> 
+   <?define UpgradeCode="11d99dd0-e9ce-4d64-9cae-de79e817cd27" ?> <!-- Don't change        -->
+   <?define InfoURL="https://github.com/podonoghue/DigitalLabBoard" ?>
+   <!--?define TargetArchCondition="NOT Msix64" ?-->             <!-- Defined on command line -->
+
+   <?define DriverDir="DriversXP" ?>
+   <?define WdfCoInstaller="WdfCoInstaller01009" ?>
+   <?define WinusbCoinstaller="winusbcoinstaller2" ?>
+   
+   <Product
+      Name="$(var.ProductName)"
+      Id="$(var.ProductCode)"
+      UpgradeCode="$(var.UpgradeCode)"
+      Version="$(var.ProductVersion)"
+      Manufacturer="$(var.Manufacturer)"
+      Language='1033'
+      Codepage='1252' >
+
+      <Package
+         Id='*'
+         Keywords='FX2LAFWDriver' 
+         Description="$(var.ProductName) Installer"
+         Comments="$(var.ProductName) Package"
+         Manufacturer="$(var.Manufacturer)"
+         InstallerVersion='100' Languages='1033' Compressed='yes' SummaryCodepage='1252' />
+         
+      <Condition Message="You are attempting to run the wrong version of the installer for this version of Windows.">
+        <![CDATA[$(var.TargetArchCondition)]]>
+      </Condition>
+      
+      <Media Id='1' Cabinet="disk1.cab" EmbedCab='yes' DiskPrompt="$(var.ProductCode) Media" />
+
+      <MajorUpgrade
+         AllowSameVersionUpgrades="no"
+         DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
+
+      <Property Id='ARPCOMMENTS'>Drivers for Digital Lab Board</Property>
+      <Property Id='ARPURLINFOABOUT'>$(var.InfoURL)</Property>
+      <Property Id='DiskPrompt' Value="$(var.ProductName) $(var.ProductVersion) Installation" />
+      <Property Id="ARPPRODUCTICON" Value="ChipIcon.ico" />
+<!--
+      <Property Id='ARPCONTACT'>contact info</Property>
+      <Property Id='ARPHELPLINK'>URL for technical support</Property>
+      <Property Id='ARPURLUPDATEINFO'>URL for product updates</Property>
+      <Property Id='ARPHELPTELEPHONE'>URL for technical support</Property>
+      <Property Id='ARPREADME'>path</Property>
+      <Property Id='ARPSIZE'>app size in kilobytes</Property>
+-->
+  
+      <!--====================================================== -->
+      <!--           Directory structure                         -->
+      <Directory Id='TARGETDIR' Name='SourceDir'>
+         <Directory Id='ProgramFilesFolder' Name='PFiles'>
+            <Directory Id='MANUFACTURER_FOLDER' Name="$(var.Manufacturer)">
+               <Directory Id='INSTALLDIR' Name="$(var.ProductName) $(var.ProductVersion)" />
+            </Directory>
+         </Directory>
+
+         <!-- Desktop Folder -->
+         <Directory Id="DesktopFolder" Name="Desktop" />
+      </Directory>
+
+      <!-- ========================================================================== -->
+      <!-- Driver Components -->      
+      <DirectoryRef Id='INSTALLDIR'>
+         <Directory Id="D.DIG_LAB_DRIVER" Name="Digital_Lab_driver">
+            <Directory Id="D.DIG_LAB_DRIVER.amd64" Name="amd64">
+               <Component Id='C.DIG_LAB_DRIVER.amd64.WinUSB' Guid='f9f6fcf9-261a-4664-934d-4aabb62b95c8' >
+                  <File Id='F.DIG_LAB_DRIVER.amd64.WdfCoInstallerDLL'    Name='$(var.WdfCoInstaller).dll'    DiskId='1' Source='$(var.DriverDir)/amd64/$(var.WdfCoInstaller).dll'/>
+                  <File Id='F.DIG_LAB_DRIVER.amd64.winusbcoinstallerDLL' Name='$(var.WinusbCoinstaller).dll' DiskId='1' Source='$(var.DriverDir)/amd64/$(var.WinusbCoinstaller).dll'/>
+               </Component>
+            </Directory>
+            <Directory Id="D.DIG_LAB_DRIVER.x86" Name="x86">
+               <Component Id='C.DIG_LAB_DRIVER.x86.WinUSB' Guid='5b00aa0d-0f54-4463-842d-676ace3e37d2' >
+                  <File Id='F.DIG_LAB_DRIVER.x86.WdfCoInstallerDLL'    Name='$(var.WdfCoInstaller).dll'    DiskId='1' Source='$(var.DriverDir)/x86/$(var.WdfCoInstaller).dll'/>
+                  <File Id='F.DIG_LAB_DRIVER.x86.winusbcoinstallerDLL' Name='$(var.WinusbCoinstaller).dll' DiskId='1' Source='$(var.DriverDir)/x86/$(var.WinusbCoinstaller).dll'/>
+               </Component>
+            </Directory>
+            <Component Id='C.DIG_LAB_DRIVER.drivers' Guid='5f88dfa1-49fa-4406-aa0b-d25eddb25c6a' >
+               <File Id='F.DIG_LAB_DRIVER.FX2LAFW_InterfaceCAT' Name='digital_lab_board_interface.cat' DiskId='1' Source='$(var.DriverDir)/digital_lab_board_interface.cat' KeyPath='yes'/>
+               <File Id='F.DIG_LAB_DRIVER.FX2LAFW_InterfaceINF' Name='digital_lab_board_interface.inf' DiskId='1' Source='$(var.DriverDir)/digital_lab_board_interface.inf'/>
+               <difx:Driver Sequence='1' PlugAndPlayPrompt='no' />
+            </Component>
+         </Directory>
+      </DirectoryRef>
+
+      <ComponentGroup Id='CG.DIG_LAB_DRIVER'>
+          <ComponentRef Id='C.DIG_LAB_DRIVER.x86.WinUSB'   />
+          <ComponentRef Id='C.DIG_LAB_DRIVER.amd64.WinUSB' />
+          <ComponentRef Id='C.DIG_LAB_DRIVER.drivers'    />
+      </ComponentGroup>
+      
+      <!-- License file -->
+      <WixVariable Id="WixUILicenseRtf" Value="Drivers\license.rtf" />
+               
+      <Feature Id='Complete' Level='1'>
+         <ComponentGroupRef Id='CG.DIG_LAB_DRIVER' />
+      </Feature>
+	  
+      <UIRef Id="WixUI_Minimal" />
+      <Icon Id="ChipIcon.ico" SourceFile="Hardware-Chip.ico" />
+   </Product>
+</Wix>
