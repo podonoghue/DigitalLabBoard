@@ -14,6 +14,7 @@ Projects:
 * __PARSE_JEDEC__ 
 * __Parse_XSVF_To_C__  
 * __Shared__ Some files that get bundled when installer is built
+* __Windows_Drivers__ WINUSB drivers for Windows (none needed for Linux)
 * __Windows_Installer__ Windows installer (MSI file)
 * __compareFiles__ 
 * __xsvf_player__ Software for CPLD programmer
