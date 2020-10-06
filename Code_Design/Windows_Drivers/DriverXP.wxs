@@ -3,7 +3,7 @@
      xmlns:difx='http://schemas.microsoft.com/wix/DifxAppExtension'>
 
    <?define Manufacturer="pgo" ?>
-   <?define ProductName="DIG_LAB Drivers" ?>
+   <?define ProductName="Digital Lab Board Driver" ?>
    <!--?define ProductVersion="1.0.0" ?-->                        <!-- Defined on command line -->
    <?define ProductCode="*" ?> 
    <?define UpgradeCode="11d99dd0-e9ce-4d64-9cae-de79e817cd27" ?> <!-- Don't change        -->

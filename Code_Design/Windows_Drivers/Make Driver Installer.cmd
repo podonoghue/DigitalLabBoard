@@ -33,7 +33,7 @@ echo "Unknown option %1"
 goto finish
 
 :doMake
-cmd /c "%~dp0\Make Cat Files.cmd"
+rem cmd /c "%~dp0\Make Cat Files.cmd"
 if exist %MSI_FILE_X64%.msi    del %MSI_FILE_X64%.msi
 if exist %MSI_FILE_X32%.msi    del %MSI_FILE_X32%.msi
 if exist %MSI_FILE_XP_X32%.msi del %MSI_FILE_XP_X32%.msi
@@ -59,16 +59,19 @@ rem echo %CANDLE% %CANDLE_OPTIONS% -dProductVersion=%VERSIONn% -dTargetArchCondi
 del *.wixpdb
 rmdir /S /Q %WIX_BUILD_DIR%
 
-set SIGNTOOL="C:\Program Files (x86)\Windows Kits\8.1\bin\x64\SignTool.exe"
+rem set SDK_HOME="C:\Program Files (x86)\Windows Kits\8.1\bin"
+set SDK_HOME="C:\Program Files (x86)\Windows Kits\10\bin"
+
+set SIGNTOOL=%SDK_HOME%\x64\SignTool.exe
+
 set NAME="Open Source Developer, Peter O'Donoghue"
 set DESCRIPTION="Digital Lab Board Driver"
 set TIMESTAMP_URL=http://time.certum.pl/
+rem set TIMESTAMP_URL=http://timestamp.verisign.com/scripts/timstamp.dll
 
 set SIGN_COMMAND=%SIGNTOOL% sign /n %NAME% /t %TIMESTAMP_URL% /d %DESCRIPTION% /fd sha1 /v
 
 echo Signing files
-
-echo %SIGN_COMMAND% %~dp0\*.msi
-%SIGN_COMMAND% %~dp0\*.msi
+rem %SIGN_COMMAND% %~dp0\*.msi
 
 pause

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Assumes file is in executable directory - not current!
+cd `dirname $0`
+#pwd
+
+echo -n Password: 
+read -s password
+echo 
+
+for file in *.msi ; do
+   echo -n "signing ${file} - "
+   signwindowsfiles -n "Digital_Lab_Board_Driver" -p ${password} ${file}
+done
+
+# Pause to see result
+read -p "Press [Enter] to close"
+
