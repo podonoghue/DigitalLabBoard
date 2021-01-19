@@ -4,3 +4,11 @@ Version=1.0
 ProjectPath=CPLD_Programmer\CPLD_Programmer.PrjPcb
 [Project2]
 ProjectPath=DigitalLabBoard\DigitalLabBoard.PrjPCB
+[Project3]
+ProjectPath=..\..\SolderingStation\PCB_Controller\SolderingStation.PrjPcb
+[Project4]
+ProjectPath=..\..\usbdm-hcs08\USBDM_SWD_JS16CWJ\USBDM_SWD_JS16CWJ.PRJPCB
+[Project5]
+ProjectPath=..\..\usbdm-hcs08\USBDM_SWD_SER_JS16CWJ\USBDM_SWD_SER_JS16CWJ.PRJPCB
+[Project6]
+ProjectPath=..\..\usbdm-kinetis\usbdm-kinetis\Hardware\USBDM_Kinetis_MK22F\USBDM_Kinetis_MK22F.PrjPcb
