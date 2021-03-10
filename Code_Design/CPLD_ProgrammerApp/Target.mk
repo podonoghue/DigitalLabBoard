@@ -120,13 +120,6 @@ $(BUILDDIR) :
 	@echo -- Making directory $(BUILDDIR)
 	-$(MKDIR) $(BUILDDIR)
     
-ifneq ($(TARGET_LIBDIR),$(TARGET_BINDIR))
-$(TARGET_LIBDIR) :
-	@echo -- Making directory $(TARGET_LIBDIR)
-	-$(MKDIR) $(TARGET_LIBDIR)
-    
-endif
-
 $(TARGET_LIBDIR)/$(TARGET_DLL): | $(TARGET_LIBDIR)
 
 $(TARGET_BINDIR)/$(TARGET_EXE): | $(TARGET_BINDIR)

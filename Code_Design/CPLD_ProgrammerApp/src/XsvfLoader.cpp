@@ -114,9 +114,11 @@ libusb_device_handle *XsvfLoader::findDevice() {
 const char *XsvfLoader::checkTargetVref() {
    const char *errorMessage = nullptr;
 
+   fprintf(stderr, "checkTargetVref\n");
+
    int rc = libusb_init(&libusbContext);
    if (rc < 0) {
-      return "sendSxvfFile - Libusb failed initialisation";
+      return "checkTargetVref - Libusb failed initialisation";
    }
    do {
       deviceHandle = findDevice();
@@ -133,6 +135,7 @@ const char *XsvfLoader::checkTargetVref() {
       int bytesSent = 0;
       int rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 1000);
       if (rc < 0) {
+         fprintf(stderr, "checkTargetVref - Failed transmission - \"%s\"\n", libusb_error_name(rc));
          errorMessage = libusb_error_name(rc);
          break;
       }
@@ -146,6 +149,7 @@ const char *XsvfLoader::checkTargetVref() {
       int bytesReceived = 0;
       rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 1000);
       if (rc < 0) {
+         fprintf(stderr, "checkTargetVref - Missing response - \"%s\"\n", libusb_error_name(rc));
          errorMessage = libusb_error_name(rc);
          break;
       }
@@ -202,6 +206,7 @@ const char *XsvfLoader::readIdcode(uint32_t &idcode) {
       int bytesSent = 0;
       int rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 1000);
       if (rc < 0) {
+         fprintf(stderr, "readIdcode - Failed transmission - \"%s\"\n", libusb_error_name(rc));
          errorMessage = libusb_error_name(rc);
          break;
       }
@@ -215,6 +220,7 @@ const char *XsvfLoader::readIdcode(uint32_t &idcode) {
       int bytesReceived = 0;
       rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 1000);
       if (rc < 0) {
+         fprintf(stderr, "readIdcode - Missing response - \"%s\"\n", libusb_error_name(rc));
          errorMessage = libusb_error_name(rc);
          break;
       }
@@ -238,6 +244,7 @@ const char *XsvfLoader::readIdcode(uint32_t &idcode) {
    }
 
    libusb_exit(libusbContext);
+   fprintf(stderr, "checkTargetVref - exit \n");
    return errorMessage;
 }
 
@@ -335,24 +342,26 @@ const char *XsvfLoader::sendXsvfBlock(unsigned xsvf_size, uint8_t *xsvf_data) {
    int bytesToSend = sizeof(SimpleCommandMessage)+message.byteLength;
    rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&message, bytesToSend, &bytesSent, 1000);
    if (rc < 0) {
+      fprintf(stderr, "sendXsvfBlock - Failed transmission - \"%s\"\n", libusb_error_name(rc));
       return libusb_error_name(rc);
    }
    if (bytesSent != bytesToSend) {
-      return "downloadXsvfBlock - Incomplete transmission";
+      return "sendXsvfBlock - Incomplete transmission";
    }
    SimpleResponseMessage response = {};
 
    int bytesReceived = 0;
    rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 1000);
    if (rc < 0) {
+      fprintf(stderr, "readIdcode - Missing response - \"%s\"\n", libusb_error_name(rc));
       return libusb_error_name(rc);
    }
    if ((unsigned)bytesReceived < sizeof(response)) {
       fprintf(stderr, "downloadXsvfBlock - bytesReceived = %d\n", bytesReceived);
-      return "downloadXsvfBlock - Incomplete reception";
+      return "sendXsvfBlock - Incomplete reception";
    }
    if (response.status != UsbCommandStatus_OK) {
-      return "downloadXsvfBlock - Operation failed on device";
+      return "sendXsvfBlock - Operation failed on device";
    }
    return nullptr;
 }
@@ -385,6 +394,7 @@ const char *XsvfLoader::sendXsvf(unsigned xsvf_size, uint8_t *xsvf_data) {
    int bytesSent = 0;
    int rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 1000);
    if (rc < 0) {
+      fprintf(stderr, "sendXsvf - Failed transmission - \"%s\"\n", libusb_error_name(rc));
       return libusb_error_name(rc);
    }
    if ((unsigned)bytesSent != sizeof(command)) {
@@ -396,6 +406,7 @@ const char *XsvfLoader::sendXsvf(unsigned xsvf_size, uint8_t *xsvf_data) {
    int bytesReceived = 0;
    rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 1000);
    if (rc < 0) {
+      fprintf(stderr, "sendXsvf - Missing response - \"%s\"\n", libusb_error_name(rc));
       return libusb_error_name(rc);
    }
    if ((unsigned)bytesReceived < sizeof(response)) {
