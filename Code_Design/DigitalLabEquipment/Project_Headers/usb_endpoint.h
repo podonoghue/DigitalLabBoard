@@ -20,6 +20,8 @@
 #include "usb_defs.h"
 #include "derivative.h"
 #include "error.h"
+#include "cstring"
+#include "console.h"
 
 namespace USBDM {
 
@@ -218,14 +220,22 @@ public:
    const uint16_t fEndpointSize;
 
    /**
+    * Clear value reflecting selected hardware based ping-pong buffer.
+    * This would normally only be called when resetting the USB hardware or using
+    * USBx_CTL_ODDRST.
+    */
+   void clearPinPongToggle() {
+      fTxOdd            = BufferToggle_Even;
+      fRxOdd            = BufferToggle_Even;
+   }
+
+   /**
     * Initialise endpoint
     *  - Internal state
     *  - BDTs
     */
    void initialise() {
       fDataToggle       = DataToggle_0;
-      fTxOdd            = BufferToggle_Even;
-      fRxOdd            = BufferToggle_Even;
       fState            = EPIdle;
       fNeedZLP          = false;
       fDataPtr          = nullptr;

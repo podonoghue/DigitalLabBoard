@@ -845,7 +845,7 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetupToken() {
    // Call-backs only persist during a SETUP transaction
    fControlEndpoint.setCallback(ep0DummyTransactionCallback);
 
-//   console.WRITE("handleSetupToken - ").WRITELN(getSetupPacketDescription(&fEp0SetupBuffer));
+   console.WRITE("handleSetupToken - ").WRITELN(getSetupPacketDescription(&fEp0SetupBuffer));
 
    switch(REQ_TYPE(fEp0SetupBuffer.bmRequestType)) {
       case UsbRequestType_STANDARD :
@@ -1004,6 +1004,8 @@ void UsbBase_T<Info, EP0_SIZE>::handleUSBReset() {
 
    // Initialise control end-point
    initialiseEndpoints();
+   UsbImplementation::clearPinPongToggle();
+   UsbImplementation::initialiseEndpoints();
 
    // Enable various interrupts
    setInterruptMask(USB_INTMASKS|USB_INTEN_ERROREN_MASK);
@@ -1065,8 +1067,9 @@ void UsbBase_T<Info, EP0_SIZE>::handleUSBResume() {
    handleUserCallback(UserEvent_Resume);
 
    // Initialise all end-points
-   UsbImplementation::initialiseEndpoints();
    initialiseEndpoints();
+   UsbImplementation::clearPinPongToggle();
+   UsbImplementation::initialiseEndpoints();
 
    // Enable the transmit or receive of packets
    fUsb().CTL = USB_CTL_USBENSOFEN_MASK;
@@ -1198,14 +1201,14 @@ void UsbBase_T<Info, EP0_SIZE>::initialiseEndpoints() {
    // Clear all BDTs
    memset((uint8_t*)(endPointBdts), 0, sizeof(EndpointBdtEntry[UsbImplementation::NUMBER_OF_ENDPOINTS]));
 
-   // Clear odd/even bits & enable USB device
+   // Clear odd/even buffer selection & enable USB device
    fUsb().CTL = USB_CTL_USBENSOFEN_MASK|USB_CTL_ODDRST_MASK;
    fUsb().CTL = USB_CTL_USBENSOFEN_MASK;
 
    addEndpoint(&fControlEndpoint);
 
+   fControlEndpoint.clearPinPongToggle();
    fControlEndpoint.initialise();
-
    fControlEndpoint.setCallback(ep0DummyTransactionCallback);
 
    // Set up to receive SETUP transaction
@@ -1457,13 +1460,10 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetConfiguration() {
       fControlEndpoint.stall();
       return;
    }
-   bool configChanged = setUSBconfiguredState(fEp0SetupBuffer.wValue.lo());
-
-   if (configChanged) {
    // Initialise non-control end-points
-      UsbImplementation::initialiseEndpoints();
-      fUserCallbackFunction(UserEvent::UserEvent_Configure);
-   }
+   console.WRITE("RxOdd").WRITELN((bool)UsbImplementation::epBulkOut.fRxOdd);
+   UsbImplementation::initialiseEndpoints();
+   fUserCallbackFunction(UserEvent::UserEvent_Configure);
 
    // Tx empty Status transaction
    fControlEndpoint.startTxStatus();

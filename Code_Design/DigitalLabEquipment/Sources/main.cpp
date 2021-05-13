@@ -103,7 +103,10 @@ static BootInformation const bootInformation = {
 
 int main() {
    // Enable Reset pin filter
-   Rcm::configure(RcmResetPinRunWaitFilter_LowPowerOscillator, RcmResetPinStopFilter_LowPowerOscillator, 24);
+   Rcm::configure(
+         RcmResetPinRunWaitFilter_LowPowerOscillator,
+         RcmResetPinStopFilter_LowPowerOscillator,
+         24);
 
    // Set first power-on message
    StringFormatter_T<22> sf;

@@ -226,6 +226,16 @@ public:
 
 protected:
    /**
+    * Clear value reflecting selected hardware based ping-pong buffer.
+    * This would normally only be called when resetting the USB hardware or using
+    * USBx_CTL_ODDRST.
+    */
+   static void clearPinPongToggle() {
+      epBulkOut.clearPinPongToggle();
+      epBulkIn.clearPinPongToggle();
+   }
+
+   /**
     * Initialises all end-points
     */
    static void initialiseEndpoints(void) {

@@ -48,34 +48,34 @@ MEMORY
   gpioBitband    (rw)  : ORIGIN = 0x42000000, LENGTH = 0x02000000
   peripherals    (rw)  : ORIGIN = 0xE0000000, LENGTH = 0x00100000
 /*
- *  <o>  flexRAM address <constant>
- *  <o1> flexRAM size    <constant>
+    <o>  flexRAM address <constant>
+    <o1> flexRAM size    <constant>
  */
   flexRAM        (rw)  : ORIGIN = 0x14000000, LENGTH = 0x00000800
 /*
- *  <o>  Flex NVM address <constant>
- *  <o1> Flex NVM size    <constant>
+    <o>  Flex NVM address <constant>
+    <o1> Flex NVM size    <constant>
  */
   flexNVM        (rx)  : ORIGIN = 0x10000000, LENGTH = 0x00008000
 /*
- *  <o>  FLASH  address
- *  <o1> FLASH  size
+    <o>  FLASH  address
+    <o1> FLASH  size
  */
   flash          (rx)  : ORIGIN = 0x4000, LENGTH = 0x1BFF0
 /*
- *  <o>  Boot Information  address
- *  <o1> Boot Information  size
+    <o>  Boot Information  address
+    <o1> Boot Information  size
  */
   bootInfo          (rx)  : ORIGIN = 0x1FFF0, LENGTH = 0x10
   
 /*
- *  <o>  ram_high address <constant>
- *  <o1> ram_high size    <constant>
+    <o>  ram_high address <constant>
+    <o1> ram_high size    <constant>
  */
   ram_high       (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00002000
 /*
- *  <o>  ram_low address <constant>
- *  <o1> ram_low size    <constant>
+    <o>  ram_low address <constant>
+    <o1> ram_low size    <constant>
  */
   ram_low        (rwx) : ORIGIN = 0x1FFFE000, LENGTH = 0x00002000
 /*

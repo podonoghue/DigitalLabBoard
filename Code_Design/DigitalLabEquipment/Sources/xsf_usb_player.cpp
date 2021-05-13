@@ -28,12 +28,12 @@ UsbCommandMessage UsbXsvfInterface::command;
  * @param message Command message to describe
  */
 static void writeCommandMessage(UsbCommandMessage &message) {
-   console.write(getCommandName(message.command));
+   console.WRITE(getCommandName(message.command));
    if (message.byteLength>0) {
    }
    else {
    }
-   console.writeln();
+   console.WRITELN();
 }
 
 bool UsbXsvfInterface::execute(unsigned xsvd_size, uint8_t *xsvf_data, uint32_t &result) {
@@ -46,7 +46,7 @@ bool UsbXsvfInterface::execute(unsigned xsvd_size, uint8_t *xsvf_data, uint32_t 
       return true;
    }
    else {
-      console.write("Failed to execute XSVF, rc = ").writeln(xsvf.getError());
+      console.WRITE("Failed to execute XSVF, rc = ").WRITELN(xsvf.getError());
       return false;
    }
 }
@@ -88,7 +88,7 @@ bool UsbXsvfInterface::readIdcode(uint32_t &idcode) {
       return true;
    }
    else {
-      console.write("Failed to read IDCODE, rc = ").writeln(xsvf.getError());
+      console.WRITE("Failed to read IDCODE, rc = ").WRITELN(xsvf.getError());
       return false;
    }
 }
@@ -131,7 +131,7 @@ private:
          return false;
       }
       if (command.command != UsbCommand_XSVF_data) {
-         console.writeln(getCommandName(command.command));
+         console.WRITELN(getCommandName(command.command));
          error = "Unexpected USB packet type";
          return false;
       }
@@ -172,12 +172,12 @@ public:
 
       if (xsvf.playAll()) {
          // Success
-         console.writeln("Programming successful");
+         console.WRITELN("Programming successful");
          return true;
       }
       else {
          // Failure
-         console.write("Programming failed, rc = ").writeln(xsvf.getError());
+         console.WRITE("Programming failed, rc = ").WRITELN(xsvf.getError());
          return false;
       }
    }
@@ -252,19 +252,19 @@ void UsbXsvfInterface::pollUsb() {
 
    bool noVref = !JtagInterface::checkVref();
    if (noVref) {
-      console.writeln("No target Vref");
+      console.WRITELN("No target Vref");
    }
    do {
       if (size < (int)sizeof(command.command)) {
          // Empty message?
-         console.writeln("Empty command");
+         console.WRITELN("Empty command");
          continue;
       }
       writeCommandMessage(command);
 
       switch(command.command) {
          default:
-            console.write("Unexpected command: ").writeln(command.command);
+            console.WRITE("Unexpected command: ").WRITELN(command.command);
             continue;
 
          case UsbCommand_Nop:
@@ -276,17 +276,17 @@ void UsbXsvfInterface::pollUsb() {
                continue;
             }
             if (!readIdcode(response.idcode)) {
-               console.writeln("Failed read IDCODE");
+               console.WRITELN("Failed read IDCODE");
                continue;
             }
             if (response.idcode == 0xFFFFFFFF) {
-               console.writeln("Failed read IDCODE (no device?)");
+               console.WRITELN("Failed read IDCODE (no device?)");
                continue;
             }
             response.status      = UsbCommandStatus_OK;
             response.byteLength  = 4;
             responseSize         = sizeof(ResponseIdentifyMessage);
-            console.write("IDCODE = 0x").writeln(response.idcode, Radix_16);
+            console.WRITE("IDCODE = 0x").WRITELN(response.idcode, Radix_16);
             continue;
 
          case UsbCommand_CheckVref:
@@ -294,7 +294,7 @@ void UsbXsvfInterface::pollUsb() {
                continue;
             }
             response.status      = UsbCommandStatus_OK;
-            console.writeln("Target Vref present");
+            console.WRITELN("Target Vref present");
             continue;
 
          case UsbCommand_XSVF_execute:
@@ -307,7 +307,7 @@ void UsbXsvfInterface::pollUsb() {
             response.status      = UsbCommandStatus_OK;
             response.byteLength  = 4;
             responseSize         = sizeof(ResponseIdentifyMessage);
-            console.write("Result = 0x").writeln(response.result, Radix_16);
+            console.WRITE("Result = 0x").WRITELN(response.result, Radix_16);
             continue;
 
          case UsbCommand_XSVF:
