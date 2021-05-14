@@ -20,6 +20,8 @@
 #include "usb_defs.h"
 #include "derivative.h"
 #include "error.h"
+#include "cstring"
+#include "console.h"
 
 namespace USBDM {
 
@@ -169,7 +171,7 @@ protected:
     */
    static EndpointState unsetHandlerCallback(EndpointState endpointState) {
       (void)endpointState;
-      setAndCheckErrorCode(E_NO_HANDLER);
+//      setAndCheckErrorCode(E_NO_HANDLER);
       return EPIdle;
    }
 
@@ -218,14 +220,22 @@ public:
    const uint16_t fEndpointSize;
 
    /**
+    * Clear value reflecting selected hardware based ping-pong buffer.
+    * This would normally only be called when resetting the USB hardware or using
+    * USBx_CTL_ODDRST.
+    */
+   void clearPinPongToggle() {
+      fTxOdd            = BufferToggle_Even;
+      fRxOdd            = BufferToggle_Even;
+   }
+
+   /**
     * Initialise endpoint
     *  - Internal state
     *  - BDTs
     */
    void initialise() {
       fDataToggle       = DataToggle_0;
-      fTxOdd            = BufferToggle_Even;
-      fRxOdd            = BufferToggle_Even;
       fState            = EPIdle;
       fNeedZLP          = false;
       fDataPtr          = nullptr;
@@ -404,9 +414,6 @@ public:
     * @param[in]  bufPtr  Pointer to external buffer (may be NULL to indicate fDatabuffer is being used directly)
     */
    void startTxStage(EndpointState state, uint16_t bufSize=0, volatile const uint8_t *bufPtr=nullptr) {
-      if (fState == EPStall) {
-         return;
-      }
       // Pointer to data
       fDataPtr = (uint8_t*)bufPtr;
 
@@ -786,9 +793,6 @@ public:
     * Data Toggle = DATA1
     */
    void setupReceived() {
-//      if (fState == EPStall) {
-//         Endpoint::clearStall();
-//      }
       fState      = EPIdle;
       Endpoint::setDataToggle(DataToggle_1);
    }

@@ -169,7 +169,7 @@ static BootInformation *getBootInformation() {
 /** Buffer for USB command */
 static UsbCommandMessage command;
 
-enum UsbState {UsbStartUp, UsbIdle};
+enum UsbState {UsbStartUp, UsbIdle, UsbWaiting};
 
 void pollUsb() {
 
@@ -180,11 +180,12 @@ void pollUsb() {
 
    // Call-back to record USB user events
    static auto cb = [](const UsbImplementation::UserEvent) {
+      // Restart USB transfers on reset etc.
+      usbState = UsbIdle;
       return E_NO_ERROR;
    };
 
    if (usbState == UsbStartUp) {
-      // 1st time - Initialise hardware
       // Start USB
       console.WRITELN("UsbStartUp");
       UsbImplementation::initialise();
@@ -193,25 +194,36 @@ void pollUsb() {
       usbState = UsbIdle;
       return;
    }
-
    // Check for USB connection
    if (!UsbImplementation::isConfigured()) {
-//      console.WRITELN("Not configured");
+      console.WRITELN("Not configured");
       // No connection
       return;
    }
 
    int size;
 
-   size = Usb0::pollReceiveBulkData(sizeof(command), (uint8_t *)&command);
+   if (usbState != UsbWaiting) {
+      // UsbIdle
+      // Set up to receive a message
+      Usb0::startReceiveBulkData(sizeof(command), (uint8_t *)&command);
+      usbState = UsbWaiting;
+      return;
+   }
+
+   // UsbWaiting
+
+   // Check if we have received a message
+   size = Usb0::pollReceiveBulkData();
    if (size < 0) {
       // No message - USB still ready
       return;
    }
 
-   /*
-    * We have a message to process
-    */
+   // *****************************
+   // We have a message to process
+   // *****************************
+
 
    // Default to OK small response
    ResponseMessage    response;
@@ -243,7 +255,7 @@ void pollUsb() {
             BootInformation *bootInformation = getBootInformation();
 
             response.bootHardwareVersion  = HW_LOGIC_BOARD_V4;
-            response.bootSoftwareVersion  = BOOTLOADER_V2;
+            response.bootSoftwareVersion  = BOOTLOADER_V3;
             response.flashStart           = FLASH_BUFFER_START;
             response.flashSize            = FLASH_BUFFER_SIZE;
             if (bootInformation != nullptr) {

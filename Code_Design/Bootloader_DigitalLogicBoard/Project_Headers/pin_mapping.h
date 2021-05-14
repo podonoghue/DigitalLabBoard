@@ -1487,7 +1487,7 @@ public:
    }
 
    //! Number of signals available in info table
-   static constexpr int numSignals  = 24;
+   static constexpr int numSignals  = 28;
 
    //! Information for each signal of peripheral
    static constexpr PinInfo  info[] = {
@@ -1517,6 +1517,10 @@ public:
          /*  21: ADC0_SE21            = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
          /*  22: --                   = --                             */  { NoPortInfo, 0,         INVALID_PCR,  0 },
          /*  23: ADC0_SE23            = --                             */  { NoPortInfo, 0,         UNMAPPED_PCR, 0 },
+         /*  24: --                   = --                             */  { NoPortInfo, 0,         INVALID_PCR,  0 },
+         /*  25: --                   = --                             */  { NoPortInfo, 0,         INVALID_PCR,  0 },
+         /*  26: ADC0_SE26            = TempSensor (Internal)          */  { NoPortInfo, 0,         FIXED_NO_PCR, 0 },
+         /*  27: ADC0_SE27            = BandGap (Internal)             */  { NoPortInfo, 0,         FIXED_NO_PCR, 0 },
    };
 
    /**
@@ -4986,6 +4990,8 @@ namespace USBDM {
  */
 using Adc_p8               = const USBDM::Adc0::Channel<19>;
 using Adc_p7               = const USBDM::Adc0::Channel<0>;
+using Adc_Internal         = const USBDM::Adc0::Channel<27>;
+//using Adc_Internal         = const USBDM::Adc0::Channel<26>;
 /** 
  * End group ADC_Group
  * @}
@@ -5017,6 +5023,7 @@ using Gpio_p21             = const USBDM::GpioA<4>;
  *  ------------------------ | --------------------------------------------|---------------------------| ------------- 
  *  ADC0_DM0                 | ADC0_DM0/ADC0_SE19                          | p8                        | -       
  *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | -       
+ *  BandGap                  | ADC0_SE27                                   | Internal                  | -       
  *  EXTAL32                  | EXTAL32                                     | p15                       | -       
  *  PTA0                     | JTAG_TCLK/SWD_CLK                           | p17                       | SWD_CLK       
  *  PTA1                     | UART0_RX                                    | p18                       | SWD_Rx       
@@ -5048,6 +5055,7 @@ using Gpio_p21             = const USBDM::GpioA<4>;
  *  PTD6                     | -                                           | p47                       | -       
  *  PTD7                     | -                                           | p48                       | -       
  *  RESET_b                  | RESET_b                                     | p26                       | Reset       
+ *  TempSensor               | ADC0_SE26                                   | Internal                  | -       
  *  USB0_DM                  | USB0_DM                                     | p4                        | USBDM       
  *  USB0_DP                  | USB0_DP                                     | p3                        | USBDP       
  *  VBAT                     | VBAT                                        | p16                       | Vdd       
@@ -5069,6 +5077,7 @@ using Gpio_p21             = const USBDM::GpioA<4>;
  *
  *    Pin Name               |   Functions                                 |  Location                 |  Description  
  *  ------------------------ | --------------------------------------------|---------------------------| ------------- 
+ *  TempSensor               | ADC0_SE26                                   | Internal                  | -       
  *  VDD1                     | VDD1                                        | p1                        | Vdd       
  *  VSS1                     | VSS1                                        | p2                        | Vss       
  *  USB0_DP                  | USB0_DP                                     | p3                        | USBDP       
@@ -5126,6 +5135,8 @@ using Gpio_p21             = const USBDM::GpioA<4>;
  *  PTD7                     | -                                           | p48                       | -       
  *  ADC0_DM0                 | ADC0_DM0/ADC0_SE19                          | p8                        | -       
  *  ADC0_DP0                 | ADC0_DP0/ADC0_SE0                           | p7                        | -       
+ *  TempSensor               | ADC0_SE26                                   | Internal                  | -       
+ *  BandGap                  | ADC0_SE27                                   | Internal                  | -       
  *  PTA18                    | EXTAL0                                      | p24                       | 16 MHz Crystal       
  *  EXTAL32                  | EXTAL32                                     | p15                       | -       
  *  PTA4                     | GPIOA_4/LLWU_P3                             | p21                       | BOOT_BTN       
