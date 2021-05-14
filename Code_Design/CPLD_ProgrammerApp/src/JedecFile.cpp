@@ -56,6 +56,7 @@ const char *JedecFile::loadFile(FILE *fp) {
    auto saveCharacter = [&comment_ptr, &comment](char ch) {
       if (comment_ptr<(comment+sizeof(comment)-1)) {
          *comment_ptr++ = ch;
+         *comment_ptr   = '\0'; // Keep '\0' terminated for debug
       }
    };
 
@@ -72,6 +73,7 @@ const char *JedecFile::loadFile(FILE *fp) {
    int ch;
    do {
       ch = fgetc(fp);
+      //fprintf(stderr,  "%c", (char)ch); fflush(stderr);
       if ((ch == ETX) || (ch == -1)) {
          break;
       }

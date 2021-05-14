@@ -36,6 +36,8 @@ const DeviceInformation *DeviceInformation::findDevice(const char *deviceName) {
       if (info->block_num == 0) {
          break;
       }
+      //fprintf(stderr, "Name = %s\n", deviceName); fflush(stderr);
+      //fprintf(stderr, "Name = %s (%d)\n", info->name, info->name_length); fflush(stderr);
       if (strncasecmp(deviceName, info->name, info->name_length) == 0) {
          return info;
       }

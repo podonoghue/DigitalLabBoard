@@ -122,6 +122,25 @@ public:
     */
    const char *checkTargetVref();
 
+   /**
+    * Set status LEDs to failed
+    *
+    * @return nullptr   => success
+    * @return !=nullptr => failed, error message
+    */
+   const char *setFailed();
+
+   /**
+    * Set status LEDs to failed (Red on, Green off)
+    *
+    * @param okLed
+    * @param failLed
+    *
+    * @return nullptr   => success
+    * @return !=nullptr => failed, error message
+    */
+   const char *setleds(bool passLed, bool failLed);
+
 };
 
 #endif /* XSVFLOADER_H_ */

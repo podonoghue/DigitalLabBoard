@@ -235,6 +235,7 @@ const char *ProgrammerDialogue::confirmDevice() {
       deviceInformation = DeviceInformation::findDevice(idcode);
       if (deviceInformation == nullptr) {
          res = "Unknown device";
+         loader.setFailed();
       }
    } while (false);
 
@@ -279,7 +280,6 @@ void ProgrammerDialogue::onProgramDevice(wxCommandEvent &event) {
       if (msg != nullptr) {
          break;
       }
-      onConfirmId(event);
       msg = loader.executeXsvf(xsvf);
       if (msg != nullptr) {
          break;

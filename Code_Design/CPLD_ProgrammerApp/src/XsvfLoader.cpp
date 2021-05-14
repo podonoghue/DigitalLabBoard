@@ -174,6 +174,139 @@ const char *XsvfLoader::checkTargetVref() {
 }
 
 /**
+ * Set status LEDs to failed (Red on, Green off)
+ *
+ * @return nullptr   => success
+ * @return !=nullptr => failed, error message
+ */
+const char *XsvfLoader::setFailed() {
+   const char *errorMessage = nullptr;
+
+   fprintf(stderr, "setFailed\n");
+
+   int rc = libusb_init(&libusbContext);
+   if (rc < 0) {
+      return "setFailed - Libusb failed initialisation";
+   }
+   do {
+      deviceHandle = findDevice();
+      if (deviceHandle == nullptr) {
+         errorMessage = "Programmer not found";
+         break;
+      }
+
+      UsbCommandIdentifyMessage  command = {
+            /* command      */ UsbCommand_SetFailed,
+            /* byteLength   */ 0,
+      };
+
+      int bytesSent = 0;
+      int rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 1000);
+      if (rc < 0) {
+         fprintf(stderr, "setFailed - Failed transmission - \"%s\"\n", libusb_error_name(rc));
+         errorMessage = libusb_error_name(rc);
+         break;
+      }
+      if ((unsigned)bytesSent != sizeof(command)) {
+         errorMessage = "setFailed - Incomplete transmission";
+         break;
+      }
+
+      SimpleResponseMessage response = {};
+
+      int bytesReceived = 0;
+      rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 1000);
+      if (rc < 0) {
+         fprintf(stderr, "setFailed - Missing response - \"%s\"\n", libusb_error_name(rc));
+         errorMessage = libusb_error_name(rc);
+         break;
+      }
+      if ((unsigned)bytesReceived < sizeof(response)) {
+         errorMessage = "setFailed - Incomplete reception";
+         break;
+      }
+
+   } while(false);
+
+   if (deviceHandle != nullptr) {
+      libusb_close(deviceHandle);
+      deviceHandle = nullptr;
+   }
+
+   libusb_exit(libusbContext);
+   return errorMessage;
+}
+
+/**
+ * Set status LEDs to failed (Red on, Green off)
+ *
+ * @param passLed
+ * @param failLed
+ *
+ * @return nullptr   => success
+ * @return !=nullptr => failed, error message
+ */
+const char *XsvfLoader::setleds(bool passLed, bool failLed) {
+   const char *errorMessage = nullptr;
+
+   fprintf(stderr, "setleds\n");
+
+   int rc = libusb_init(&libusbContext);
+   if (rc < 0) {
+      return "setleds - Libusb failed initialisation";
+   }
+   do {
+      deviceHandle = findDevice();
+      if (deviceHandle == nullptr) {
+         errorMessage = "Programmer not found";
+         break;
+      }
+
+      UsbSetSatusMessage  command = {
+            /* command      */ UsbCommand_Status_Leds,
+            /* byteLength   */ 2,
+            /* okLed        */ passLed,
+            /* failLed      */ failLed,
+      };
+
+      int bytesSent = 0;
+      int rc = libusb_bulk_transfer(deviceHandle, EP_OUT, (uint8_t*)&command, sizeof(command), &bytesSent, 1000);
+      if (rc < 0) {
+         fprintf(stderr, "setleds - Failed transmission - \"%s\"\n", libusb_error_name(rc));
+         errorMessage = libusb_error_name(rc);
+         break;
+      }
+      if ((unsigned)bytesSent != sizeof(command)) {
+         errorMessage = "setleds - Incomplete transmission";
+         break;
+      }
+
+      SimpleResponseMessage response = {};
+
+      int bytesReceived = 0;
+      rc = libusb_bulk_transfer(deviceHandle, EP_IN, (uint8_t*)&response, sizeof(response), &bytesReceived, 1000);
+      if (rc < 0) {
+         fprintf(stderr, "setleds - Missing response - \"%s\"\n", libusb_error_name(rc));
+         errorMessage = libusb_error_name(rc);
+         break;
+      }
+      if ((unsigned)bytesReceived < sizeof(response)) {
+         errorMessage = "setleds - Incomplete reception";
+         break;
+      }
+
+   } while(false);
+
+   if (deviceHandle != nullptr) {
+      libusb_close(deviceHandle);
+      deviceHandle = nullptr;
+   }
+
+   libusb_exit(libusbContext);
+   return errorMessage;
+}
+
+/**
  * Read IDCODE from device
  * - This will open the device.
  * - Read IDCODE from CPLD
