@@ -24,12 +24,12 @@ using namespace USBDM;
  * @param message Command message to describe
  */
 static void writeCommandMessage(UsbCommandMessage &message) {
-   console.write(getCommandName(message.command));
+   console.WRITE(getCommandName(message.command));
    if (message.byteLength>0) {
    }
    else {
    }
-   console.writeln();
+   console.WRITELN();
 }
 
 using ProgrammerBusyLed = GpioD<7>;
@@ -44,7 +44,7 @@ bool execute(unsigned xsvd_size, uint8_t *xsvf_data, uint32_t &result) {
       return true;
    }
    else {
-      console.write("Failed to execute XSVF, rc = ").writeln(xsvf.getError());
+      console.WRITE("Failed to execute XSVF, rc = ").WRITELN(xsvf.getError());
       return false;
    }
 }
@@ -205,7 +205,7 @@ bool execute(unsigned xsvd_size, uint8_t *xsvf_data, uint32_t &result) {
 //      return true;
 //   }
 //   else {
-//      console.write("Failed to execute XSVF sequence, rc = ").writeln(xsvf.getError());
+//      console.WRITE("Failed to execute XSVF sequence, rc = ").WRITELN(xsvf.getError());
 //      return false;
 //   }
 //}
@@ -247,7 +247,7 @@ bool readIdcode(uint32_t &idcode) {
       return true;
    }
    else {
-      console.write("Failed to read IDCODE, rc = ").writeln(xsvf.getError());
+      console.WRITE("Failed to read IDCODE, rc = ").WRITELN(xsvf.getError());
       return false;
    }
 }
@@ -290,7 +290,7 @@ private:
          return false;
       }
       if (command.command != UsbCommand_XSVF_data) {
-         console.writeln(getCommandName(command.command));
+         console.WRITELN(getCommandName(command.command));
          error = "Unexpected USB packet type";
          return false;
       }
@@ -331,12 +331,12 @@ public:
 
       if (xsvf.playAll()) {
          // Success
-         console.writeln("Programming successful");
+         console.WRITELN("Programming successful");
          return true;
       }
       else {
          // Failure
-         console.write("Programming failed, rc = ").writeln(xsvf.getError());
+         console.WRITE("Programming failed, rc = ").WRITELN(xsvf.getError());
          return false;
       }
    }
@@ -375,6 +375,7 @@ void pollUsb() {
             PinSlewRate_Slow);
 
       // Start USB
+      console.WRITELN("UsbStartUp");
       UsbImplementation::initialise();
       UsbImplementation::setUserCallback(cb);
       checkError();
@@ -383,6 +384,7 @@ void pollUsb() {
    }
    // Check for USB connection
    if (!UsbImplementation::isConfigured()) {
+//      console.WRITELN("Not configured");
       // No connection
       return;
    }
@@ -410,6 +412,7 @@ void pollUsb() {
    // We have a message to process
    // *****************************
 
+   ProgrammerBusyLed::on();
    // Default to Failed small response
    ResponseMessage    response;
    response.status     = UsbCommandStatus_Failed;
@@ -418,19 +421,20 @@ void pollUsb() {
 
    bool noVref = !JtagInterface::checkVref();
    if (noVref) {
-      console.writeln("No target Vref");
+      console.WRITELN("No target Vref");
    }
    do {
       if (size < (int)sizeof(command.command)) {
-         // Empty message?
-         console.writeln("Empty command");
+         // Incomplete command?
+         console.WRITELN("Incomplete command");
          continue;
       }
+      // Report message on console
       writeCommandMessage(command);
 
       switch(command.command) {
          default:
-            console.write("Unexpected command: ").writeln(command.command);
+            console.WRITE("Unexpected command: ").WRITELN(command.command);
             continue;
 
          case UsbCommand_Nop:
@@ -442,17 +446,17 @@ void pollUsb() {
                continue;
             }
             if (!readIdcode(response.idcode)) {
-               console.writeln("Failed read IDCODE");
+               console.WRITELN("Failed read IDCODE");
                continue;
             }
             if (response.idcode == 0xFFFFFFFF) {
-               console.writeln("Failed read IDCODE (no device?)");
+               console.WRITELN("Failed read IDCODE (no device?)");
                continue;
             }
             response.status      = UsbCommandStatus_OK;
             response.byteLength  = 4;
             responseSize         = sizeof(ResponseIdentifyMessage);
-            console.write("IDCODE = 0x").writeln(response.idcode, Radix_16);
+            console.WRITE("IDCODE = 0x").WRITELN(response.idcode, Radix_16);
             continue;
 
          case UsbCommand_CheckVref:
@@ -460,7 +464,7 @@ void pollUsb() {
                continue;
             }
             response.status      = UsbCommandStatus_OK;
-            console.writeln("Target Vref present");
+            console.WRITELN("Target Vref present");
             continue;
 
          case UsbCommand_XSVF_execute:
@@ -473,7 +477,7 @@ void pollUsb() {
             response.status      = UsbCommandStatus_OK;
             response.byteLength  = 4;
             responseSize         = sizeof(ResponseIdentifyMessage);
-            console.write("Result = 0x").writeln(response.result, Radix_16);
+            console.WRITE("Result = 0x").WRITELN(response.result, Radix_16);
             continue;
 
          case UsbCommand_XSVF:
@@ -485,15 +489,24 @@ void pollUsb() {
             }
             response.status      = UsbCommandStatus_OK;
             continue;
+
+         case UsbCommand_Status_Leds:
+            ProgrammerBusyLed::write(command.failLed);
+            continue;
       }
    } while (false);
+
+   if (command.command != UsbCommand_Status_Leds) {
+      ProgrammerBusyLed::write(response.status != UsbCommandStatus_OK);
+   }
+
    Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
    usbState = UsbIdle;
 }
 
 int main() {
 
-   console.writeln("Starting");
+   console.WRITELN("Starting");
 
 	for(;;) {
 	pollUsb();

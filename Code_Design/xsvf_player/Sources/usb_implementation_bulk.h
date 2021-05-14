@@ -177,6 +177,14 @@ public:
    static ErrorCode sendBulkData(const uint16_t size, const uint8_t *buffer, uint32_t timeout);
 
    static ErrorCode startReceiveBulkData(uint16_t size, uint8_t *buffer);
+   /**
+    * Poll for receive data on USB.
+    * If the interface is idle it is set up for reception using the parameters provided.
+    * This is non-blocking.
+    *
+    * @return  <0  => No data available
+    * @return  >=0 => Data has been received and copied to buffer
+    */
    static int       pollReceiveBulkData();
 
    /**
@@ -217,6 +225,16 @@ public:
    static const Descriptors otherDescriptors;
 
 protected:
+   /**
+    * Clear value reflecting selected hardware based ping-pong buffer.
+    * This would normally only be called when resetting the USB hardware or using
+    * USBx_CTL_ODDRST.
+    */
+   static void clearPinPongToggle() {
+      epBulkOut.clearPinPongToggle();
+      epBulkIn.clearPinPongToggle();
+   }
+
    /**
     * Initialises all end-points
     */
