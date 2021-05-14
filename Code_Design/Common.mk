@@ -11,9 +11,9 @@ PKG_NAME = digitallabboard
 # Used as prefix with the above when in build directory $(DUMMY_CHILD)/$(SHARED_SRC) = PackageFiles/src
 DUMMY_CHILD    := PackageFiles
 
-ifeq ('$(OS)','')
-   OS=Windows_NT
-endif
+#ifeq ('$(OS)','')
+#   OS=Windows_NT
+#endif
 
 BITNESS ?= 64
 
@@ -121,14 +121,12 @@ endif
 SHARED_WXWIDGETS := "Y"
 
 WXWIDGETS_CPPFLAGS       := $(shell wx-config --cppflags)
-WXWIDGETS_SHARED_LIBS    := $(shell wx-config --libs)
-WXWIDGETS_STATIC_LIBS    := $(shell wx-config --libs --static)
 WXWIDGETS_DEFS           := -DuseWxWidgets
 
 ifdef SHARED_WXWIDGETS
-   WXWIDGETS_LIBS    := $(WXWIDGETS_SHARED_LIBS)
+   WXWIDGETS_LIBS    := $(shell wx-config --libs)
 else
-   WXWIDGETS_LIBS    := $(WXWIDGETS_STATIC_LIBS)       
+   WXWIDGETS_LIBS    := $(shell wx-config --libs --static)       
 endif
 
 #===========================================================
