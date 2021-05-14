@@ -845,7 +845,7 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetupToken() {
    // Call-backs only persist during a SETUP transaction
    fControlEndpoint.setCallback(ep0DummyTransactionCallback);
 
-   console.WRITE("handleSetupToken - ").WRITELN(getSetupPacketDescription(&fEp0SetupBuffer));
+//   console.WRITE("handleSetupToken - ").WRITELN(getSetupPacketDescription(&fEp0SetupBuffer));
 
    switch(REQ_TYPE(fEp0SetupBuffer.bmRequestType)) {
       case UsbRequestType_STANDARD :
@@ -1201,7 +1201,7 @@ void UsbBase_T<Info, EP0_SIZE>::initialiseEndpoints() {
    // Clear all BDTs
    memset((uint8_t*)(endPointBdts), 0, sizeof(EndpointBdtEntry[UsbImplementation::NUMBER_OF_ENDPOINTS]));
 
-   // Clear odd/even buffer selection & enable USB device
+   // Clear hardware odd/even buffer selection & enable USB device
    fUsb().CTL = USB_CTL_USBENSOFEN_MASK|USB_CTL_ODDRST_MASK;
    fUsb().CTL = USB_CTL_USBENSOFEN_MASK;
 
@@ -1460,8 +1460,10 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetConfiguration() {
       fControlEndpoint.stall();
       return;
    }
+   setUSBconfiguredState(fEp0SetupBuffer.wValue.lo());
+   
    // Initialise non-control end-points
-   console.WRITE("RxOdd").WRITELN((bool)UsbImplementation::epBulkOut.fRxOdd);
+//   console.WRITE("RxOdd").WRITELN((bool)UsbImplementation::epBulkOut.fRxOdd);
    UsbImplementation::initialiseEndpoints();
    fUserCallbackFunction(UserEvent::UserEvent_Configure);
 

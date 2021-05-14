@@ -241,7 +241,7 @@ void Oled::putPixel(unsigned index, uint8_t mask, bool pixel, WriteMode writeMod
          }
          break;
       case WriteMode_Xor:
-         if (!pixel) {
+         if (pixel) {
             buffer.buffer[index] ^= mask;
          }
          break;

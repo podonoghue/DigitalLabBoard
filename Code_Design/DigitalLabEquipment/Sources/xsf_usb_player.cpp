@@ -155,7 +155,7 @@ private:
       }
       byteCounter++;
       if ((byteCounter % 1000) == 0) {
-         ProgrammerBusyLed::toggle();
+         ProgrammerFailLed::toggle();
       }
       return command.data[blockByteCounter++];
    }
@@ -198,6 +198,7 @@ void UsbXsvfInterface::pollUsb() {
 
    static UsbState usbState = UsbStartUp;
 
+   // Call-back to record USB user events
    static auto cb = [](const UsbImplementation::UserEvent) {
       // Restart USB transfers on reset etc.
       usbState = UsbIdle;
@@ -206,6 +207,7 @@ void UsbXsvfInterface::pollUsb() {
 
    if (usbState == UsbStartUp) {
       // Start USB
+      console.WRITELN("UsbStartUp");
       UsbImplementation::initialise();
       UsbImplementation::setUserCallback(cb);
       checkError();
@@ -214,6 +216,7 @@ void UsbXsvfInterface::pollUsb() {
    }
    // Check for USB connection
    if (!UsbImplementation::isConfigured()) {
+//      console.WRITELN("Not configured");
       // No connection
       return;
    }
@@ -241,8 +244,8 @@ void UsbXsvfInterface::pollUsb() {
    // We have a message to process
    // *****************************
 
-   ProgrammerBusyLed::on();
-   ProgrammerOkLed::off();
+   ProgrammerFailLed::on(); // Indicates busy
+   ProgrammerPassLed::off();
 
    // Default to Failed small response
    ResponseMessage    response;
@@ -256,10 +259,11 @@ void UsbXsvfInterface::pollUsb() {
    }
    do {
       if (size < (int)sizeof(command.command)) {
-         // Empty message?
-         console.WRITELN("Empty command");
+         // Incomplete command?
+         console.WRITELN("Incomplete command");
          continue;
       }
+      // Report message on console
       writeCommandMessage(command);
 
       switch(command.command) {
@@ -319,11 +323,18 @@ void UsbXsvfInterface::pollUsb() {
             }
             response.status      = UsbCommandStatus_OK;
             continue;
+
+         case UsbCommand_Status_Leds:
+            ProgrammerFailLed::write(command.failLed);
+            ProgrammerPassLed::write(command.passLed);
+            continue;
       }
    } while (false);
 
-   ProgrammerBusyLed::write(response.status != UsbCommandStatus_OK);
-   ProgrammerOkLed::write(response.status == UsbCommandStatus_OK);
+   if (command.command != UsbCommand_Status_Leds) {
+      ProgrammerFailLed::write(response.status != UsbCommandStatus_OK);
+      ProgrammerPassLed::write(response.status == UsbCommandStatus_OK);
+   }
 
    Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
    usbState = UsbIdle;

@@ -27,8 +27,8 @@ private:
     */
    virtual void softPowerOff() override {
       // Just turn off the programmer LEDs
-      ProgrammerBusyLed::off();
-      ProgrammerOkLed::off();
+      ProgrammerFailLed::off();
+      ProgrammerPassLed::off();
    }
 
    /**
@@ -56,12 +56,12 @@ public:
       using namespace USBDM;
 
       // Initialise hardware
-      ProgrammerBusyLed::setOutput(
+      ProgrammerFailLed::setOutput(
             PinDriveStrength_High,
             PinDriveMode_PushPull,
             PinSlewRate_Slow);
 
-      ProgrammerOkLed::setOutput(
+      ProgrammerPassLed::setOutput(
             PinDriveStrength_High,
             PinDriveMode_PushPull,
             PinSlewRate_Slow);

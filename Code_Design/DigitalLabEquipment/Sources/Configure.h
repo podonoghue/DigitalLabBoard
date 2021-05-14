@@ -155,8 +155,9 @@ using TargetVddDischarge = USBDM::GpioD<6, USBDM::ActiveLow>;
 /// IO1_7-0 = Inputs from switches/Outputs to LEDs (active-low)
 static constexpr uint8_t BUTTON_I2C_ADDRESS  = 0b000;
 
-// Programmer LEDs
-using ProgrammerOkLed   = USBDM::GpioD<4>;
-using ProgrammerBusyLed = USBDM::GpioD<7>;
+//! Programmer Pass LED (Green)
+using ProgrammerPassLed = USBDM::GpioD<4>;
+//! Programmer Fail LED (Red)
+using ProgrammerFailLed = USBDM::GpioD<7>;
 
 #endif /* SOURCES_CONFIGURE_H_ */

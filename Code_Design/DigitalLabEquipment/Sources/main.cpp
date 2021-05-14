@@ -96,7 +96,7 @@ __attribute__ ((section(".bootloader")))
 __attribute__((used))
 static BootInformation const bootInformation = {
       0,                   // Reserved
-      3,                   // Software version
+      4,                   // Software version
       HARDWARE_VERSION,    // Hardware version for this image
       0,                   // Checksum - filled in by loader
 };
