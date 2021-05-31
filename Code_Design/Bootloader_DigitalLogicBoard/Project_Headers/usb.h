@@ -110,7 +110,7 @@ public:
       bool selfPowered  : 1;    //!< Device is self-powered
       bool remoteWakeup : 1;    //!< Supports remote wake-up
       bool portTest     : 1;    //!< Port test
-      int res1          : 13;    //!< Reserved
+      int  res1         : 13;   //!< Reserved
    };
 
    /**
@@ -128,7 +128,7 @@ public:
       UserEvent_Suspend,   //!< USB has been suspended
       UserEvent_Resume,    //!< USB has been resumed
       UserEvent_Reset,     //!< USB has been reset
-      UserEvent_Configure, //!< USB has been configureds
+      UserEvent_Configure, //!< USB has been configured
    };
 
    /**
@@ -150,14 +150,6 @@ public:
     * @return  Error code
     */
    typedef ErrorCode (*SOFCallbackFunction)(uint16_t frameNumber);
-
-   /**
-    * Type definition for user call-back\n
-    * This function is called whenever the 'user' code needs to be notified of an event
-    *
-    *  @param[in]  event Reason for callback
-    */
-   typedef void (*SetupCompleteCallbackFunction)();
 
    /**
     * Type definition for USB SETUP call-back\n
@@ -328,8 +320,12 @@ protected:
    static UserCallbackFunction fUserCallbackFunction;
 
    /**
-    * Start-of-frame callback \n
-    * This function is called when SOF transaction is complete
+    * USB SOF call-back\n
+    * This function is call for SOF transactions
+    *
+    * @param frameNumber Frame number from SOF token
+    *
+    * @return  Error code
     */
    static SOFCallbackFunction fSofCallbackFunction;
 
@@ -350,8 +346,6 @@ public:
       Info::enableClock();
 
       configureAllPins();
-
-      enableNvicInterrupts(Info::irqLevel);
    }
 
    /**
@@ -734,9 +728,12 @@ public:
 };
 
 /**
- * Start-of-frame callback
+ * USB SOF call-back\n
+ * This function is call for SOF transactions
  *
  * @param frameNumber Frame number from SOF token
+ *
+ * @return  Error code
  */
 template<class Info, int EP0_SIZE>
 UsbBase::SOFCallbackFunction UsbBase_T<Info, EP0_SIZE>::fSofCallbackFunction = unsetSOFHandlerCallback;
@@ -746,6 +743,8 @@ UsbBase::SOFCallbackFunction UsbBase_T<Info, EP0_SIZE>::fSofCallbackFunction = u
  * This function is called whenever the 'user' code needs to be notified of an event
  *
  *  @param[in]  event Reason for callback
+ *  @return     E_NOERROR if handled
+ *  @return     Else stalls endpoint
  */
 template<class Info, int EP0_SIZE>
 UsbBase::UserCallbackFunction UsbBase_T<Info, EP0_SIZE>::fUserCallbackFunction = unsetUserCallback;
@@ -1514,10 +1513,10 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
       if (pendingInterruptFlags == 0) {
          return;
       }
-      //      if (pendingInterruptFlags != USB_ISTAT_SOFTOK_MASK) {
-      // Report other than SOF
-      //          console.WRITE("Irq ").WRITELN(pendingInterruptFlags, Radix_16);
-      //      }
+//      if (pendingInterruptFlags != USB_ISTAT_SOFTOK_MASK) {
+//         // Report other than SOF
+//         console.WRITE("Irq ").WRITELN(pendingInterruptFlags&~USB_ISTAT_SOFTOK_MASK, Radix_2);
+//      }
       if ((pendingInterruptFlags&USB_ISTAT_USBRST_MASK) != 0) {
 //         console.WRITELN("========\nRes");
          // Reset signaled on Bus
@@ -1527,6 +1526,7 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
       if ((pendingInterruptFlags&USB_ISTAT_TOKDNE_MASK) != 0) {
          // Get endpoint status
          UsbStat usbStat = (UsbStat)fUsb().STAT;
+//         console.WRITE("St ").WRITE(usbStat.endp).WRITE(',').WRITE((unsigned)usbStat.tx).WRITE(',').WRITELN((unsigned)usbStat.odd);
          // Token complete interrupt
          if (usbStat.endp == fControlEndpoint.fEndpointNumber) {
             handleTokenComplete(usbStat);

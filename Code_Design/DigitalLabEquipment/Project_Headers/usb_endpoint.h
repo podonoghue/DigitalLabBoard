@@ -652,6 +652,7 @@ public:
          case EPStatusIn: // Just done an IN transaction as a status handshake for an OUT Data transfer
             // Execute callback function after STATUS IN transaction
             fState = EPIdle;
+//            console.write((void*)fCallback); // Check call-back address
             fCallback(EPStatusIn);
             break;
 
