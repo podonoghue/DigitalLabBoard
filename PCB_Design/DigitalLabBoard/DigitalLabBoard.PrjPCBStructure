@@ -1,1 +1,6 @@
-Record=TopLevelDocument|FileName=DigitalLabBoard_Die.SchDoc
+Record=TopLevelDocument|FileName=DigitalLabBoard_Die.SchDoc|SheetNumber= 
+Record=NoMainPathDocument|SourceDocument=DigitalLabBoard_Die.SchDoc|FileName=DigitalLabBoard_LEDs.SchDoc|SheetNumber= 
+Record=NoMainPathDocument|SourceDocument=DigitalLabBoard_Die.SchDoc|FileName=DigitalLabBoard_Processor.SchDoc|SheetNumber= 
+Record=NoMainPathDocument|SourceDocument=DigitalLabBoard_Die.SchDoc|FileName=DigitalLabBoard_Stepper.SchDoc|SheetNumber= 
+Record=NoMainPathDocument|SourceDocument=DigitalLabBoard_Die.SchDoc|FileName=DigitalLabBoard_Switches.SchDoc|SheetNumber= 
+Record=NoMainPathDocument|SourceDocument=DigitalLabBoard_Die.SchDoc|FileName=DigitalLabBoard_Traffic.SchDoc|SheetNumber= 
