@@ -28,7 +28,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "CompanyName",      "pgo"
-            VALUE "FileDescription",  "CPLD Programmer"
+            VALUE "FileDescription",  "Kinetis bootloader"
             VALUE "FileVersion",      KINETIS_BOOTLOADER_VERSION_STRING
             VALUE "InternalName",     ""
             VALUE "ProductName",      "EEE20001 Laboratory Software"
