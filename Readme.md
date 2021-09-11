@@ -10,6 +10,6 @@ Folders:
 * __Release_Files__ Release files for installation
 * __VHDL_TestHardware__ Simple test projects for the CPLD 
  
-[Digital lab board documentation](PCB_Design/DigitalLabBoard/DigitalLabBoard_V4.PDF) 
+[Digital lab board documentation](https://raw.githubusercontent.com/podonoghue/DigitalLabBoard/master/PCB_Design/DigitalLabBoard/DigitalLabBoard_V4.PDF) 
 
-[CPLD programmer documentation](PCB_Design/CPLD_Programmer/CPLD_Programmer_V2.PDF) 
+[CPLD programmer documentation](https://raw.githubusercontent.com/podonoghue/DigitalLabBoard/master/PCB_Design/CPLD_Programmer/CPLD_Programmer_V2.PDF) 
