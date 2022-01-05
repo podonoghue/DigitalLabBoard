@@ -73,7 +73,7 @@ public:
    /**
     * Get name of endpoint state
     *
-    * @param[in]  state Endpoint state
+    * @param [in]  state Endpoint state
     *
     * @return Pointer to static string
     */
@@ -156,7 +156,7 @@ protected:
     *  - After an IN transaction with endpointState = EPDataIn.\n
     *  - After an OUT transaction with endpointState = EPDataOut.
     *
-    * @param[in] endpointState State of endpoint before completion of transaction
+    * @param [in] endpointState State of endpoint before completion of transaction
     *
     * @return The endpoint state to set after call-back
     */
@@ -165,7 +165,7 @@ protected:
    /**
     *  Dummy callback used to catch use of unset callback
     *
-    * @param[in]  endpointState State of endpoint before completion
+    * @param [in]  endpointState State of endpoint before completion
     *
     * @return The endpoint state to set after call-back (EPIdle)
     */
@@ -175,36 +175,40 @@ protected:
       return EPIdle;
    }
 
-   /** Reference to hardware instance */
-   volatile USB_Type &fUsb;
-
    /** Hardware instance pointer */
-   __attribute__((always_inline)) volatile USB_Type &usb() { return fUsb; }
+   HardwarePtr<USB_Type>fUsb;
 
-   /** Buffer for Transmit & Receive data */
-   volatile uint8_t * const fDataBuffer;
+   /** Buffer Transmit data */
+   volatile uint8_t * const fTxDataBuffer;
+
+   /** Buffer Receive data */
+   volatile uint8_t * const fRxDataBuffer;
 
    /**
     * Constructor
     *
-    * @param[in]  endpointNumber End-point number
-    * @param[in]  endpointSize   Size of endpoint buffer
-    * @param[in]  endPointType   Endpoint type (Control, Bulk, Interrupt)
-    * @param[in]  dataBuffer     Endpoint buffer
-    * @param[in]  usb            Reference to USB hardware
+    * @param [in] endpointNumber End-point number
+    * @param [in] endpointSize   Size of endpoint buffer
+    * @param [in] endPointType   Endpoint type (Control, Bulk, Interrupt)
+    * @param [in] bdtValue       BDT to use
+    * @param [in] txDataBuffer   Transmit endpoint buffer
+    * @param [in] rxDataBuffer   Receive endpoint buffer
+    * @param [in] usb            Reference to USB hardware
     */
    constexpr Endpoint(
          int               endpointNumber,
          unsigned          endpointSize,
          EndPointType      endPointType,
          uint8_t           bdtValue,
-         uint8_t           dataBuffer[],
-         volatile USB_Type &usb) :
+         uint8_t           txDataBuffer[],
+         uint8_t           rxDataBuffer[],
+         uint32_t          usb) :
             fEndPointType(endPointType),
             fEpControlValue(bdtValue),
             fBdt(endPointBdts[endpointNumber]),
             fUsb(usb),
-            fDataBuffer(dataBuffer),
+            fTxDataBuffer(txDataBuffer),
+            fRxDataBuffer(rxDataBuffer),
             fEndpointNumber(endpointNumber),
             fEndpointSize(endpointSize) {
    }
@@ -244,19 +248,19 @@ public:
       fCallback         = unsetHandlerCallback;
 
       // Value used to initialise an Endpoint Control Register
-      fUsb.ENDPOINT[fEndpointNumber].ENDPT = fEpControlValue;
+      fUsb->ENDPOINT[fEndpointNumber].ENDPT = fEpControlValue;
 
       // Assumes single shared buffer
-      fBdt.rxEven.initialise( 0, 0, nativeToLe32((uint32_t)fDataBuffer));
-      fBdt.rxOdd.initialise(  0, 0, nativeToLe32((uint32_t)fDataBuffer));
-      fBdt.txEven.initialise( 0, 0, nativeToLe32((uint32_t)fDataBuffer));
-      fBdt.txOdd.initialise(  0, 0, nativeToLe32((uint32_t)fDataBuffer));
+      fBdt.rxEven.initialise( 0, 0, nativeToLe32((uint32_t)fRxDataBuffer));
+      fBdt.rxOdd.initialise(  0, 0, nativeToLe32((uint32_t)fRxDataBuffer));
+      fBdt.txEven.initialise( 0, 0, nativeToLe32((uint32_t)fTxDataBuffer));
+      fBdt.txOdd.initialise(  0, 0, nativeToLe32((uint32_t)fTxDataBuffer));
    }
 
    /**
     * Set endpoint state
     *
-    * @param[in] state
+    * @param [in] state
     */
    void setState(EndpointState state) {
       fState = state;
@@ -276,7 +280,7 @@ public:
     */
    void stall() {
 //      console.WRITELN("EpX.stall");
-      fUsb.ENDPOINT[fEndpointNumber].ENDPT = fEpControlValue|USB_ENDPT_EPSTALL_MASK;
+      fUsb->ENDPOINT[fEndpointNumber].ENDPT = fEpControlValue|USB_ENDPT_EPSTALL_MASK;
 //      fBdt.txEven.setControl(BDTEntry_OWN_MASK|BDTEntry_STALL_MASK|BDTEntry_DTS_MASK);
 //      fBdt.txOdd.setControl(BDTEntry_OWN_MASK|BDTEntry_STALL_MASK|BDTEntry_DTS_MASK);
       setState(EPStall);
@@ -285,7 +289,7 @@ public:
    /**
     * Set Data toggle
     *
-    * @param[in] dataToggle
+    * @param [in] dataToggle
     */
    void setDataToggle(DataToggle dataToggle) {
       fDataToggle = dataToggle;
@@ -296,7 +300,7 @@ public:
     */
    void clearStall() {
 //      console.WRITELN("EpX.clearStall");
-      fUsb.ENDPOINT[fEndpointNumber].ENDPT = fEpControlValue;
+      fUsb->ENDPOINT[fEndpointNumber].ENDPT = fEpControlValue;
 //      fBdt.txEven.setControl(BDTEntry_DTS_MASK);
 //      fBdt.txOdd.setControl(BDTEntry_DTS_MASK);
       setState(EPIdle);
@@ -306,7 +310,7 @@ public:
    /**
     * Flip active odd/even buffer state
     *
-    * @param[in]  usbStat Value from USB_STAT
+    * @param [in]  usbStat Value from USB_STAT
     */
    void flipOddEven(const UsbStat usbStat) {
       usbdm_assert(fEndpointNumber == usbStat.endp, "Wrong end point!");
@@ -330,7 +334,7 @@ public:
     *  - After an OUT transaction with endpointState = EPDataOut, EPStatusOut.
     *  The endpoint state will be set to EPIdle <b>before</b> calling this routine.
     *
-    * @param[in]  callback The call-back function to execute\n
+    * @param [in]  callback The call-back function to execute\n
     *                      May be nullptr to remove callback
     */
    void setCallback(EndpointState (*callback)(EndpointState)) {
@@ -344,7 +348,7 @@ public:
     *  Indicates that the next IN transaction needs to be terminated
     *  with a ZLP if transfer size is multiple of endpoint size
     *
-    *  @param[in]  needZLP True to indicate need for ZLPs.
+    *  @param [in]  needZLP True to indicate need for ZLPs.
     *
     *  @note This flag is cleared during the transaction
     */
@@ -409,9 +413,9 @@ public:
    /**
     * Start IN transaction stage [Transmit, device -> host, DATA0/1 sequence]
     *
-    * @param[in]  state   State to adopt for this phase e.g. EPDataIn, EPStatusIn
-    * @param[in]  bufSize Size of buffer to send (may be zero)
-    * @param[in]  bufPtr  Pointer to external buffer (may be NULL to indicate fDatabuffer is being used directly)
+    * @param [in]  state   State to adopt for this phase e.g. EPDataIn, EPStatusIn
+    * @param [in]  bufSize Size of buffer to send (may be zero)
+    * @param [in]  bufPtr  Pointer to external buffer (may be NULL to indicate fDatabuffer is being used directly)
     */
    void startTxStage(EndpointState state, uint16_t bufSize=0, volatile const uint8_t *bufPtr=nullptr) {
       // Pointer to data
@@ -453,16 +457,16 @@ public:
       // fDataBuffer may be nullptr to indicate using fDataBuffer directly
       if (fDataPtr != nullptr) {
          // Copy the Transmit data to EP buffer
-         safeCopy(fDataBuffer, fDataPtr, size);
+         safeCopy(fTxDataBuffer, fDataPtr, size);
 
          // Advance pointer to next data
          fDataPtr += size;
       }
       // Count of transferred bytes
-      fDataTransferred += size;
+      fDataTransferred = fDataTransferred + size;
 
       // Count of remaining bytes
-      fDataRemaining   -= size;
+      fDataRemaining = fDataRemaining - size;
 
       // Set up to Transmit transaction
       bdt.setByteCount((uint8_t)size);
@@ -478,9 +482,9 @@ public:
    /**
     * Start an OUT transaction stage [Receive, device <- host, DATA0/1 sequence]
     *
-    *   @param[in]  state   - State to adopt for phase e.g. EPIdle, EPDataOut, EPStatusOut
-    *   @param[in]  bufSize - Size of data to transfer (may be zero)
-    *   @param[in]  bufPtr  - Buffer for data (may be nullptr)
+    *   @param [in]  state   - State to adopt for phase e.g. EPIdle, EPDataOut, EPStatusOut
+    *   @param [in]  bufSize - Size of data to transfer (may be zero)
+    *   @param [in]  bufPtr  - Buffer for data (may be nullptr)
     */
    void startRxStage(EndpointState state, uint16_t bufSize=0, uint8_t *bufPtr=nullptr) {
       // Count of bytes transferred
@@ -540,14 +544,14 @@ public:
          // Check if external buffer in use
          if (fDataPtr != nullptr) {
             // Copy the data from the Receive buffer to external buffer
-            ( void )memcpy((void*)fDataPtr, (void*)fDataBuffer, size);
+            ( void )memcpy((void*)fDataPtr, (void*)fRxDataBuffer, size);
             // Advance buffer ptr
             fDataPtr    += size;
          }
          // Count of transferred bytes
-         fDataTransferred += size;
+         fDataTransferred = fDataTransferred + size;
          // Count down bytes to go
-         fDataRemaining   -= size;
+         fDataRemaining = fDataRemaining - size;
       }
 //      else {
 //         console.WRITELN("RxSize = 0\n");
@@ -668,18 +672,27 @@ public:
    }
 
    /**
-    * Gets pointer to USB data buffer
+    * Gets pointer to USB transmit data buffer
     *
     * @return Pointer to buffer
     */
-   volatile uint8_t *getBuffer() {
-      return fDataBuffer;
+   volatile uint8_t *getTxBuffer() {
+      return fTxDataBuffer;
+   }
+
+   /**
+    * Gets pointer to USB receive data buffer
+    *
+    * @return Pointer to buffer
+    */
+   volatile const uint8_t *getRxBuffer() {
+      return fRxDataBuffer;
    }
 
 };
 
 /**
- * Class for generic endpoint
+ * Class for generic endpoint with one buffer (Rx or Tx or shared Rx/Tx)
  *
  * @tparam Info         Class describing associated USB hardware
  * @tparam ENDPOINT_NUM Endpoint number
@@ -700,12 +713,47 @@ public:
     * Constructor
     */
    Endpoint_T(EndPointType endPointType, uint8_t bdtValue) :
-      Endpoint(ENDPOINT_NUM, EP_MAXSIZE, endPointType, bdtValue, fAllocatedDataBuffer, Info::usb()) {
+      Endpoint(ENDPOINT_NUM, EP_MAXSIZE, endPointType, bdtValue, fAllocatedDataBuffer, fAllocatedDataBuffer, Usb0Info::baseAddress) {
    }
 };
 
 template<class Info, unsigned ENDPOINT_NUM, unsigned EP_MAXSIZE>
 uint8_t Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE>::fAllocatedDataBuffer[EP_MAXSIZE];
+
+/**
+ * Class for generic endpoint with 2 buffers (Tx + Rx)
+ *
+ * @tparam Info         Class describing associated USB hardware
+ * @tparam ENDPOINT_NUM Endpoint number
+ * @tparam EP_MAXSIZE   Maximum size of DATA transaction
+ */
+template<class Info, unsigned ENDPOINT_NUM, unsigned EP_MAXSIZE>
+class Endpoint2_T : public Endpoint {
+
+private:
+   /** Buffer for Transmit & Receive data */
+   static uint8_t fAllocatedTxDataBuffer[EP_MAXSIZE] __attribute__ ((aligned (4)));
+
+   /** Buffer for Transmit & Receive data */
+   static uint8_t fAllocatedRxDataBuffer[EP_MAXSIZE] __attribute__ ((aligned (4)));
+
+public:
+   /** Size of endpoint (maximum transfer size) */
+   static constexpr unsigned BUFFER_SIZE = EP_MAXSIZE;
+
+   /**
+    * Constructor
+    */
+   Endpoint2_T(EndPointType endPointType, uint8_t bdtValue) :
+      Endpoint(ENDPOINT_NUM, EP_MAXSIZE, endPointType, bdtValue, fAllocatedTxDataBuffer, fAllocatedRxDataBuffer, Info::usb()) {
+   }
+};
+
+template<class Info, unsigned ENDPOINT_NUM, unsigned EP_MAXSIZE>
+uint8_t Endpoint2_T<Info, ENDPOINT_NUM, EP_MAXSIZE>::fAllocatedTxDataBuffer[EP_MAXSIZE];
+
+template<class Info, unsigned ENDPOINT_NUM, unsigned EP_MAXSIZE>
+uint8_t Endpoint2_T<Info, ENDPOINT_NUM, EP_MAXSIZE>::fAllocatedRxDataBuffer[EP_MAXSIZE];
 
 /**
  * Class for CONTROL endpoint
@@ -715,9 +763,6 @@ uint8_t Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE>::fAllocatedDataBuffer[EP_MAXS
  */
 template<class Info, unsigned EP0_SIZE>
 class ControlEndpoint : public Endpoint_T<Info, 0, EP0_SIZE> {
-
-protected:
-   using Endpoint_T<Info, 0, EP0_SIZE>::fUsb;
 
 public:
    using Endpoint::fState;
@@ -810,7 +855,6 @@ template<class Info, unsigned ENDPOINT_NUM, unsigned EP_MAXSIZE>
 class InEndpoint : public Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE> {
 
 protected:
-   using Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE>::fUsb;
    using Endpoint = Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE>;
 
 private:
@@ -841,7 +885,6 @@ template<class Info, unsigned ENDPOINT_NUM, unsigned EP_MAXSIZE>
 class OutEndpoint : public Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE> {
 
 protected:
-   using Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE>::fUsb;
    using Endpoint = Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE>;
 
 private:

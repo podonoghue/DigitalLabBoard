@@ -10,7 +10,6 @@
 
 #include "hardware.h"
 #include "Oled.h"
-#include "Configure.h"
 #include "FunctionQueue.h"
 #include "Power.h"
 
@@ -104,10 +103,10 @@ public:
    static constexpr unsigned Frequency_Off = 0.0;
 
    /// Minimum frequency available
-   static constexpr unsigned Frequency_Min = 1 * USBDM::Hz;
+   static constexpr unsigned Frequency_Min = 1_Hz;
 
    /// Maximum frequency available
-   static constexpr unsigned Frequency_Max = 10 * USBDM::MHz;
+   static constexpr unsigned Frequency_Max = 10_MHz;
 
    /**
     * Construct Frequency generator

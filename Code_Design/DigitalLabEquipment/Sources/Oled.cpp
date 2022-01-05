@@ -6,9 +6,9 @@
  *
  *  Based loosely on Adafruit library (initialisation sequences and constants)
  */
-#include "malloc.h"
+#include <malloc.h>
+#include <memory.h>
 #include "Oled.h"
-#include "memory.h"
 
 using namespace USBDM;
 
@@ -67,7 +67,7 @@ void Oled::initialise() {
          0,                                    // first page
          (((HEIGHT+7)/8)-1),                   // last page
    };
-   i2c.transmit(I2C_ADDRESS, sizeof(init1), init1);
+   i2c.transmit(I2C_ADDRESS, init1);
 
    if constexpr ((WIDTH == 128) && (HEIGHT == 32)) {
 
@@ -76,10 +76,9 @@ void Oled::initialise() {
             SSD1306_SETCOMPINS,                   // 0xDA
             0x02,                                 // = default
             SSD1306_SETCONTRAST,                  // 0x81
-//            0x8F,
             0x10,
       };
-      i2c.transmit(I2C_ADDRESS, sizeof(init4a), init4a);
+      i2c.transmit(I2C_ADDRESS, init4a);
 
    } else if constexpr ((WIDTH == 128) && (HEIGHT == 64)) {
 
@@ -90,7 +89,7 @@ void Oled::initialise() {
             SSD1306_SETCONTRAST,                  // 0x81
             ((VCC_CONTROL == OledVccControl_External) ? 0x9F : 0xCF),
       };
-      i2c.transmit(I2C_ADDRESS, sizeof(init4b), init4b);
+      i2c.transmit(I2C_ADDRESS, init4b);
 
    } else if constexpr ((WIDTH == 96) && (HEIGHT == 16)) {
 
@@ -101,7 +100,7 @@ void Oled::initialise() {
             SSD1306_SETCONTRAST,                  // 0x81
             ((VCC_CONTROL == OledVccControl_External) ? 0x10 : 0xAF),
       };
-      i2c.transmit(I2C_ADDRESS, sizeof(init4c), init4c);
+      i2c.transmit(I2C_ADDRESS, init4c);
    } else {
       // Other screen varieties -- TBD
    }
@@ -117,7 +116,38 @@ void Oled::initialise() {
          SSD1306_DEACTIVATE_SCROLL,
          SSD1306_DISPLAYON,                    // Main screen turn on
    };
-   i2c.transmit(I2C_ADDRESS, sizeof(init5), init5);
+   i2c.transmit(I2C_ADDRESS, init5);
+}
+
+/**
+ * Turn display on or off
+ */
+void Oled::enable(bool enable) {
+   static const uint8_t onCommand[] = {
+         MULTIPLE_COMMANDS,                    // Co = 0, D/C = 0
+         SSD1306_DISPLAYON,                    // 0xAF
+   };
+   static const uint8_t offCommand[] = {
+         MULTIPLE_COMMANDS,                    // Co = 0, D/C = 0
+         SSD1306_DISPLAYOFF,                   // 0xAE
+   };
+   i2c.transmit(I2C_ADDRESS, enable?onCommand:offCommand);
+}
+
+/**
+ * Control display contrast/brightness
+ *
+ *  Has no appreciable effect on display tested
+ *
+ * @param level
+ */
+void Oled::setContrast(uint8_t level) {
+   uint8_t contrastCommand[] = {
+         MULTIPLE_COMMANDS,                    // Co = 0, D/C = 0
+         SSD1306_SETCONTRAST,                  // 0x81
+         level,
+   };
+   i2c.transmit(I2C_ADDRESS, contrastCommand);
 }
 
 /**
@@ -125,7 +155,7 @@ void Oled::initialise() {
  */
 void Oled::refreshImage() {
    buffer.controlByte = MULTIPLE_GDRAM;
-   i2c.transmit(I2C_ADDRESS, sizeof(buffer), (uint8_t *)&buffer);
+   i2c.transmit(I2C_ADDRESS, buffer.rawData);
 }
 
 /**
@@ -155,15 +185,20 @@ Oled &Oled::writeImage(const uint8_t *dataPtr, int x, int y, int width, int heig
             // Clip on right
             break;
          }
+         // Get pixel value from image
          unsigned pixelIndex = (h*((width+7)/8))+(w/8);
          bool pixel = (dataPtr[pixelIndex]&(1<<(7-(w&0b111))));
-         uint8_t mask = 0b1<<((y+h)&0b111);
-         unsigned index = (x+w)+(((y+h)/8)*WIDTH);
-         putPixel(index, mask, pixel, writeMode);
-//         console.write(pixel?'*':' ');
+         if constexpr (orientation == Orientation_Normal) {
+            uint8_t mask = 0b1<<((y+h)&0b111);
+            unsigned index = (x+w)+(((y+h)/8)*WIDTH);
+            putPixel(index, mask, pixel, writeMode);
+         }
+         if constexpr (orientation == Orientation_Rotated_180) {
+            uint8_t mask = 0b1<<(7-((y+h)&0b111));
+            unsigned index = ((WIDTH-1)-x-w)+((((HEIGHT-1)-y-h)/8)*WIDTH);
+            putPixel(index, mask, pixel, writeMode);
+         }
       }
-//      console.writeln();
-//      refreshImage();
    }
    return *this;
 }
@@ -212,37 +247,45 @@ Oled &Oled::putSpace(int width) {
    return *this;
 }
 
+/**
+ *
+ * @param index      Index into frame buffer in bytes
+ * @param mask       Mask for pixel being manipulated in byte
+ * @param pixel      Pixel value
+ * @param writeMode  Mode of modification
+ */
 void Oled::putPixel(unsigned index, uint8_t mask, bool pixel, WriteMode writeMode) {
+   usbdm_assert(index < (sizeof(buffer.data)/sizeof(buffer.data[0])), "Illegal index");
    switch(writeMode) {
       case WriteMode_Write:
          if (pixel) {
-            buffer.buffer[index] |= mask;
+            buffer.data[index] |= mask;
          }
          else {
-            buffer.buffer[index] &= ~mask;
+            buffer.data[index] &= ~mask;
          }
          break;
       case WriteMode_InverseWrite:
          if (pixel) {
-            buffer.buffer[index] &= ~mask;
+            buffer.data[index] &= ~mask;
          }
          else {
-            buffer.buffer[index] |= mask;
+            buffer.data[index] |= mask;
          }
          break;
       case WriteMode_Or:
          if (pixel) {
-            buffer.buffer[index] |= mask;
+            buffer.data[index] |= mask;
          }
          break;
       case WriteMode_InverseAnd:
          if (!pixel) {
-            buffer.buffer[index] &= ~mask;
+            buffer.data[index] &= ~mask;
          }
          break;
       case WriteMode_Xor:
          if (pixel) {
-            buffer.buffer[index] ^= mask;
+            buffer.data[index] ^= mask;
          }
          break;
       default:
@@ -261,6 +304,11 @@ void Oled::drawVerticalLine(int x, int y1, int y2, WriteMode writeMode) {
    if ((x<0)||(x>=WIDTH)) {
       // Off screen
       return;
+   }
+   if constexpr (orientation == Orientation_Rotated_180) {
+      x = (WIDTH-1)-x;
+      y1 = (HEIGHT-1)-y1;
+      y2 = (HEIGHT-1)-y2;
    }
    if (y1>y2) {
       int t = y1;
@@ -302,6 +350,11 @@ void Oled::drawHorizontalLine(int x1, int x2, int y, WriteMode writeMode) {
       // Off screen
       return;
    }
+   if constexpr (orientation == Orientation_Rotated_180) {
+      x1 = (WIDTH-1)-x1;
+      x2 = (WIDTH-1)-x2;
+      y = (HEIGHT-1)-y;
+   }
    if (x1>x2) {
       int t = x1;
       x1 = x2;
@@ -335,6 +388,10 @@ void Oled::drawPixel(int x, int y, bool pixel, WriteMode writeMode) {
    if ((y<0)||(y>=HEIGHT)) {
       // Off screen
       return;
+   }
+   if constexpr (orientation == Orientation_Rotated_180) {
+      x = (WIDTH-1)-x;
+      y = (HEIGHT-1)-y;
    }
    uint8_t mask = 0b1<<(y&7);
    unsigned index = x+((y>>3)*WIDTH);

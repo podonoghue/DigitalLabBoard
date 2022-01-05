@@ -26,6 +26,8 @@ private:
     * Notification that soft power-off is about to occur
     */
    virtual void softPowerOff() override {
+      using namespace USBDM;
+
       // Just turn off the programmer LEDs
       ProgrammerFailLed::off();
       ProgrammerPassLed::off();

@@ -20,6 +20,7 @@
 #include "rcm.h"
 #include "UsbCommandMessage.h"
 #include "xsf_usb_player.h"
+#include "BootInformation.h"
 
 using namespace USBDM;
 
@@ -29,7 +30,6 @@ using namespace USBDM;
 class Initialise {
 
    static void buttonPollTimerCallback();
-   PitChannelNum channel = PitChannelNum_None;
 
 public:
 
@@ -41,10 +41,9 @@ public:
     */
    Initialise() {
       // Shared PIT
-      USBDM::Pit::configure();
-      channel = Pit::allocateChannel();
-      Pit::setCallback(channel, buttonPollTimerCallback);
-      Pit::configureChannel(channel, 5*ms, PitChannelIrq_Enabled);
+      Pit::configure();
+      ButtonPollChannel::setCallback(buttonPollTimerCallback);
+      ButtonPollChannel::configure(5_ms, PitChannelIrq_Enabled);
 
       // Shared ADC
       Adc0::configure(AdcResolution_8bit_se, AdcClockSource_Busdiv2);
@@ -52,11 +51,11 @@ public:
    }
 
    void enablePolling() {
-      Pit::enableNvicInterrupts(channel, NvicPriority_Normal);
+      ButtonPollChannel::enableNvicInterrupts(NvicPriority_Normal);
    }
 
    void disablePolling() {
-      Pit::enableNvicInterrupts(channel, NvicPriority_Normal);
+      ButtonPollChannel::enableNvicInterrupts(NvicPriority_Normal);
    }
 };
 
@@ -83,34 +82,39 @@ void Initialise::buttonPollTimerCallback() {
    traffic.pollButtons();
 }
 
-struct BootInformation {
-   uint32_t reserved;
-   uint32_t softwareVersion;
-   uint32_t hardwareVersion;
-   uint32_t checksum;
-};
+static constexpr unsigned HARDWARE_VERSION = HW_LOGIC_BOARD_V4a;
 
-static constexpr unsigned HARDWARE_VERSION = HW_LOGIC_BOARD_V4;
+__attribute__ ((section(".noinit")))
+static uint32_t magicNumber;
 
-__attribute__ ((section(".bootloader")))
+#if defined(RELEASE_BUILD)
+// Triggers memory image relocation for bootloader
+extern BootInformation const bootloaderInformation;
+#endif
+
+__attribute__ ((section(".bootloaderInformation")))
 __attribute__((used))
-static BootInformation const bootInformation = {
-      0,                   // Reserved
+const BootInformation bootloaderInformation = {
+      &magicNumber,        // Magic number to force ICP on reboot
       4,                   // Software version
       HARDWARE_VERSION,    // Hardware version for this image
-      0,                   // Checksum - filled in by loader
 };
 
 int main() {
+//   console.setBaudRate(defaultBaudRate);
+//   for(;;) {
+//      console.writeln("Starting\n");
+//      wait(100_ms);
+//   }
    // Enable Reset pin filter
    Rcm::configure(
          RcmResetPinRunWaitFilter_LowPowerOscillator,
          RcmResetPinStopFilter_LowPowerOscillator,
-         24);
+         RcmResetFilterBusClockCount_32);
 
-   // Set first power-on message
+   // Set message for first power-on
    StringFormatter_T<22> sf;
-   sf.write("SW:V").writeln(bootInformation.softwareVersion)
+   sf.write("SW:V").writeln(bootloaderInformation.softwareVersion)
      .write("HW:").write(getHardwareVersion<HARDWARE_VERSION>());
    frequencyGenerator.setStartupMessage(sf.toString());
 

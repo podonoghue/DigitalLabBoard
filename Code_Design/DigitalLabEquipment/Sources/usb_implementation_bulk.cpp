@@ -18,6 +18,7 @@
 
 #include "usb.h"
 #include "usb_implementation_bulk.h"
+#include "delay.h"
 
 namespace USBDM {
 
@@ -43,7 +44,7 @@ static const uint8_t s_product[]         = PRODUCT_DESCRIPTION;         //!< Pro
 static const uint8_t s_serial[]          = SERIAL_NO;                   //!< Serial Number
 static const uint8_t s_config[]          = "Default configuration";     //!< Configuration name
 
-static const uint8_t s_bulk_interface[]  = "Bulk Interface";           //!< Bulk Interface
+static const uint8_t s_bulk_interface[]  = "Bulk Interface";            //!< Bulk Interface
 
 /*
  * Add additional String descriptors here
@@ -135,10 +136,10 @@ const Usb0::Descriptors Usb0::otherDescriptors = {
 };
 
 /** Out end-point for BULK data out */
-OutEndpoint <Usb0Info, Usb0::BULK_OUT_ENDPOINT, BULK_OUT_EP_MAXSIZE> Usb0::epBulkOut(EndPointType_Bulk);
+OutEndpoint <Usb0Info, Usb0::BULK_OUT_ENDPOINT,         BULK_OUT_EP_MAXSIZE>          Usb0::epBulkOut(EndPointType_Bulk);
 
 /** In end-point for BULK data in */
-InEndpoint  <Usb0Info, Usb0::BULK_IN_ENDPOINT,  BULK_IN_EP_MAXSIZE>  Usb0::epBulkIn(EndPointType_Bulk);
+InEndpoint  <Usb0Info, Usb0::BULK_IN_ENDPOINT,          BULK_IN_EP_MAXSIZE>           Usb0::epBulkIn(EndPointType_Bulk);
 
 /*
  * TODO Add additional end-points here

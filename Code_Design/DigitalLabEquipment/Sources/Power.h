@@ -40,7 +40,10 @@ private:
    unsigned stableCount          = 0;
    unsigned powerOnRecoveryCount = 0;
 
+   // Array of power change subscribers to notify
    PowerSubscriber *powerSubscribers[5];
+
+   // Count of power change subscribers to notify
    unsigned         powerSubscriberCount = 0;
 
    static constexpr USBDM::AdcResolution adcResolution = USBDM::AdcResolution_8bit_se;
@@ -60,7 +63,7 @@ private:
    }
 
    /**
-    * Notifies all devices that soft power-off has occurred
+    * Notifies all devices that soft power-off is to occur
     *
     * @note This is done before power-off
     */
@@ -98,12 +101,14 @@ private:
     * Enables 3.3V regulator
     */
    void enableTargetVdd() {
+      using namespace USBDM;
+
       TargetVddDischarge::off();
       TargetVddSample::setInput();
       PowerEnableControl::on();
    }
 
-   /**
+   /** 
     * Disable target Vdd
     *
     * Disables 3.3V regulator
@@ -111,6 +116,8 @@ private:
     * Disconnects TargetVddSample
     */
    void disableTargetVdd() {
+      using namespace USBDM;
+
       PowerEnableControl::off();
       TargetVddDischarge::setOutput(USBDM::PinDriveStrength_High, USBDM::PinDriveMode_OpenDrain, USBDM::PinSlewRate_Slow);
       TargetVddDischarge::on();

@@ -7,7 +7,6 @@
 
 #include "MotorSimulation.h"
 #include "Configure.h"
-#include "pit.h"
 
 using namespace USBDM;
 
@@ -220,9 +219,9 @@ void MotorSimulator::softPowerOn() {
 
    powerOn = true;
 
-   Pit::setCallback(pitChannel, cb);
-   Pit::enableNvicInterrupts(pitChannel, NvicPriority_Normal);
-   Pit::configureChannel(pitChannel, 1*ms, PitChannelIrq_Enabled);
+   MotorPitChannel::setCallback(cb);
+   MotorPitChannel::enableNvicInterrupts(NvicPriority_Normal);
+   MotorPitChannel::configure(1_ms, PitChannelIrq_Enabled);
 }
 
 /**
@@ -232,7 +231,7 @@ void MotorSimulator::softPowerOff() {
 
    powerOn = false;
 
-   Pit::configureChannel(pitChannel, 1*ms, PitChannelIrq_Disabled);
+   MotorPitChannel::configure(1_ms, PitChannelIrq_Disabled);
 
    writeLed(LEDS_OFF);
 }

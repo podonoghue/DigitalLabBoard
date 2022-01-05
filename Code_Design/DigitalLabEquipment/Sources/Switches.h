@@ -8,8 +8,6 @@
 #ifndef SOURCES_SWITCHES_H_
 #define SOURCES_SWITCHES_H_
 
-#include "hardware.h"
-#include "i2c.h"
 #include "PCA9555.h"
 #include "Power.h"
 #include "FunctionQueue.h"

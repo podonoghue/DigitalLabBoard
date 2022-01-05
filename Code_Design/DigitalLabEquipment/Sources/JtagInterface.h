@@ -11,22 +11,12 @@
 class JtagInterface {
 
 private:
-   /** Hardware used for JTAG Interface */
-   using Jtag = USBDM::GpioDField<3,0>;
-   using Tms  = Jtag::Bit<3>;
-   using Tdi  = Jtag::Bit<2>;
-   using Tdo  = Jtag::Bit<1>;
-   using Tck  = Jtag::Bit<0>;
+   static constexpr unsigned TMS_MASK = (1<<(USBDM::Tms::BITNUM-USBDM::Jtag::RIGHT));
+   static constexpr unsigned TDI_MASK = (1<<(USBDM::Tdi::BITNUM-USBDM::Jtag::RIGHT));
+   static constexpr unsigned TDO_MASK = (1<<(USBDM::Tdo::BITNUM-USBDM::Jtag::RIGHT));
+   static constexpr unsigned TCK_MASK = (1<<(USBDM::Tck::BITNUM-USBDM::Jtag::RIGHT));
 
-   using Adc  = USBDM::Adc0;
-   using Vref = Adc::Channel<0>;
-
-   static constexpr unsigned TMS_MASK = (1<<(Tms::BITNUM-Jtag::RIGHT));
-   static constexpr unsigned TDI_MASK = (1<<(Tdi::BITNUM-Jtag::RIGHT));
-   static constexpr unsigned TDO_MASK = (1<<(Tdo::BITNUM-Jtag::RIGHT));
-   static constexpr unsigned TCK_MASK = (1<<(Tck::BITNUM-Jtag::RIGHT));
-
-   static_assert ((Jtag::LEFT-Jtag::RIGHT) == 3);
+   static_assert ((USBDM::Jtag::LEFT-USBDM::Jtag::RIGHT) == 3);
 
    static constexpr USBDM::AdcResolution adcResolution = USBDM::AdcResolution_8bit_se;
 
@@ -40,7 +30,7 @@ public:
       Jtag::setInOut(
             PinPull_Up, PinDriveStrength_High, PinDriveMode_PushPull,
             PinAction_None, PinFilter_None, PinSlewRate_Fast);
-      Jtag::write(0b1111);
+      Jtag::bitWrite(0b1111);
       Jtag::setDirection(TMS_MASK|TDI_MASK|TCK_MASK);
    }
 
@@ -50,6 +40,7 @@ public:
     * @note Pull-ups are still active on pins
     */
    static void disable() {
+      using namespace USBDM;
       Jtag::setIn();
    }
 
@@ -61,11 +52,11 @@ public:
     */
    static bool checkVref() {
       using namespace USBDM;
-      while (Adc0::isBusy()) {
+      while (MyAdc::isBusy()) {
          __asm__("nop");
       }
-      Adc::configure(adcResolution, AdcClockSource_Bus);
-      return Vref::readAnalogue()>(Adc::getSingleEndedMaximum(adcResolution) * 0.8);
+      MyAdc::configure(adcResolution, AdcClockSource_Bus);
+      return JtagVref::readAnalogue()>(MyAdc::getSingleEndedMaximum(adcResolution) * 0.8);
    }
 
    /**
@@ -74,7 +65,8 @@ public:
     * @param value
     */
    static void setTDI(bool value) {
-      Tdi::write(value);
+      using namespace USBDM;
+      Tdi::writeBit(value);
    }
 
    /**
@@ -83,13 +75,15 @@ public:
     * @param value
     */
    static void setTMS(bool value) {
-      Tms::write(value);
+      using namespace USBDM;
+      Tms::writeBit(value);
    }
 
    /**
     * Cycle TCK pin
     */
    static void clockTCK() {
+      using namespace USBDM;
       Tck::clear();
       Tck::set();
    }
@@ -100,7 +94,8 @@ public:
     * @return
     */
    static bool getTDO() {
-      return Tdo::read();
+      using namespace USBDM;
+      return Tdo::readBit();
    }
 
    /**

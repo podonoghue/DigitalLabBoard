@@ -9,7 +9,7 @@
  *      Author: podonoghue
  ============================================================================
  */
-#include "hardware.h"
+#include <hardware.h>
 #include "Configure.h"
 #include "xsvfPlayer.h"
 #include "usb.h"

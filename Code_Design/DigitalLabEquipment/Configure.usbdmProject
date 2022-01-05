@@ -5,70 +5,106 @@
 -->
 
 <section name="USBDM">
-   <item key="$$DeviceInfo_Device_Variant"                 value="MK20DX128VLF5" />
+   <item key="$$DeviceInfo_Device_Variant"                 value="MK20DX32VLF5" />
    <item key="$$DeviceInfo_SubFamily"                      value="MK20D5" />
    <item key="$$Hardware_Source_Filename"                  value="MK20D5.usbdmHardware" />
-   <item key="$signal$ADC0_DM0_descriptionSetting"         value="Unused" />
-   <item key="$signal$ADC0_DP0_descriptionSetting"         value="Vref_JTAG" />
+   <item key="$peripheral$ADC0_codeIdentifier"             value="MyAdc" />
+   <item key="$peripheral$FTM0_codeIdentifier"             value="FrequencyGeneratorTimer" />
+   <item key="$peripheral$FTM0_userDescription"            value="Frequency generator" />
+   <item key="$peripheral$GPIOA_polarity"                  value="16" />
+   <item key="$peripheral$GPIOB_polarity"                  value="196608" />
+   <item key="$peripheral$GPIOD_polarity"                  value="15" />
+   <item key="$peripheral$I2C0_codeIdentifier"             value="I2cInterface" />
+   <item key="$peripheral$I2C0_userDescription"            value="I2C Interface for OLED, and GPIOs" />
+   <item key="$pin$PTA0_pcrSetting_7"                      value="700" />
+   <item key="$pin$PTA18_pcrSetting_0"                     value="0" />
+   <item key="$pin$PTA19_pcrSetting_0"                     value="0" />
+   <item key="$pin$PTA1_pcrSetting_2"                      value="200" />
+   <item key="$pin$PTA2_pcrSetting_2"                      value="200" />
+   <item key="$pin$PTA3_pcrSetting_7"                      value="700" />
+   <item key="$pin$PTA4_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTB0_pcrSetting_2"                      value="220" />
+   <item key="$pin$PTB16_pcrSetting_1"                     value="100" />
+   <item key="$pin$PTB17_pcrSetting_1"                     value="100" />
+   <item key="$pin$PTB1_pcrSetting_2"                      value="220" />
+   <item key="$pin$PTB2_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTB3_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTC0_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTC1_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTC2_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTC3_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTC4_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTC5_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTC6_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTC7_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTD0_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTD1_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTD2_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTD3_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTD4_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTD5_pcrSetting_4"                      value="400" />
+   <item key="$pin$PTD6_pcrSetting_0"                      value="0" />
+   <item key="$pin$PTD6_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTD7_pcrSetting_1"                      value="100" />
+   <item key="$signal$ADC0_SE0_codeIdentifier"             value="JtagVref" />
+   <item key="$signal$ADC0_SE0_descriptionSetting"         value="Used to measure JTAG Vref" />
+   <item key="$signal$ADC0_SE7b_codeIdentifier"            value="TargetVddSample" />
+   <item key="$signal$ADC0_SE7b_descriptionSetting"        value="Used to measure Target Vdd" />
+   <item key="$signal$EXTAL0_descriptionSetting"           value="16 MHz Crystal" />
    <item key="$signal$EXTAL32_descriptionSetting"          value="Unused" />
-   <item key="$signal$PTA0_descriptionSetting"             value="SWD_CLK" />
-   <item key="$signal$PTA0_muxSetting"                     value="mux7" />
-   <item key="$signal$PTA18_descriptionSetting"            value="16 MHz Crystal" />
-   <item key="$signal$PTA18_muxSetting"                    value="mux0" />
-   <item key="$signal$PTA19_descriptionSetting"            value="16 MHz Crystal" />
-   <item key="$signal$PTA19_muxSetting"                    value="mux0" />
-   <item key="$signal$PTA1_descriptionSetting"             value="SWD_Rx" />
-   <item key="$signal$PTA1_muxSetting"                     value="mux2" />
-   <item key="$signal$PTA2_descriptionSetting"             value="SWD_Tx" />
-   <item key="$signal$PTA2_muxSetting"                     value="mux2" />
-   <item key="$signal$PTA3_descriptionSetting"             value="SWD_DIO" />
-   <item key="$signal$PTA3_muxSetting"                     value="mux7" />
-   <item key="$signal$PTA4_descriptionSetting"             value="POWER_BTN" />
-   <item key="$signal$PTA4_muxSetting"                     value="mux1" />
-   <item key="$signal$PTB0_descriptionSetting"             value="I2C_SCL" />
-   <item key="$signal$PTB0_muxSetting"                     value="mux2" />
-   <item key="$signal$PTB16_descriptionSetting"            value="FREQ_DOWN_BTN" />
-   <item key="$signal$PTB16_muxSetting"                    value="mux1" />
-   <item key="$signal$PTB17_descriptionSetting"            value="FREQ_UP_BTN" />
-   <item key="$signal$PTB17_muxSetting"                    value="mux1" />
-   <item key="$signal$PTB1_descriptionSetting"             value="I2C_SDA" />
-   <item key="$signal$PTB1_muxSetting"                     value="mux2" />
-   <item key="$signal$PTB2_descriptionSetting"             value="Spare1" />
-   <item key="$signal$PTB3_descriptionSetting"             value="POWER_EN" />
-   <item key="$signal$PTB3_muxSetting"                     value="mux1" />
-   <item key="$signal$PTC0_descriptionSetting"             value="C_PLEX0" />
-   <item key="$signal$PTC0_muxSetting"                     value="mux1" />
-   <item key="$signal$PTC1_descriptionSetting"             value="C_PLEX1" />
-   <item key="$signal$PTC1_muxSetting"                     value="mux1" />
-   <item key="$signal$PTC2_descriptionSetting"             value="C_PLEX2" />
-   <item key="$signal$PTC2_muxSetting"                     value="mux1" />
-   <item key="$signal$PTC3_descriptionSetting"             value="C_PLEX3" />
-   <item key="$signal$PTC3_muxSetting"                     value="mux1" />
-   <item key="$signal$PTC4_descriptionSetting"             value="PH0" />
-   <item key="$signal$PTC4_muxSetting"                     value="mux1" />
-   <item key="$signal$PTC5_descriptionSetting"             value="PH1" />
-   <item key="$signal$PTC5_muxSetting"                     value="mux1" />
-   <item key="$signal$PTC6_descriptionSetting"             value="PH2" />
-   <item key="$signal$PTC6_muxSetting"                     value="mux1" />
-   <item key="$signal$PTC7_descriptionSetting"             value="PH3" />
-   <item key="$signal$PTC7_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD0_descriptionSetting"             value="CAR_NS_TCK" />
-   <item key="$signal$PTD0_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD1_descriptionSetting"             value="CAR_EW_TDO" />
-   <item key="$signal$PTD1_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD2_descriptionSetting"             value="PED_NS_TDI" />
-   <item key="$signal$PTD2_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD3_descriptionSetting"             value="PED_EW_TMS" />
-   <item key="$signal$PTD3_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD4_descriptionSetting"             value="Pass_LED" />
-   <item key="$signal$PTD4_muxSetting"                     value="mux1" />
-   <item key="$signal$PTD5_descriptionSetting"             value="CLOCK" />
-   <item key="$signal$PTD5_muxSetting"                     value="mux4" />
-   <item key="$signal$PTD6_descriptionSetting"             value="VddSample/Discharge" />
-   <item key="$signal$PTD6_muxSetting"                     value="mux0" />
-   <item key="$signal$PTD7_descriptionSetting"             value="Busy_LED" />
-   <item key="$signal$PTD7_muxSetting"                     value="mux1" />
+   <item key="$signal$FTM0_CH5_codeIdentifier"             value="FrequencyGeneratorTimerChannel" />
+   <item key="$signal$FTM0_CH5_descriptionSetting"         value="Frequency generator channel" />
+   <item key="$signal$GPIOA_4_codeIdentifier"              value="PowerButton" />
+   <item key="$signal$GPIOA_4_descriptionSetting"          value="Power toggle button" />
+   <item key="$signal$GPIOB_16_codeIdentifier"             value="FrequencyButtons/FrequencyDownButton" />
+   <item key="$signal$GPIOB_16_descriptionSetting"         value="Frequency generator - Up/Down buttons" />
+   <item key="$signal$GPIOB_17_codeIdentifier"             value="FrequencyButtons/FrequencyUpButton" />
+   <item key="$signal$GPIOB_17_descriptionSetting"         value="Frequency generator - Up/Down buttons" />
+   <item key="$signal$GPIOB_2_codeIdentifier"              value="Debug" />
+   <item key="$signal$GPIOB_2_descriptionSetting"          value="Debug pin" />
+   <item key="$signal$GPIOB_3_codeIdentifier"              value="PowerEnableControl" />
+   <item key="$signal$GPIOB_3_descriptionSetting"          value="Power - Enable to voltage regulator" />
+   <item key="$signal$GPIOC_0_codeIdentifier"              value="CharliePlexing" />
+   <item key="$signal$GPIOC_0_descriptionSetting"          value="Motor simulator - Charlieplexed LEDs" />
+   <item key="$signal$GPIOC_1_codeIdentifier"              value="CharliePlexing" />
+   <item key="$signal$GPIOC_1_descriptionSetting"          value="Motor simulator - Charlieplexed LEDs" />
+   <item key="$signal$GPIOC_2_codeIdentifier"              value="CharliePlexing" />
+   <item key="$signal$GPIOC_2_descriptionSetting"          value="Motor simulator - Charlieplexed LEDs" />
+   <item key="$signal$GPIOC_3_codeIdentifier"              value="CharliePlexing" />
+   <item key="$signal$GPIOC_3_descriptionSetting"          value="Motor simulator - Charlieplexed LEDs" />
+   <item key="$signal$GPIOC_4_codeIdentifier"              value="MotorPhases" />
+   <item key="$signal$GPIOC_4_descriptionSetting"          value="Motor simulator - Phase inputs from user" />
+   <item key="$signal$GPIOC_5_codeIdentifier"              value="MotorPhases" />
+   <item key="$signal$GPIOC_5_descriptionSetting"          value="Motor simulator - Phase inputs from user" />
+   <item key="$signal$GPIOC_6_codeIdentifier"              value="MotorPhases" />
+   <item key="$signal$GPIOC_6_descriptionSetting"          value="Motor simulator - Phase inputs from user" />
+   <item key="$signal$GPIOC_7_codeIdentifier"              value="MotorPhases" />
+   <item key="$signal$GPIOC_7_descriptionSetting"          value="Motor simulator - Phase inputs from user" />
+   <item key="$signal$GPIOD_0_codeIdentifier"              value="TrafficButtons/Jtag/Tck/carNS" />
+   <item key="$signal$GPIOD_0_descriptionSetting"          value="Traffic Intersection/JTAG interface/JTAG - TCK/CAR_NS" />
+   <item key="$signal$GPIOD_1_codeIdentifier"              value="TrafficButtons/Jtag/Tdo/carEW" />
+   <item key="$signal$GPIOD_1_descriptionSetting"          value="//JTAG - TDO/CAR_EW" />
+   <item key="$signal$GPIOD_2_codeIdentifier"              value="TrafficButtons/Jtag/Tdi/pedNS" />
+   <item key="$signal$GPIOD_2_descriptionSetting"          value="//JTAG - TDI/PED_NS" />
+   <item key="$signal$GPIOD_3_codeIdentifier"              value="TrafficButtons/Jtag/Tms/pedEW" />
+   <item key="$signal$GPIOD_3_descriptionSetting"          value="//JTAG - TMS/PED_EW" />
+   <item key="$signal$GPIOD_4_codeIdentifier"              value="ProgrammerPassLed" />
+   <item key="$signal$GPIOD_4_descriptionSetting"          value="Programmer Pass LED (Green)" />
+   <item key="$signal$GPIOD_6_codeIdentifier"              value="TargetVddDischarge" />
+   <item key="$signal$GPIOD_6_descriptionSetting"          value="Used to discharge TargetVdd (against leakage)" />
+   <item key="$signal$GPIOD_7_codeIdentifier"              value="ProgrammerFailLed" />
+   <item key="$signal$GPIOD_7_descriptionSetting"          value="Programmer Fail LED (Red)" />
+   <item key="$signal$I2C0_SCL_descriptionSetting"         value="I2C_SCL" />
+   <item key="$signal$I2C0_SDA_descriptionSetting"         value="I2C_SDA" />
+   <item key="$signal$PIT_CH0_codeIdentifier"              value="MotorPitChannel" />
+   <item key="$signal$PIT_CH0_descriptionSetting"          value="Motor simulator - PIT channel" />
+   <item key="$signal$PIT_CH1_codeIdentifier"              value="ButtonPollChannel" />
+   <item key="$signal$PIT_CH1_descriptionSetting"          value="Used to poll directly connected buttons - power, clock and traffic" />
    <item key="$signal$RESET_b_descriptionSetting"          value="Reset" />
+   <item key="$signal$SWD_CLK_descriptionSetting"          value="SWD_CLK" />
+   <item key="$signal$SWD_DIO_descriptionSetting"          value="SWD_DIO" />
+   <item key="$signal$UART0_RX_descriptionSetting"         value="SWD_Rx" />
+   <item key="$signal$UART0_TX_descriptionSetting"         value="SWD_Tx" />
    <item key="$signal$USB0_DM_descriptionSetting"          value="USBDM" />
    <item key="$signal$USB0_DP_descriptionSetting"          value="USBDP" />
    <item key="$signal$VBAT_descriptionSetting"             value="Vdd" />
@@ -78,28 +114,46 @@
    <item key="$signal$VOUT33_descriptionSetting"           value="Vdd" />
    <item key="$signal$VREFH_descriptionSetting"            value="Vdd" />
    <item key="$signal$VREFL_descriptionSetting"            value="Vss" />
-   <item key="$signal$VREF_OUT_descriptionSetting"         value="Unused" />
    <item key="$signal$VREGIN_descriptionSetting"           value="5V_Fused" />
    <item key="$signal$VSS1_descriptionSetting"             value="Vss" />
    <item key="$signal$VSS2_descriptionSetting"             value="Vss" />
    <item key="$signal$VSSA_descriptionSetting"             value="Vss" />
+   <item key="$signal$XTAL0_descriptionSetting"            value="16 MHz Crystal" />
    <item key="$signal$XTAL32_descriptionSetting"           value="Unused" />
    <item key="/ADC0/irqHandlingMethod"                     value="$ClassMethod" />
+   <item key="/Console/consoleEnable"                      value="false" />
    <item key="/FTFL/peripheral_file"                       value="ftfl_32k_flexrom" />
    <item key="/FTM0/check_minimums"                        value="false" />
    <item key="/FTM0/irqHandlingMethod"                     value="$ClassMethod" />
+   <item key="/HARDWARE/mapAllPins"                        value="true" />
+   <item key="/I2C0/mapPinsOnEnable"                       value="false" />
+   <item key="/I2S0/mapPinsOnEnable"                       value="false" />
+   <item key="/LINKER/enableBootloader"                    value="true" />
+   <item key="/LINKER/heapSize"                            value="0" />
+   <item key="/LINKER/linkerExtraRegions"                  value="Not initialised" />
+   <item key="/LINKER/linkerInformation"                   value="Not initialised" />
+   <item key="/LINKER/text_rom"                            value="flexNVM" />
+   <item key="/LLWU/device_list"                           value="LPTMR0;CMP0;CMP1;;TSI;RTC_Alarm;;RTC_Seconds" />
    <item key="/LLWU/irqHandlingMethod"                     value="$ClassMethod" />
    <item key="/MCG/ClockConfig[0]"                         value="ClockConfig_PEE_48MHz" />
    <item key="/MCG/ClockConfig[1]"                         value="ClockConfig_BLPE_4MHz" />
    <item key="/MCG/ClockConfig[2]"                         value="ClockConfig_FEE_40MHz" />
+   <item key="/MCG/DummyClockConfig[0]"                    value="ClockConfig_0" />
+   <item key="/MCG/DummyClockConfig[1]"                    value="ClockConfig_1" />
+   <item key="/MCG/DummyClockConfig[2]"                    value="ClockConfig_2" />
    <item key="/MCG/clock_mode[0]"                          value="ClockMode_PEE" />
    <item key="/MCG/clock_mode[1]"                          value="ClockMode_BLPE" />
    <item key="/MCG/clock_mode[2]"                          value="ClockMode_FEE" />
    <item key="/MCG/pll0OutputFrequency[0]"                 value="96000000" />
    <item key="/MCG/system_mcgfllclk_clock[1]"              value="80000000" />
    <item key="/MCG/system_mcgfllclk_clock[2]"              value="80000000" />
+   <item key="/OSC0/mapPinsOnEnable"                       value="false" />
    <item key="/OSC0/osc_input_freq"                        value="16000000" />
    <item key="/PIT/irqHandlingMethod"                      value="$ClassMethod" />
+   <item key="/RTC/mapPinsOnEnable"                        value="false" />
+   <item key="/SIM/ClockConfig[0]"                         value="" />
+   <item key="/SIM/ClockConfig[1]"                         value="" />
+   <item key="/SIM/ClockConfig[2]"                         value="" />
    <item key="/SIM/sim_clkdiv2_usb"                        value="2" />
    <item key="/SIM/sim_sopt2_pllfllsel[0]"                 value="1" />
    <item key="/SIM/system_bus_clock[1]"                    value="4000000" />
@@ -108,5 +162,10 @@
    <item key="/SIM/system_core_clock[2]"                   value="40000000" />
    <item key="/SIM/system_flash_clock[1]"                  value="1000000" />
    <item key="/SIM/system_flash_clock[2]"                  value="20000000" />
+   <item key="/SPI0/mapPinsOnEnable"                       value="false" />
+   <item key="/UART0/mapPinsOnEnable"                      value="false" />
+   <item key="/UART1/mapPinsOnEnable"                      value="false" />
+   <item key="/UART2/mapPinsOnEnable"                      value="false" />
    <item key="/USB0/irqHandlingMethod"                     value="$ClassMethod" />
+   <item key="/USB0/mapPinsOnEnable"                       value="false" />
 </section>

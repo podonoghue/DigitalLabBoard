@@ -70,7 +70,7 @@ private:
       uint8_t txData[] = {address, value};
 
       i2c.startTransaction();
-      i2c.transmit(pca95555Address, sizeof(txData), txData);
+      i2c.transmit(pca95555Address, txData);
       i2c.endTransaction();
    }
 
@@ -85,7 +85,7 @@ private:
       uint8_t rxData[1] = {};
 
       i2c.startTransaction();
-      i2c.txRx(pca95555Address, sizeof(txData), txData, sizeof(rxData), rxData);
+      i2c.txRx(pca95555Address, txData, rxData);
       i2c.endTransaction();
 
       value = rxData[0];

@@ -4,9 +4,7 @@
  * @brief   Generate square waves over a wide range of frequencies using the FTM
  =================================================================================
  */
-#include <FrequencyGenerator.h>
-#include "hardware.h"
-#include "Configure.h"
+#include "FrequencyGenerator.h"
 
 using namespace USBDM;
 
@@ -92,7 +90,7 @@ void FrequencyGenerator::setFrequency(unsigned frequency) {
        */
       FrequencyGeneratorTimerChannel::configure(FtmChMode_OutputCompareClear, FtmChannelAction_None);
    }
-   else if (frequency < 100*Hz) {
+   else if (frequency < 100_Hz) {
       /*
        * Low frequency strategy
        *
@@ -115,7 +113,7 @@ void FrequencyGenerator::setFrequency(unsigned frequency) {
        */
       FrequencyGeneratorTimerChannel::configure(FtmChMode_OutputCompareToggle, FtmChannelAction_None);
 
-      FrequencyGeneratorTimer::setPeriod(1/(2.0*frequency));
+      FrequencyGeneratorTimer::setPeriod(Seconds(1/(2.0*frequency)));
 
       // Trigger pin action when counter crosses 1 tick
       FrequencyGeneratorTimerChannel::setEventTime(1);
@@ -151,11 +149,11 @@ void FrequencyGenerator::refreshFrequency() {
          This->oled.write("  Off");
       }
       else {
-         if (frequency >= 1*MHz) {
+         if (frequency >= 1_MHz) {
             units = " MHz";
             frequency /= 1000000;
          }
-         else if (frequency >= 1*kHz) {
+         else if (frequency >= 1_kHz) {
             units = " kHz";
             frequency /= 1000;
          }
@@ -180,16 +178,22 @@ const float FrequencyGenerator::freqs[] = {
       1,2,5,
       10,20,50,
       100,200,500,
-      1*kHz,2*kHz,5*kHz,
-      10*kHz,20*kHz,50*kHz,
-      100*kHz,200*kHz,500*kHz,
-      1*MHz,2*MHz,
+      1_kHz,2_kHz,5_kHz,
+      10_kHz,20_kHz,50_kHz,
+      100_kHz,200_kHz,500_kHz,
+      1_MHz,2_MHz,
 };
 
 /**
  * Do all polling operations
  */
 void FrequencyGenerator::pollButtons() {
+   /// Frequency generator - Mask for UP button (see FrequencyButtons)
+   static constexpr unsigned FREQUENCY_UP_BUTTON = 1<<(USBDM::FrequencyUpButton::BITNUM - USBDM::FrequencyButtons::RIGHT);
+
+   /// Frequency generator - Mask for DOWN button (see FrequencyButtons)
+   static constexpr unsigned FREQUENCY_DOWN_BUTTON = 1<<(USBDM::FrequencyDownButton::BITNUM - USBDM::FrequencyButtons::RIGHT);
+
 
    static unsigned lastButtonValue     = 0;
    static unsigned stableCount         = 0;

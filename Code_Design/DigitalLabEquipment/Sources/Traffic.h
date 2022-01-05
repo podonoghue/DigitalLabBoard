@@ -7,7 +7,7 @@
 
 #ifndef SOURCES_TRAFFIC_H_
 #define SOURCES_TRAFFIC_H_
-#include "Configure.h"
+
 #include "Power.h"
 #include "PCA9555.h"
 #include "FunctionQueue.h"

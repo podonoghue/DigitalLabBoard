@@ -12,22 +12,6 @@
 
 #include "hardware.h"
 #include "i2c.h"
-//#include "pit.h"
-
-/// I2C Interface for OLED, and GPIOs
-using I2cInterface = USBDM::I2c0;
-
-/*
- * MOTOR SIMULATOR
- */
-/// Motor simulator - Charlieplexed LEDs
-using CharliePlexing = USBDM::GpioCField<4,0,USBDM::ActiveHigh>;
-
-/// Motor simulator - Phase inputs from user
-using MotorPhases    = USBDM::GpioCField<7,4,USBDM::ActiveHigh>;
-
-/// Motor simulator - PIT channel
-//using MotorPitChannel = USBDM::Pit::Channel<0>;
 
 /// Interval x5ms for switch debouncing/unlatching
 static constexpr unsigned DEBOUNCE_INTERVAL_COUNT = 20/5;
@@ -44,18 +28,9 @@ static constexpr unsigned POWER_ON_ADC_DELAY_COUNT = 20/5;
 /// Interval x5ms for power-up delay before notifying peripherals
 static constexpr unsigned POWER_ON_DELAY_COUNT = 100/5;
 
-/// Timer used for polling
-//using ButtonPollTimer = USBDM::Pit;
-
-/// Used to poll directly connected buttons - power, clock and traffic
-//using ButtonPollChannel = USBDM::Pit::Channel<1>;
-
 /*
  * TRAFFIC SIMULATOR
  */
-/// Traffic intersection - buttons PED + CAR
-using TrafficButtons = USBDM::GpioDField<3,0,USBDM::ActiveLow>;
-
 /// I2C address for Traffic intersection GPIO expander
 /// IO0_7-0 = Fixed direction user I/O
 /// IO1_7-0 = Outputs to LEDs (active high)
@@ -121,43 +96,9 @@ static constexpr inline unsigned trafficLedsEncode(unsigned nsLights, unsigned e
    return (lightTable[nsLights]<<NS_LED_OFFSET)|(lightTable[ewLights]<<EW_LED_OFFSET);
 }
 
-/*
- * FREQUENCY GENERATOR
- */
-/// Frequency generator - Up/Down buttons
-using FrequencyButtons   = USBDM::GpioBField<17,16, USBDM::ActiveLow>;
-/// Frequency generator - Mask for UP button (see FrequencyButtons)
-static constexpr unsigned FREQUENCY_UP_BUTTON = 0b10;
-/// Frequency generator - Mask for DOWN button (see FrequencyButtons)
-static constexpr unsigned FREQUENCY_DOWN_BUTTON = 0b01;
-/// Frequency generator - Timer being used
-using FrequencyGeneratorTimer = USBDM::Ftm0;
-/// Frequency generator - Timer channel being used
-using FrequencyGeneratorTimerChannel = FrequencyGeneratorTimer::Channel<5>;
-
-/*
- * POWER CONTROL
- */
-/// Power - Enable to voltage regulator
-using PowerEnableControl  = USBDM::GpioB<3,  USBDM::ActiveHigh>;
-/// Power - Enable button
-using PowerButton          = USBDM::GpioA<4,  USBDM::ActiveLow>;
-/// Power - Used to sample the target power supply (alias for TargetVddDischarge)
-using TargetVddSample = USBDM::Adc0::Channel<7>;
-/// Power - Used to discharge the target power supply (alias for TargetVddSample)
-using TargetVddDischarge = USBDM::GpioD<6, USBDM::ActiveLow>;
-
-/*
- * BUTTONS
- */
 /// I2C address for debounced buttons GPIO expander
 /// IO0_7-0 = Outputs to user
 /// IO1_7-0 = Inputs from switches/Outputs to LEDs (active-low)
 static constexpr uint8_t BUTTON_I2C_ADDRESS  = 0b000;
-
-//! Programmer Pass LED (Green)
-using ProgrammerPassLed = USBDM::GpioD<4>;
-//! Programmer Fail LED (Red)
-using ProgrammerFailLed = USBDM::GpioD<7>;
 
 #endif /* SOURCES_CONFIGURE_H_ */

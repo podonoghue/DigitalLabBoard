@@ -10,13 +10,13 @@
 #ifndef SOURCES_OLED_H_
 #define SOURCES_OLED_H_
 
-#include "fonts.h"
 #include "i2c.h"
+#include "fonts.h"
 #include "formatted_io.h"
 
 namespace USBDM {
 
-enum OledVccControl : int8_t {
+enum OledVccControl : uint8_t {
    OledVccControl_Internal = 0,
    OledVccControl_External = 1,
 };
@@ -74,7 +74,7 @@ class Oled : public USBDM::FormattedIO {
 
 private:
 
-   USBDM::Font *font = &USBDM::fontSmall;
+   USBDM::Font *font = &USBDM::fontLarge;
 
    /**
     * Check if character is available
@@ -105,31 +105,42 @@ private:
    /**
     *  Flush input data
     */
-   virtual void flushInput() override {
+   virtual Oled &flushInput() override {
+      return *this;
    }
 
 public:
    /**
     *  Flush output data
     */
-   virtual void flushOutput() override {
+   virtual Oled &flushOutput() override {
       refreshImage();
+      return *this;
    }
 
    // Address (LSB = R/W bit = 0)
    static constexpr unsigned   I2C_ADDRESS   = 0b01111000;
-   static constexpr unsigned   I2C_SPEED     = 400*kHz;
+   static constexpr unsigned   I2C_SPEED     = 400_kHz;
 
-   static const int            WIDTH         = 128;
-   static const int            HEIGHT        =  32;
-   static const OledVccControl VCC_CONTROL   = OledVccControl_Internal;
+   static constexpr int            WIDTH         = 128;
+   static constexpr int            HEIGHT        =  32;
+   static constexpr OledVccControl VCC_CONTROL   = OledVccControl_Internal;
+
+   enum Orientation {Orientation_Normal, Orientation_Rotated_180};
+   static constexpr Orientation orientation = Orientation_Normal;
 
 #pragma pack(push,1)
    /// Buffer type for display data
    /// This is prefixed by a command byte for transmission to OLED
-   struct Buffer {
+   union Buffer {
+      struct {
+      /// Command byte
       uint8_t  controlByte;
-      uint8_t  buffer[WIDTH * ((HEIGHT + 7) / 8)];
+      /// Data values
+      uint8_t  data[WIDTH * ((HEIGHT + 7) / 8)];
+      };
+      /// All data for transmission
+      uint8_t rawData[1+(WIDTH * ((HEIGHT + 7) / 8))];
    };
 #pragma pack(pop)
 
@@ -149,8 +160,8 @@ public:
    int fontHeight = 0;
 
    template<typename T> T max(T a, T b) {
-         return (a>b)?a:b;
-      }
+      return (a>b)?a:b;
+   }
 
 public:
    Oled(USBDM::I2c &i2c) : i2c(i2c) {
@@ -171,29 +182,120 @@ public:
       return *this;
    }
 
+   /**
+    * Set font to use for subsequent operations
+    *
+    * @param font
+    * @return
+    */
    Oled &setFont(USBDM::Font &font) {
       this->font = &font;
       return *this;
    }
 
-   void initialise();
-   Oled &clearDisplay();
-//   void executeCommand1(uint8_t c);
-   void refreshImage();
+   /**
+    * Initialise OLED peripheral
+    *
+    * @return true on success
+    *
+    * @note   This function must be called before any drawing or updates!
+    * @note   Based loosely on Adafruit library initialisation sequence
+    */   void initialise();
 
-   Oled &writeImage(const uint8_t *dataPtr, int x, int y, int width, int height, WriteMode writeMode=WriteMode_Write);
-   Oled &putSpace(int width);
-   void putPixel(unsigned index, uint8_t mask, bool pixel, WriteMode writeMode);
-   void drawPixel(int x, int y, bool pixel, WriteMode writeMode=WriteMode_Write);
-   void drawVerticalLine(int x, int y1, int y2, WriteMode writeMode=WriteMode_Write);
-   void drawHorizontalLine(int x1, int x2, int y, WriteMode writeMode=WriteMode_Write);
-   void drawRect(int x1, int y1, int x2, int y2, WriteMode writeMode=WriteMode_Write);
+    /**
+     * Clear internal frame buffer
+     * The OLED is not affected until refreshImage() is called.
+     */
+    Oled &clearDisplay();
 
-   Oled &moveXY(int x, int y) {
-      this->x = x;
-      this->y = y;
-      return *this;
-   }
+    /**
+     * Turn display on or off
+     */
+    void enable(bool enable);
+
+    /**
+     * Control display contrast/brightness
+     *
+     *  Has no appreciable effect on display tested
+     *
+     * @param level
+     */
+    void setContrast(uint8_t level);
+
+    /**
+     * Refresh OLED from frame buffer
+     */
+    void refreshImage();
+
+    /**
+     * Write image to frame buffer
+     *
+     * @param[in] dataPtr Pointer to start of image
+     * @param[in] x       X position of top-left corner
+     * @param[in] y       Y position of top-left corner
+     * @param[in] width   Width of image
+     * @param[in] height  Height of image
+     */
+    Oled &writeImage(const uint8_t *dataPtr, int x, int y, int width, int height, WriteMode writeMode=WriteMode_Write);
+
+    /**
+     * Writes whitespace to the frame buffer at the current x,y location
+     *
+     * @param[in] width Width of white space in pixels
+     */
+    Oled &putSpace(int width);
+
+    void putPixel(unsigned index, uint8_t mask, bool pixel, WriteMode writeMode);
+    void drawPixel(int x, int y, bool pixel, WriteMode writeMode=WriteMode_Write);
+    void drawVerticalLine(int x, int y1, int y2, WriteMode writeMode=WriteMode_Write);
+    void drawHorizontalLine(int x1, int x2, int y, WriteMode writeMode=WriteMode_Write);
+    void drawRect(int x1, int y1, int x2, int y2, WriteMode writeMode=WriteMode_Write);
+
+    /**
+     * Move current location
+     *
+     * @param x
+     * @param y
+     *
+     * @return Reference to self
+     */
+    Oled &moveXY(int x, int y) {
+       this->x = x;
+       this->y = y;
+       return *this;
+    }
+
+    /**
+     * Get current X location
+     *
+     * @return X location in pixels
+     */
+    int getX() {
+       return x;
+    }
+
+    /**
+     * Get current Y location
+     *
+     * @return Y location in pixels
+     */
+    int getY() {
+       return y;
+    }
+
+    /**
+     * Get current X,Y location
+     *
+     * @param[out] x X location in pixels
+     * @param[out] y Y location in pixels
+     *
+     * @return Reference to self
+     */
+    Oled &getXY(int &x, int &y) {
+       x = this->x;
+       y = this->y;
+       return *this;
+    }
 };
 
 } // namespace USBDM

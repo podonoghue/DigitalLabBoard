@@ -13,29 +13,6 @@
 // USB messages are packed data in LE (native) format
 #pragma pack(push, 1)
 
-// Each unique hardware should define a new number here
-static constexpr uint16_t HW_LOGIC_BOARD_V2 = 1;
-static constexpr uint16_t HW_LOGIC_BOARD_V3 = 2;
-static constexpr uint16_t HW_LOGIC_BOARD_V4 = 3;
-
-static constexpr uint16_t BOOTLOADER_V1     = 1;
-static constexpr uint16_t BOOTLOADER_V2     = 2;
-static constexpr uint16_t BOOTLOADER_V3     = 3;
-
-template<int version>
-constexpr const char *getHardwareVersion() {
-   if constexpr(version == HW_LOGIC_BOARD_V2) {
-      return "Dig-Logic 2";
-   }
-   if constexpr(version == HW_LOGIC_BOARD_V3) {
-      return "Dig-Logic 3";
-   }
-   if constexpr(version == HW_LOGIC_BOARD_V4) {
-      return "Dig-Logic 4";
-   }
-   return "Unknown";
-}
-
 /**
  * Commands available
  */

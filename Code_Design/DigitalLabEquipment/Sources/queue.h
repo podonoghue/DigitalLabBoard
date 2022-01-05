@@ -9,7 +9,7 @@
 #define INCLUDE_USBDM_QUEUE_H_
 
 #include "system.h"
-#include "hardware.h"
+//#include "hardware.h"
 
 namespace USBDM {
 
@@ -80,7 +80,7 @@ public:
       bool hasSpace = !isFull();
       if (hasSpace) {
          *fTail++ = element;
-         fNumberOfElements++;
+         fNumberOfElements = fNumberOfElements + 1;
          if (fTail>=(fBuff+QUEUE_SIZE)) {
             fTail = fBuff;
          }
@@ -96,7 +96,7 @@ public:
       USBDM::CriticalSection cs;
       usbdm_assert(!isEmpty(), "Queue empty");
       T t = *fHead++;
-      fNumberOfElements--;
+      fNumberOfElements = fNumberOfElements - 1;
       if (fHead>=(fBuff+QUEUE_SIZE)) {
          fHead = fBuff;
       }

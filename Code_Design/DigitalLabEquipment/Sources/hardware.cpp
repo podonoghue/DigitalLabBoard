@@ -1,6 +1,6 @@
 /**
  * @file      hardware.cpp (generated from MK20D5.usbdmHardware)
- * @version   1.2.0
+ * @version   1.3.0
  * @brief     Pin initialisation for MK20DX128VLF5
  *
  * *****************************
@@ -23,31 +23,69 @@ namespace USBDM {
  * @brief Hardware Peripheral Interface and library
  * @{
  */
+
 /**
- * Used to configure pin-mapping before 1st use of peripherals
+ * Startup code for C++ classes
+ */
+extern "C" void __attribute__((constructor)) cpp_initialise() {
+   if constexpr (MapAllPinsOnStartup) {
+      mapAllPins();
+   }
+}
+
+// No user object definitions found
+
+/**
+ * Map all configured pins to peripheral signals.
+ *
+ * PCRs of allocated pins are set according to settings in Configure.usbdmProject
+ *
+ * @note Only the lower 16-bits of the PCR registers are initialised
  */
 void mapAllPins() {
-#ifdef PCC_PCCn_CGC_MASK
-      PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
-      PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
-      PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
-      PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
-#else
-      enablePortClocks(PORTA_CLOCK_MASK|PORTB_CLOCK_MASK|PORTC_CLOCK_MASK|PORTD_CLOCK_MASK);
+#if false
+
+#warning "PCR Not initialised for PTD6       : Multiple signals mapped to pin - ADC0_SE7b, GPIOD_6/LLWU_P15"
+
 #endif
-      PORTA->GPCHR = 0x0000UL|PORT_GPCHR_GPWE(0x000CUL);
-      PORTA->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
-      PORTA->GPCLR = 0x0200UL|PORT_GPCLR_GPWE(0x0006UL);
-      PORTA->GPCLR = 0x0700UL|PORT_GPCLR_GPWE(0x0009UL);
-      PORTB->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0008UL);
-      PORTB->GPCHR = 0x0100UL|PORT_GPCHR_GPWE(0x0003UL);
-      PORTB->GPCLR = 0x0200UL|PORT_GPCLR_GPWE(0x0003UL);
-      PORTC->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x00FFUL);
-      PORTD->GPCLR = 0x0000UL|PORT_GPCLR_GPWE(0x0040UL);
-      PORTD->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x009FUL);
-      PORTD->GPCLR = 0x0400UL|PORT_GPCLR_GPWE(0x0020UL);
+
+
+#if defined(PCC_PCCn_CGC_MASK)
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTE = PCC_PCCn_CGC_MASK;
+#else
+   enablePortClocks(PORTA_CLOCK_MASK|PORTB_CLOCK_MASK|PORTC_CLOCK_MASK|PORTD_CLOCK_MASK|PORTE_CLOCK_MASK);
+#endif
+
+   PORTA->GPCHR = ForceLockedPins|0x0000UL|PORT_GPCHR_GPWE(0x000CUL);
+   PORTA->GPCLR = ForceLockedPins|0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
+   PORTA->GPCLR = ForceLockedPins|0x0200UL|PORT_GPCLR_GPWE(0x0006UL);
+   PORTA->GPCLR = ForceLockedPins|0x0700UL|PORT_GPCLR_GPWE(0x0009UL);
+   PORTB->GPCLR = ForceLockedPins|0x0100UL|PORT_GPCLR_GPWE(0x000CUL);
+   PORTB->GPCHR = ForceLockedPins|0x0100UL|PORT_GPCHR_GPWE(0x0003UL);
+   PORTB->GPCLR = ForceLockedPins|0x0220UL|PORT_GPCLR_GPWE(0x0003UL);
+   PORTC->GPCLR = ForceLockedPins|0x0100UL|PORT_GPCLR_GPWE(0x00FFUL);
+   PORTD->GPCLR = ForceLockedPins|0x0100UL|PORT_GPCLR_GPWE(0x009FUL);
+   PORTD->GPCLR = ForceLockedPins|0x0400UL|PORT_GPCLR_GPWE(0x0020UL);
+
+   if constexpr (ForceLockoutUnbondedPins) {
+      PORTA->GPCLR = PinLock_Locked |0x0000UL|PORT_GPCLR_GPWE(0xFFE0UL); // Lockout unavailable pins
+      PORTA->GPCHR = PinLock_Locked |0x0000UL|PORT_GPCHR_GPWE(0xFFF3UL); // Lockout unavailable pins
+      PORTB->GPCLR = PinLock_Locked |0x0000UL|PORT_GPCLR_GPWE(0xFFF0UL); // Lockout unavailable pins
+      PORTB->GPCHR = PinLock_Locked |0x0000UL|PORT_GPCHR_GPWE(0xFFFCUL); // Lockout unavailable pins
+      PORTC->GPCLR = PinLock_Locked |0x0000UL|PORT_GPCLR_GPWE(0xFF00UL); // Lockout unavailable pins
+      PORTC->GPCHR = PinLock_Locked |0x0000UL|PORT_GPCHR_GPWE(0xFFFFUL); // Lockout unavailable pins
+      PORTD->GPCLR = PinLock_Locked |0x0000UL|PORT_GPCLR_GPWE(0xFF00UL); // Lockout unavailable pins
+      PORTD->GPCHR = PinLock_Locked |0x0000UL|PORT_GPCHR_GPWE(0xFFFFUL); // Lockout unavailable pins
+      PORTE->GPCLR = PinLock_Locked |0x0000UL|PORT_GPCLR_GPWE(0xFFFFUL); // Lockout unavailable pins
+      PORTE->GPCHR = PinLock_Locked |0x0000UL|PORT_GPCHR_GPWE(0xFFFFUL); // Lockout unavailable pins
+   }
+
 }
-/** 
+/**
  * End group USBDM_Group
  * @}
  */

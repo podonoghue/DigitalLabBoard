@@ -148,7 +148,11 @@ public:
 
 protected:
    /* end-points */
+
+   /** Out end-point for Bulk */
    static OutEndpoint <Usb0Info, Usb0::BULK_OUT_ENDPOINT, BULK_OUT_EP_MAXSIZE> epBulkOut;
+
+   /** In end-point for Bulk */
    static InEndpoint  <Usb0Info, Usb0::BULK_IN_ENDPOINT,  BULK_IN_EP_MAXSIZE>  epBulkIn;
 
    /*

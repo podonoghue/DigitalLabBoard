@@ -9,7 +9,7 @@
  *      Author: podonoghue
  ============================================================================
  */
-#include "hardware.h"
+#include <hardware.h>
 #include "utilities.h"
 #include "JtagInterface.h"
 #include "JtagTables.h"
@@ -102,7 +102,9 @@ const char *XsvfPlayer::getXstateName(Xstate state) {
  */
 void XsvfPlayer::printBits(const char* title, unsigned numBits, const uint8_t *buff) {
    (void)title;
+   (void)numBits;
    (void)buff;
+#if defined(DEBUG_BUILD) && USE_CONSOLE
    unsigned size = (numBits+7)/8;
    unsigned index = 8*size;
    bool doHeader = true;
@@ -127,6 +129,7 @@ void XsvfPlayer::printBits(const char* title, unsigned numBits, const uint8_t *b
    }
    console.WRITELN();
    console.resetFormat();
+#endif
 }
 
 /**
