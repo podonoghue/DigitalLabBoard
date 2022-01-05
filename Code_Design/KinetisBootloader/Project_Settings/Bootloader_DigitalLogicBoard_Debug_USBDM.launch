@@ -37,7 +37,7 @@
     <stringAttribute key="net.sourceforge.usbdm.gdb.serverType" value="SERVER_SOCKET"/>
     <booleanAttribute key="net.sourceforge.usbdm.gdb.setPcRegister" value="false"/>
     <stringAttribute key="net.sourceforge.usbdm.gdb.stopAtMainAddress" value="main"/>
-    <stringAttribute key="net.sourceforge.usbdm.gdb.targetVdd" value="BDM_TARGET_VDD_OFF"/>
+    <stringAttribute key="net.sourceforge.usbdm.gdb.targetVdd" value="BDM_TARGET_VDD_3V3"/>
     <booleanAttribute key="net.sourceforge.usbdm.gdb.trimClock" value="false"/>
     <intAttribute key="net.sourceforge.usbdm.gdb.ttyPort" value="4321"/>
     <booleanAttribute key="net.sourceforge.usbdm.gdb.useDebugVersion" value="false"/>
@@ -56,6 +56,6 @@
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
         <listEntry value="4"/>
     </listAttribute>
-    <stringAttribute key="org.eclipse.dsf.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&lt;memoryBlockExpressionList context=&quot;reserved-for-future-use&quot;&gt;&lt;gdbmemoryBlockExpression address=&quot;131056&quot; label=&quot;0x1fff0&quot;/&gt;&lt;gdbmemoryBlockExpression address=&quot;16384&quot; label=&quot;0x4000&quot;/&gt;&lt;/memoryBlockExpressionList&gt;"/>
+    <stringAttribute key="org.eclipse.dsf.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&lt;memoryBlockExpressionList context=&quot;reserved-for-future-use&quot;/&gt;"/>
     <stringAttribute key="process_factory_id" value="org.eclipse.cdt.dsf.gdb.GdbProcessFactory"/>
 </launchConfiguration>

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version 3.9.0 Sep  6 2020)
+// C++ code generated with wxFormBuilder (version 3.9.0 Sep 11 2020)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -40,7 +40,7 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 	sbSizer2->Add( checkDevice_button, 0, wxALL|wxEXPAND, 5 );
 
 	checkDevice_textCtrl = new wxTextCtrl( sbSizer2->GetStaticBox(), wxID_ANY, wxT("-- no information --"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	checkDevice_textCtrl->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString ) );
+	checkDevice_textCtrl->SetFont( wxFont( 10, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Consolas") ) );
 
 	sbSizer2->Add( checkDevice_textCtrl, 1, wxALL|wxEXPAND, 5 );
 

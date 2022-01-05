@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version 3.9.0 Sep  6 2020)
+// C++ code generated with wxFormBuilder (version 3.9.0 Sep 11 2020)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -49,7 +49,7 @@ class BootloaderDialogueSkeleton : public wxDialog
 
 	public:
 
-		BootloaderDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Kinetis Bootloader"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 464,298 ), long style = wxDEFAULT_DIALOG_STYLE );
+		BootloaderDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Kinetis Bootloader"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 464,322 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~BootloaderDialogueSkeleton();
 
 };

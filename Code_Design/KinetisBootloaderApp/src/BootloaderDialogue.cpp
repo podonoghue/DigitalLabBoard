@@ -76,13 +76,16 @@ void BootloaderDialogue::onCheckDevice(wxCommandEvent &event) {
             "Bootloader Version = %d\r\n"
             "Image H/W Version  = %s\r\n"
             "Image Version      = %d\r\n"
-            "Flash Image[0x%08X..0x%08X]",
+            "Flash Range1[0x%08X..0x%08X]\n"
+            "Flash Range2[0x%08X..0x%08X]",
             getHardwareType(identity.bootHardwareVersion),
             identity.bootSoftwareVersion,
             getHardwareType(identity.imageHardwareVersion),
             identity.imageSoftwareVersion,
-            identity.flashStart,
-            identity.flashStart+identity.flashSize-1
+            identity.flash1_start,
+            identity.flash1_start+identity.flash1_size-1,
+            identity.flash2_start,
+            identity.flash2_start+identity.flash2_size-1
             );
       checkDevice_textCtrl->ChangeValue(status);
    }

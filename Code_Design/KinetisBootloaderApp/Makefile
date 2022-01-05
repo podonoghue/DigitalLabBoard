@@ -11,7 +11,13 @@ $(TARGET):
 	@echo ================================================================
 	$(MAKE) exe -f Target.mk BUILDDIR=$@$(BUILDDIR_SUFFIX) MODULE=$(MODULE) TARGET=$@ CDEFS='$(EXE_DEFS)'
 
-all: commonFiles $(TARGET)
+$(TARGET)-debug:
+	@echo --
+	@echo -- Building $@
+	@echo ================================================================
+	$(MAKE) exe -f Target.mk BUILDDIR=$@$(BUILDDIR_SUFFIX) MODULE=$(MODULE) TARGET=$@ CDEFS='$(EXE_DEFS)'
+
+all: commonFiles $(TARGET) $(TARGET)-debug
 
 clean: 
 	${RMDIR} $(TARGET)$(BUILDDIR_SUFFIX)
