@@ -222,7 +222,8 @@ void Oled::_writeChar(char ch) {
          // Don't display partial characters
          return;
       }
-      writeImage((uint8_t*)(&font->data[(ch-USBDM::Font::BASE_CHAR)*font->bytesPerChar]), x, y, width, height);
+      const uint8_t * const fontData = font->operator[](ch);
+      writeImage(fontData, x, y, width, height);
       x += width;
       fontHeight = max(fontHeight, height);
    }

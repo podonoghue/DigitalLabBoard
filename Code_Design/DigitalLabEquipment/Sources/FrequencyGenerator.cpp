@@ -1,3 +1,4 @@
+
 /**
  =================================================================================
  * @file    Waveform.cpp
@@ -9,6 +10,12 @@
 using namespace USBDM;
 
 static constexpr unsigned LOW_FREQ_DIVISION_FACTOR = 100;
+
+/**
+ * Small subset of FontVeryLarge font
+ */
+static const FontArraySubset
+   <FontVeryLarge, ' ', '0', '1', '2', '5', 'k', 'M', 'H', 'z', 'O', 'f'> myFont;
 
 /**
  * Interrupt handler for FrequencyGenerator Timer interrupts
@@ -143,8 +150,9 @@ void FrequencyGenerator::refreshFrequency() {
       unsigned    frequency = This->currentFrequency;
 
       This->oled.clearDisplay();
-      This->oled.setFont(fontVeryLarge);
+      This->oled.setFont(myFont);
 
+      This->oled.moveXY(5, 4);
       if (frequency == Frequency_Off) {
          This->oled.write("  Off");
       }
@@ -160,7 +168,6 @@ void FrequencyGenerator::refreshFrequency() {
          else if (frequency != 0) {
             units = "  Hz";
          }
-         This->oled.moveXY(5, 4);
          This->oled.setWidth(3).setPadding(Padding_LeadingSpaces).write(frequency).write(units).write(" ");
       }
       This->oled.resetFormat();

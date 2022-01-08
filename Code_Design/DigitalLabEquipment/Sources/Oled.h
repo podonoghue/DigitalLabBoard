@@ -74,7 +74,7 @@ class Oled : public USBDM::FormattedIO {
 
 private:
 
-   USBDM::Font *font = &USBDM::fontLarge;
+   const USBDM::Font *font = &USBDM::fontLarge;
 
    /**
     * Check if character is available
@@ -188,7 +188,7 @@ public:
     * @param font
     * @return
     */
-   Oled &setFont(USBDM::Font &font) {
+   Oled &setFont(const USBDM::Font &font) {
       this->font = &font;
       return *this;
    }
