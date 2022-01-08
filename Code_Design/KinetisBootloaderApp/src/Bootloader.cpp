@@ -264,6 +264,7 @@ const char *Bootloader::queryDeviceInformation(ResponseIdentify &identity) {
 const char *Bootloader::programFlashRange(FlashImagePtr flashImage, uint32_t flashAddress, uint32_t bytesToProgram) {
 
    fprintf(stderr, "Processing [0x%08X..0x%08X]\n", flashAddress, (flashAddress)+bytesToProgram-1);
+   fflush(stderr);
    const char *errrorMessage = nullptr;
 
    // Maximum size of data to write

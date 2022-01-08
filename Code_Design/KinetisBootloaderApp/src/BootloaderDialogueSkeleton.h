@@ -49,7 +49,7 @@ class BootloaderDialogueSkeleton : public wxDialog
 
 	public:
 
-		BootloaderDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Kinetis Bootloader"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 464,322 ), long style = wxDEFAULT_DIALOG_STYLE );
+		BootloaderDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Kinetis Bootloader"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,400 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~BootloaderDialogueSkeleton();
 
 };

@@ -23,10 +23,11 @@ using IcpButton = GpioA<4,  USBDM::ActiveLow>;
 /** Debug pin */
 using DebugPin  = GpioD<4,  USBDM::ActiveLow>;
 
-uint32_t magicNumber;
+/// What hardware this boot loader is built for
+static constexpr HardwareType BOOT_HARDWARE_VERSION  = HW_LOGIC_BOARD_V4a;
 
-constexpr HardwareType BOOT_HARDWARE_VERSION  = HW_LOGIC_BOARD_V4a;
-constexpr uint32_t     BOOT_SOFTWARE_VERSION  = BOOTLOADER_V4;
+/// What the version of the bootloader is
+static constexpr uint32_t     BOOT_SOFTWARE_VERSION  = BOOTLOADER_V4;
 
 struct FlashImageData {
    uint32_t flash1Start;
@@ -59,13 +60,13 @@ constexpr const FlashImageData getFlashImageData(HardwareType hardwareType) {
 
 constexpr FlashImageData flashImagedata[] = {
       /*                                             Start 1     Size 1          Start2      Size 2 */
-      /* Unknown",             - MK20DX128VLF5 */  { 0x004000,   0x0,            0x10000000, 0x0 },
-      /* Digital Lab Board V2" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
-      /* Digital Lab Board V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
-      /* Digital Lab Board V4" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
-      /* Soldering Station V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
-      /* Digital Lab Board V4a - MK20DX32VLF5  */  { 0x004000,   0x08000-0x4000, 0x10000000, 0x00008000 },
-      /* Soldering Station V4" - MK20DX128VLH7 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
+      /* 0 - Unknown",             - MK20DX128VLF5 */  { 0x004000,   0x0,            0x10000000, 0x0 },
+      /* 1 - Digital Lab Board V2" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
+      /* 2 - Digital Lab Board V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
+      /* 3 - Digital Lab Board V4" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
+      /* 4 - Soldering Station V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
+      /* 5 - Digital Lab Board V4a - MK20DX32VLF5  */  { 0x004000,   0x08000-0x4000, 0x10000000, 0x00008000 },
+      /* 6 - Soldering Station V4" - MK20DX128VLH7 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
 };
 
    return flashImagedata[hardwareType];
@@ -116,6 +117,10 @@ static BootInformation *getBootInformation() {
       }
       return bootInfo;
 }
+
+//static bool ifMagicNumberInValid() {
+//   return (getBootInformation()->magicNumber == nullptr) || (*getBootInformation()->magicNumber != MAGIC_NUMBER);
+//}
 
 /**
  * Calculate Flash CRC
@@ -188,9 +193,28 @@ bool programFlash(UsbCommandMessage command) {
    return true;
 }
 
+#ifndef SCB_AIRCR_VECTKEY
+#define SCB_AIRCR_VECTKEY(x) (((x)<<SCB_AIRCR_VECTKEY_Pos)&SCB_AIRCR_VECTKEY_Msk)
+#endif
+
+/**
+ * Reset system
+ */
+static void resetSystem() {
+
+   /* Request system reset */
+   SCB->AIRCR = SCB_AIRCR_VECTKEY(0x5FA) | SCB_AIRCR_SYSRESETREQ_Msk;
+
+   /* Wait until reset */
+   for(;;) {
+      __asm__("nop");
+   }
+}
+
 /**
  * Boot into user program mode if:
  *  - Flash image is valid and
+ *  - Magic number is invalid ? and
  *  - ICP button not pressed
  *
  *  @note Does not return if ICP mode is not detected
@@ -207,24 +231,6 @@ void checkICP() {
 
    if (IcpButton::isReleased() && isFlashValid()) {
       callFlashImage();
-   }
-}
-
-#ifndef SCB_AIRCR_VECTKEY
-#define SCB_AIRCR_VECTKEY(x) (((x)<<SCB_AIRCR_VECTKEY_Pos)&SCB_AIRCR_VECTKEY_Msk)
-#endif
-
-/**
- * Reset system
- */
-static void resetSystem() {
-
-   /* Request system reset */
-   SCB->AIRCR = SCB_AIRCR_VECTKEY(0x5FA) | SCB_AIRCR_SYSRESETREQ_Msk;
-
-   /* Wait until reset */
-   for(;;) {
-      __asm__("nop");
    }
 }
 
@@ -326,8 +332,8 @@ void pollUsb() {
             console.write("Expected CRC = 0x").writeln(expectedCrc,   Radix_16);
 #endif
 
-            response.bootHardwareVersion  = HW_LOGIC_BOARD_V4a;
-            response.bootSoftwareVersion  = BOOTLOADER_V4;
+            response.bootHardwareVersion  = BOOT_HARDWARE_VERSION;
+            response.bootSoftwareVersion  = BOOT_SOFTWARE_VERSION;
             response.flash1_start         = flashImageData.flash1Start;
             response.flash1_size          = flashImageData.flash1Size;
             response.flash2_start         = flashImageData.flash2Start;
@@ -397,11 +403,7 @@ void pollUsb() {
 }
 
 int main() {
-//   LED1::setOutput();
-//   LED2::setOutput();
-
    for(;;) {
-//      LED1::toggle();
       pollUsb();
    }
 }

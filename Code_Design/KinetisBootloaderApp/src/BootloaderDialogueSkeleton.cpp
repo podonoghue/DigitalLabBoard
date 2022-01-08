@@ -37,6 +37,8 @@ BootloaderDialogueSkeleton::BootloaderDialogueSkeleton( wxWindow* parent, wxWind
 	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Device Information") ), wxHORIZONTAL );
 
 	checkDevice_button = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Check Device"), wxDefaultPosition, wxDefaultSize, 0 );
+	checkDevice_button->SetToolTip( wxT("Read description from device") );
+
 	sbSizer2->Add( checkDevice_button, 0, wxALL|wxEXPAND, 5 );
 
 	checkDevice_textCtrl = new wxTextCtrl( sbSizer2->GetStaticBox(), wxID_ANY, wxT("-- no information --"), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );

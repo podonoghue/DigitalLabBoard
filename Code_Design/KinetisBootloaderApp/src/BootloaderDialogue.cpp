@@ -72,20 +72,22 @@ void BootloaderDialogue::onCheckDevice(wxCommandEvent &event) {
 
    if (msg == nullptr) {
       wxString status = wxString::Format(
-            "Hardware Version   = %s\r\n"
-            "Bootloader Version = %d\r\n"
-            "Image H/W Version  = %s\r\n"
-            "Image Version      = %d\r\n"
-            "Flash Range1[0x%08X..0x%08X]\n"
-            "Flash Range2[0x%08X..0x%08X]",
+            "==== Bootloader ====\r\n"
+            "Hardware Version = %s\r\n"
+            "Software Version = %d\r\n"
+            "Flash Range1[0x%08X..0x%08X]\r\n"
+            "Flash Range2[0x%08X..0x%08X]\r\n"
+            "=== Loaded Image ===\r\n"
+            "Hardware Version = %s\r\n"
+            "Software Version = %d",
             getHardwareType(identity.bootHardwareVersion),
             identity.bootSoftwareVersion,
-            getHardwareType(identity.imageHardwareVersion),
-            identity.imageSoftwareVersion,
             identity.flash1_start,
             identity.flash1_start+identity.flash1_size-1,
             identity.flash2_start,
-            identity.flash2_start+identity.flash2_size-1
+            identity.flash2_start+identity.flash2_size-1,
+            getHardwareType(identity.imageHardwareVersion),
+            identity.imageSoftwareVersion
             );
       checkDevice_textCtrl->ChangeValue(status);
    }
@@ -98,14 +100,19 @@ void BootloaderDialogue::onProgramDevice(wxCommandEvent &event) {
    programAction_static->SetLabel("Busy");
    if (flashImage != nullptr) {
       Bootloader bl;
-      const char *errorMessage = bl.download(flashImage);
+
+      ResponseIdentify identity;
+      const char *errorMessage = bl.getDeviceInformation(identity);
       if (errorMessage != nullptr) {
          programAction_static->SetLabel(errorMessage);
-         //         wxMessageBox(errorMessage, "Failed to download image to device");
+         return;
       }
-      else {
-         programAction_static->SetLabel("Success");
+      errorMessage = bl.download(flashImage);
+      if (errorMessage != nullptr) {
+         programAction_static->SetLabel(errorMessage);
+         return;
       }
+      programAction_static->SetLabel("Success");
    }
 }
 

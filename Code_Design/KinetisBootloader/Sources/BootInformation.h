@@ -1,12 +1,12 @@
 /*
- * Bootloader.h
+ * BootInformation.h
  *
  *  Created on: 4 Jan. 2022
  *      Author: peter
  */
 
-#ifndef SOURCES_BOOTLOADER_H_
-#define SOURCES_BOOTLOADER_H_
+#ifndef SOURCES_BOOTINFORMATION_H_
+#define SOURCES_BOOTINFORMATION_H_
 
 #include <stdint.h>
 
@@ -71,7 +71,7 @@ enum HardwareType : uint32_t {
  *
  * @note return value is a pointer to a STATIC object - do not free
  */
-static inline const char *getHardwareType(uint16_t hardwareVersion) {
+static inline const char *getHardwareType(HardwareType hardwareVersion) {
    static const char *names[] = {
          "Unknown",
          "HW_LOGIC_BOARD_V2",
@@ -97,7 +97,7 @@ static inline const char *getHardwareType(uint16_t hardwareVersion) {
  *
  * @note return value is a pointer to a STATIC object - do not free
  */
-static inline const char *getHardwareType(uint16_t hardwareVersion) {
+static inline const char *getHardwareType(HardwareType hardwareVersion) {
    static const char *names[] = {
          "Unknown",
          "Digital Lab Board V2",
@@ -123,32 +123,9 @@ enum BootloaderVersion : uint32_t  {
    BOOTLOADER_V4      = 4,
 };
 
-template<int version>
-constexpr const char *getHardwareVersion() {
-   if constexpr(version == HW_LOGIC_BOARD_V2) {
-      return "Dig-Logic 2";
-   }
-   if constexpr(version == HW_LOGIC_BOARD_V3) {
-      return "Dig-Logic 3";
-   }
-   if constexpr(version == HW_LOGIC_BOARD_V4) {
-      return "Dig-Logic 4";
-   }
-   if constexpr(version == HW_LOGIC_BOARD_V4a) {
-      return "Dig-Logic 4a";
-   }
-   if constexpr(version == HW_SOLDER_STATION_V3) {
-      return "Soldering station V3";
-   }
-   if constexpr(version == HW_SOLDER_STATION_V4) {
-      return "Soldering station V4";
-   }
-   return "Unknown";
-}
-
 static constexpr uint32_t BOOTLOADER_ORIGIN = 0;
 static constexpr uint32_t BOOTLOADER_SIZE   = 0x4000;
 
 #pragma pack(pop)
 
-#endif /* SOURCES_BOOTLOADER_H_ */
+#endif /* SOURCES_BOOTINFORMATION_H_ */

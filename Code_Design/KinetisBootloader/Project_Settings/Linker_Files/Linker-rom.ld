@@ -63,7 +63,7 @@ SECTIONS
       . = __flash_start + 0x3C0;
       KEEP(*(.bootloader_configuration))
       
-      /* USBDM Bootloader information 0x3C0 if present */
+      /* Emit USBDM Bootloader information @0x3C0 if present */
       __bootloaderInformation = .;
       KEEP(*(.bootloaderInformation))
       ASSERT ((BOOT_LOADER_SIZE == 0) || (. != __bootloaderInformation), "No bootloader information");
@@ -73,7 +73,6 @@ SECTIONS
       KEEP(*(.security_information))
       KEEP(*(.FlashConfig))    /* KDS Flash Configuration Field (FCF) */
       ASSERT (. == __flash_start + 0x410, "No Freescale security information");
-      
    } > flash
 
 /* Size of RAM vector table (if needed) */

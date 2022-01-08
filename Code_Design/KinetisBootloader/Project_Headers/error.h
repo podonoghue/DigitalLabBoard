@@ -120,7 +120,7 @@ inline void clearError() {
    errorCode = E_NO_ERROR;
 }
 
-#define USE_CONSOLE 1
+#define USE_CONSOLE 0
 
 #if USE_CONSOLE
 /**
