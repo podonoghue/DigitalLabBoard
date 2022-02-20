@@ -59,14 +59,15 @@ struct FlashImageData {
 constexpr const FlashImageData getFlashImageData(HardwareType hardwareType) {
 
 constexpr FlashImageData flashImagedata[] = {
-      /*                                             Start 1     Size 1          Start2      Size 2 */
+      /*                                                 Start 1     Size 1          Start2      Size 2 */
       /* 0 - Unknown",             - MK20DX128VLF5 */  { 0x004000,   0x0,            0x10000000, 0x0 },
       /* 1 - Digital Lab Board V2" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
       /* 2 - Digital Lab Board V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
       /* 3 - Digital Lab Board V4" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
       /* 4 - Soldering Station V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
-      /* 5 - Digital Lab Board V4a - MK20DX32VLF5  */  { 0x004000,   0x08000-0x4000, 0x10000000, 0x00008000 },
-      /* 6 - Soldering Station V4" - MK20DX128VLH7 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
+      /* 5 - Digital Lab Board V4a - MK20DX32VLF5  */  { 0x004000,   0x08000-0x4000, 0x10000000, 0x00008000 }, // Uses Data Flash
+      /* 6 - Soldering Station V4" - MK20DX256VLH7 */  { 0x004000,   0x40000-0x4000, 0x10000000, 0x00000000 }, // Use FlexRAM
+      /* 7 - ??"                   - MK20DX256VLH7 */  { 0x004000,   0x40000-0x4000, 0x10000000, 0x00008000 },
 };
 
    return flashImagedata[hardwareType];
@@ -211,6 +212,9 @@ static void resetSystem() {
    }
 }
 
+volatile bool icpButton;
+volatile bool flashValid;
+
 /**
  * Boot into user program mode if:
  *  - Flash image is valid and
@@ -229,7 +233,10 @@ void checkICP() {
       __asm__("nop");
    }
 
-   if (IcpButton::isReleased() && isFlashValid()) {
+   icpButton  = IcpButton::isReleased();
+   flashValid = isFlashValid();
+
+   if (icpButton && flashValid) {
       callFlashImage();
    }
 }
@@ -403,6 +410,9 @@ void pollUsb() {
 }
 
 int main() {
+//   console.writeln("icpButton  = ", icpButton);
+//   console.writeln("flashValid = ", flashValid);
+
    for(;;) {
       pollUsb();
    }

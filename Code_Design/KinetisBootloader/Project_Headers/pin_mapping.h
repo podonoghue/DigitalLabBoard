@@ -128,12 +128,20 @@ namespace USBDM {
    /** Dummy port information for pins without an associated PCR */
    constexpr PortInfo  __attribute__((unused)) NoPortInfo {0, 0, IRQn_None, 0, NvicPriority_NotInstalled};
 
-   /** Class to static check signal mapping is valid */
-   template<class Info, int signalNum> class CheckSignal {
-      static_assert((signalNum<Info::numSignals), "Non-existent signal - Modify Configure.usbdm");
-      static_assert((signalNum>=Info::numSignals)||(Info::info[signalNum].gpioBit != UNMAPPED_PCR), "Signal is not mapped to a pin - Modify Configure.usbdm");
-      static_assert((signalNum>=Info::numSignals)||(Info::info[signalNum].gpioBit != INVALID_PCR),  "Signal doesn't exist in this device/package");
-      static_assert((signalNum>=Info::numSignals)||((Info::info[signalNum].gpioBit == UNMAPPED_PCR)||(Info::info[signalNum].gpioBit == INVALID_PCR)||(Info::info[signalNum].gpioBit >= 0)), "Illegal signal");
+   /**
+    * Class to static check signal mapping is valid
+    * Conditions are chained so only a single assert is reported
+    */
+   template<class Info, int signalNum> class CheckSignalMapping {
+      static constexpr bool check1 = signalNum<Info::numSignals;
+      static constexpr bool check2 = !check1 || (Info::info[signalNum].gpioBit != UNMAPPED_PCR);
+      static constexpr bool check3 = !check1 || !check2 || (Info::info[signalNum].gpioBit != INVALID_PCR);
+      static constexpr bool check4 = !check1 || !check2 || !check3 || (Info::info[signalNum].gpioBit >= 0);
+   
+      static_assert(check1, "Non-existent signal - Modify Configure.usbdm");
+      static_assert(check2, "Signal is not mapped to a pin - Modify Configure.usbdm");
+      static_assert(check3, "Signal doesn't exist in this device/package");
+      static_assert(check4, "Illegal signal");
    };
 
    /**
@@ -2443,31 +2451,31 @@ public:
    #if defined(SIM_SOPT8_FTM0OCH0SRC)
    //! System Options Register 8
    static constexpr uint32_t sopt8 = 
-      SIM_SOPT8_FTM3OCH7SRC(Symbol 'sim_sopt8_ftm3och7src' not found) |   // FTM3 channel 7 output source
-      SIM_SOPT8_FTM3OCH6SRC(Symbol 'sim_sopt8_ftm3och6src' not found) |   // FTM3 channel 6 output source
-      SIM_SOPT8_FTM3OCH5SRC(Symbol 'sim_sopt8_ftm3och5src' not found) |   // FTM3 channel 5 output source
-      SIM_SOPT8_FTM3OCH4SRC(Symbol 'sim_sopt8_ftm3och4src' not found) |   // FTM3 channel 4 output source
-      SIM_SOPT8_FTM3OCH3SRC(Symbol 'sim_sopt8_ftm3och3src' not found) |   // FTM3 channel 3 output source
-      SIM_SOPT8_FTM3OCH2SRC(Symbol 'sim_sopt8_ftm3och2src' not found) |   // FTM3 channel 2 output source
-      SIM_SOPT8_FTM3OCH1SRC(Symbol 'sim_sopt8_ftm3och1src' not found) |   // FTM3 channel 1 output source
-      SIM_SOPT8_FTM3OCH0SRC(Symbol 'sim_sopt8_ftm3och0src' not found) |   // FTM3 channel 0 output source
-      SIM_SOPT8_FTM0OCH7SRC(Symbol 'sim_sopt8_ftm0och7src' not found) |   // FTM0 channel 7 output source
-      SIM_SOPT8_FTM0OCH6SRC(Symbol 'sim_sopt8_ftm0och6src' not found) |   // FTM0 channel 6 output source
-      SIM_SOPT8_FTM0OCH5SRC(Symbol 'sim_sopt8_ftm0och5src' not found) |   // FTM0 channel 5 output source
-      SIM_SOPT8_FTM0OCH4SRC(Symbol 'sim_sopt8_ftm0och4src' not found) |   // FTM0 channel 4 output source
-      SIM_SOPT8_FTM0OCH3SRC(Symbol 'sim_sopt8_ftm0och3src' not found) |   // FTM0 channel 3 output source
-      SIM_SOPT8_FTM0OCH2SRC(Symbol 'sim_sopt8_ftm0och2src' not found) |   // FTM0 channel 2 output source
-      SIM_SOPT8_FTM0OCH1SRC(Symbol 'sim_sopt8_ftm0och1src' not found) |   // FTM0 channel 1 output source
-      SIM_SOPT8_FTM0OCH0SRC(Symbol 'sim_sopt8_ftm0och0src' not found);    // FTM0 channel 0 output source
+      SIM_SOPT8_FTM3OCH7SRC(-1) |   // FTM3 channel 7 output source
+      SIM_SOPT8_FTM3OCH6SRC(-1) |   // FTM3 channel 6 output source
+      SIM_SOPT8_FTM3OCH5SRC(-1) |   // FTM3 channel 5 output source
+      SIM_SOPT8_FTM3OCH4SRC(-1) |   // FTM3 channel 4 output source
+      SIM_SOPT8_FTM3OCH3SRC(-1) |   // FTM3 channel 3 output source
+      SIM_SOPT8_FTM3OCH2SRC(-1) |   // FTM3 channel 2 output source
+      SIM_SOPT8_FTM3OCH1SRC(-1) |   // FTM3 channel 1 output source
+      SIM_SOPT8_FTM3OCH0SRC(-1) |   // FTM3 channel 0 output source
+      SIM_SOPT8_FTM0OCH7SRC(-1) |   // FTM0 channel 7 output source
+      SIM_SOPT8_FTM0OCH6SRC(-1) |   // FTM0 channel 6 output source
+      SIM_SOPT8_FTM0OCH5SRC(-1) |   // FTM0 channel 5 output source
+      SIM_SOPT8_FTM0OCH4SRC(-1) |   // FTM0 channel 4 output source
+      SIM_SOPT8_FTM0OCH3SRC(-1) |   // FTM0 channel 3 output source
+      SIM_SOPT8_FTM0OCH2SRC(-1) |   // FTM0 channel 2 output source
+      SIM_SOPT8_FTM0OCH1SRC(-1) |   // FTM0 channel 1 output source
+      SIM_SOPT8_FTM0OCH0SRC(-1);    // FTM0 channel 0 output source
    #endif
 
    #if defined(SIM_SOPT9_TPM1CH0SRC)
    //! System Options Register 9
    static constexpr uint32_t sopt9 = 
-      SIM_SOPT9_TPM2CLKSEL(Symbol 'sim_sopt9_tpm2clksel' not found)  |   // TPM2 External Clock Pin Select
-      SIM_SOPT9_TPM1CLKSEL(Symbol 'sim_sopt9_tpm1clksel' not found)  |   // TPM1 External Clock Pin Select
-      SIM_SOPT9_TPM2CH0SRC(Symbol 'sim_sopt9_tpm2ch0src' not found)  |   // TPM2 channel 0 input capture source select
-      SIM_SOPT9_TPM1CH0SRC(Symbol 'sim_sopt9_tpm1ch0src' not found);     // TPM1 channel 0 input capture source select
+      SIM_SOPT9_TPM2CLKSEL(-1)  |   // TPM2 External Clock Pin Select
+      SIM_SOPT9_TPM1CLKSEL(-1)  |   // TPM1 External Clock Pin Select
+      SIM_SOPT9_TPM2CH0SRC(-1)  |   // TPM2 channel 0 input capture source select
+      SIM_SOPT9_TPM1CH0SRC(-1);     // TPM1 channel 0 input capture source select
    #endif
 
    /**
@@ -3601,7 +3609,7 @@ public:
  */
 class FtflInfo {
 public:
-   // Template:ftfl_32k_flexrom
+   // Template:ftfl
 
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = FTFL_BasePtr;

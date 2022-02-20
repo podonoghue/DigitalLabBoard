@@ -32,7 +32,7 @@ struct BootInformation {
    const uint32_t softwareVersion;     ///< Version of this software image
    const uint32_t hardwareVersion;     ///< Identifies the hardware this image is intended for
    const uint32_t reserved[3]{0};      ///<
-   const uint32_t key;
+   const uint32_t key;                 ///< Key indicating valid Information
 
    bool isValid() const {
       return key == KEY_VALUE;
