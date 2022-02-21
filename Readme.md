@@ -16,6 +16,6 @@ Folders:
 
 ![An image](https://raw.githubusercontent.com/podonoghue/DigitalLabBoard/master/PCB_Design/DigitalLabBoard/DigitalLabBoard.png "Board Image")
 
-[CPLD programmer documentation](https://raw.githubusercontent.com/podonoghue/DigitalLabBoard/master/PCB_Design/CPLD_Programmer/CPLD_Programmer_V2.PDF)  
+[CPLD programmer documentation](https://raw.githubusercontent.com/podonoghue/DigitalLabBoard/master/PCB_Design/CPLD_Programmer/CPLD_Programmer_V2.PDF)  Note that a version of the programmer is built into the above lab board.
 
 ![An image](https://raw.githubusercontent.com/podonoghue/DigitalLabBoard/master/PCB_Design/CPLD_Programmer/CPLD_Programmer.png "Board Image")
