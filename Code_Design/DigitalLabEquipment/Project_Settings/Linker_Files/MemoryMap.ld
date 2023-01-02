@@ -7,14 +7,14 @@
 /* <o> Stack Size
    <i> Required amount of stack space
    <i> In CMSIS this will determine the ISR stack size
-   <0x0-0x20000:4>  <constant>
+   <0x0-0x1000:4>  <constant>
 */
 __stack_size = 0x800;
 
 /* <o> Minimum Heap Size 
    <i> This is the minimum allocated.  
    <i> Available heap may be larger.
-   <0x0-0x20000:4>  <constant>
+   <0x0-0x1000:4>  <constant>
 */
 __heap_size  = 0x0;
 
@@ -46,6 +46,12 @@ FORCE_BOOT_LOADER = DEFINED(bootloaderInformation) ? 1 : 1;
     <i>  This value is used to automatically adjust the available flash area 
  */
 BOOT_LOADER_SIZE  = DEFINED(BOOT_LOADER_SIZE)  ? BOOT_LOADER_SIZE : 16384 * FORCE_BOOT_LOADER;
+/*
+    <o>  Bootloader information block size (usually 0x10 if used) <constant>
+    <i>  The bootloader information block is located at the top of the flash region
+    <i>  This value is used to automatically adjust the available flash area 
+ */
+BOOT_INFO_SIZE    = DEFINED(BOOT_INFO_SIZE)    ? BOOT_INFO_SIZE   : 0x10 * (BOOT_LOADER_SIZE > 0);
 /* </e> */
 
 /*
@@ -89,13 +95,9 @@ MEMORY
     <o1> bitband size    <constant>
  */
   bitband        (rwx) : ORIGIN = 0x22000000, LENGTH = 0x00020000
-/*
- * Guard region above stack for GDB 
- */
-  gdbGuard       (r)   : ORIGIN = 0x22020000, LENGTH = 0x00000020
-};
+}
 
-REGION_ALIAS("ram","bitband");
+REGION_ALIAS("ram","ram_low");
 
 
 /*
@@ -109,6 +111,7 @@ REGION_ALIAS("text_rom",         "flexNVM");
 /*  <s1>  Read-only data  <constant> data_rom      */
 REGION_ALIAS("rodata_rom",       "flash");
 /* </h> */
+
 /*
   <h> Section placement in RAM
   <i> The RAM on Cortex-M4 Kinetis devices is divided into upper and lower memory regions.
@@ -131,8 +134,8 @@ REGION_ALIAS("noinit_ram",     "ram_low");
 REGION_ALIAS("mtb_ram",        "ram_low");
 /*  <s1>  USB Endpoint buffers               <constant> bdts_ram       */
 REGION_ALIAS("bdts_ram",       "ram_low");
-/*  <s1>  Bitband RAM - must be in ram_high  <constant> bdts_ram       */
-REGION_ALIAS("bitband_ram",    "ram_high");
+/*  <s1>  Bitband RAM - must be in ram_high  <constant> bitband_ram       */
+REGION_ALIAS("bitband_ram",    "ram_high")
 /* </h> */
 
 

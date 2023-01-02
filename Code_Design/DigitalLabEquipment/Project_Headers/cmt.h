@@ -135,7 +135,11 @@ typedef void (*CMTCallbackFunction)();
  * @tparam info      Information class for CMT
  */
 template<class Info>
-class CmtBase_T {
+class CmtBase_T : public PcrTable_T<Info, 0> {
+
+private:
+   // Hide setInput
+   using PcrTable_T<Info, 0>::setInput;
 
 protected:
    /** Class to static check output is mapped to a pin - Assumes existence */
@@ -223,7 +227,7 @@ public:
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::initPCRs();
       }
    }
@@ -238,7 +242,7 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::clearPCRs();
       }
    }
@@ -275,36 +279,6 @@ public:
    }
 
    /**
-    * Enable CMT output pin as output.
-    * Configures all Pin Control Register (PCR) values
-    *
-    * @param[in] pcrValue PCR value to use in configuring port (excluding MUX value). See pcrValue()
-    */
-   static void setOutput(PcrValue pcrValue=OutputPin::defaultPcrValue) {
-      CheckOutputIsMapped<0>::check();
-      using Pcr = PcrTable_T<Info, 0>;
-
-      // Enable and map pin to CMP_OUT
-      Pcr::setPCR(pcrValue);
-   }
-
-   /**
-    * Enable CMT output pin as output.
-    * Configures all Pin Control Register (PCR) values
-    *
-    * @param[in] pinDriveStrength One of PinDriveStrength_Low, PinDriveStrength_High
-    * @param[in] pinDriveMode     One of PinDriveMode_PushPull, PinDriveMode_OpenDrain (defaults to PinPushPull)
-    * @param[in] pinSlewRate      One of PinSlewRate_Slow, PinSlewRate_Fast (defaults to PinSlewRate_Fast)
-    */
-   static void setOutput(
-         PinDriveStrength  pinDriveStrength,
-         PinDriveMode      pinDriveMode      = PinDriveMode_PushPull,
-         PinSlewRate       pinSlewRate       = PinSlewRate_Fast
-         ) {
-      setOutput(pinDriveStrength|pinDriveMode|pinSlewRate);
-   }
-
-   /**
     * Select Primary Prescaler Divider.
     * This divider would usually be chosen to produce a clock of 8MHz from the input Bus clock
     *
@@ -323,7 +297,7 @@ public:
     */
    static void configure(CmtMode cmtMode, CmtClockDivideBy cmtClockDivideBy=CmtClockDivideBy_1) {
       enable();
-      setPrescaler((CmtPrescaler)((SystemBusClock/8000000)-1));
+      setPrescaler((CmtPrescaler)(((SystemBusClock+4000000)/8000000)-1));
       cmt->MSC = cmtMode|cmtClockDivideBy;
    }
 
@@ -515,21 +489,11 @@ public:
 
 template<class Info> CMTCallbackFunction CmtBase_T<Info>::sCallback = CmtBase_T<Info>::unhandledCallback;
 
-#if defined(USBDM_CMT_IS_DEFINED)
-class Cmt : public CmtBase_T<CmtInfo> {};
-#endif
+   /**
+    * Class representing CMT
+    */
+   class Cmt : public CmtBase_T<CmtInfo> {};
 
-#if defined(USBDM_CMT0_IS_DEFINED)
-class Cmt0 : public CmtBase_T<CmtInfo> {};
-#endif
-
-#if defined(USBDM_CMT1_IS_DEFINED)
-class Cmt1 : public CmtBase_T<Cmt1Info> {};
-#endif
-
-#if defined(USBDM_CMT2_IS_DEFINED)
-class Cmt2 : public CmtBase_T<Cmt2Info> {};
-#endif
 
 /**
  * End CMT_Group

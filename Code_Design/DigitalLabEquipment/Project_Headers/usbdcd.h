@@ -258,9 +258,10 @@ public:
 
 template<class Info> USBDCDCallbackFunction UsbdcdBase_T<Info>::callback = UsbdcdBase_T<Info>::unhandledCallback;
 
-#if defined(USBDM_USBDCD0_IS_DEFINED)
-class Usbdcd0 : public UsbdcdBase_T<Usbdcd0Info> {};
-#endif
+   /**
+    * Class representing USBDCD0
+    */
+   class Usbdcd0 : public UsbdcdBase_T<Usbdcd0Info> {};
 
 /**
  * End USBDCD_Group

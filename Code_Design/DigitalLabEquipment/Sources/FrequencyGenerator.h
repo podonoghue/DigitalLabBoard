@@ -40,8 +40,9 @@ private:
 
    /**
     * Table of available frequencies
+    * Eclipse code parser has problems with this as a class member
     */
-   static const float freqs[];
+//   static const USBDM::Hertz freqs[];
 
    /**
  * Display current Frequency on LCD
@@ -61,7 +62,7 @@ private:
     *
     * @note Range: Frequency_Off, [Frequency_Min, Frequency_Max]
     */
-   void setFrequency(unsigned frequency);
+   void setFrequency(USBDM::Hertz frequency);
 
    /**
     * Get the current waveform frequency
@@ -100,13 +101,13 @@ private:
 
 public:
    /// Used to indicate generator off
-   static constexpr unsigned Frequency_Off = 0.0;
+   static constexpr USBDM::Hertz Frequency_Off = 0.0;
 
    /// Minimum frequency available
-   static constexpr unsigned Frequency_Min = 1_Hz;
+   static constexpr USBDM::Hertz Frequency_Min = 1.0;
 
    /// Maximum frequency available
-   static constexpr unsigned Frequency_Max = 10_MHz;
+   static constexpr USBDM::Hertz Frequency_Max = 10'000'000.0;
 
    /**
     * Construct Frequency generator

@@ -38,7 +38,9 @@ enum ErrorCode {
    E_CLOCK_INIT_FAILED,           //!< Clock initialisation failed
    E_HANDLER_ALREADY_SET,         //!< Handler (callback) already installed
    E_NO_RESOURCE,                 //!< Failed resource allocation
-   E_TIMEOUT,                     //!< Failed resource allocation
+   E_TIMEOUT,                     //!< Timeout occurred during operation
+   E_INTERRUPTED,                 //!< Interrupt occurred during operation
+   E_BUSY,                        //!< Device is busy
 
    E_CMSIS_ERR_OFFSET = 1<<20,    //!< Offset added to CMSIS error codes
 };
@@ -128,7 +130,7 @@ inline void clearError() {
  *
  * @param msg Message to print
  */
-extern void log_error(const char *);
+extern void log_error(const char * msg);
 #else
 /**
  * Print simple log message to console\n

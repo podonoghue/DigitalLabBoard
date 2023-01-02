@@ -42,7 +42,7 @@
  * based on the transaction type.
  *
  * Transfer
- * - One or more bus transactions to move information between a software client
+ * - One or more transactions to move information between a software client
  *   and its function.
  *
  * Bulk Reads and Writes
@@ -159,6 +159,7 @@ public:
     */
    typedef ErrorCode (*SetupCallbackFunction)(const SetupPacket &setup);
 
+protected:
    /**
     * Dummy callback used to catch use of unset required callback
     */
@@ -227,7 +228,7 @@ public:
     *
     * @param[in] lineCodingStructure
     */
-   void reportLineCoding(const LineCodingStructure *lineCodingStructure);
+   static void reportLineCoding(const LineCodingStructure *lineCodingStructure);
 
    /**
     * Format SETUP packet as string
@@ -239,11 +240,11 @@ public:
    static const char *getSetupPacketDescription(SetupPacket *p);
 
    /**
-    * Report line state value
+    * Report line state value to stdout
     *
     * @param[in] value
     */
-   void reportLineState(uint8_t value);
+   static void reportLineState(uint8_t value);
 
    /**
     *  Creates a valid string descriptor in UTF-16-LE from a limited UTF-8 string
@@ -292,16 +293,16 @@ protected:
    static volatile DeviceConnectionStates fConnectionState;
 
    /** Active USB configuration */
-   static volatile uint8_t fDeviceConfiguration;
+   static uint8_t fDeviceConfiguration;
 
    /** USB Device status */
-   static volatile DeviceStatus fDeviceStatus;
+   static DeviceStatus fDeviceStatus;
 
    /** Buffer for EP0 data from Setup transaction (copied from USB RAM) */
    static SetupPacket fEp0SetupBuffer;
 
    /** USB activity indicator */
-   static volatile bool fActivityFlag;
+   static bool fActivityFlag;
 
    /**
     * Unhandled SETUP callback \n
@@ -329,7 +330,7 @@ protected:
     */
    static SOFCallbackFunction fSofCallbackFunction;
 
-public:
+protected:
 
 // Template _mapPinsOption_on.xml
 
@@ -341,7 +342,7 @@ public:
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::initPCRs();
       }
    }
@@ -356,7 +357,7 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::clearPCRs();
       }
    }
@@ -431,15 +432,6 @@ public:
     */
    static void setOtgInterrupts(uint8_t mask=0xFF) {
       fUsb->OTGICR = mask;
-   }
-
-   /**
-    * Checks if the USB device is configured i.e. connected and enumerated etc.
-    *
-    * @return true if configured
-    */
-   static bool isConfigured() {
-      return fConnectionState == USBconfigured;
    }
 
 protected:
@@ -522,7 +514,7 @@ protected:
     * @param[in]  bufSize Size of buffer to send
     * @param[in]  bufPtr  Pointer to buffer (may be NULL to indicate fControlEndpoint.fDatabuffer is being used directly)
     */
-   static void ep0StartTxStage(uint16_t bufSize, volatile const uint8_t *bufPtr) {
+   static void ep0StartTxStage(uint16_t bufSize, const uint8_t *bufPtr) {
       if (bufSize > fEp0SetupBuffer.wLength) {
          // More data than requested in SETUP request - truncate
          bufSize = (uint8_t)fEp0SetupBuffer.wLength;
@@ -547,7 +539,7 @@ protected:
     */
    static void setUSBdefaultState() {
       fConnectionState      = USBdefault;
-      fUsb->ADDR           = 0;
+      fUsb->ADDR            = 0;
       fDeviceConfiguration  = 0;
    }
 
@@ -563,7 +555,7 @@ protected:
       }
       else {
          fConnectionState       = USBaddressed;
-         fUsb->ADDR            = address;
+         fUsb->ADDR             = address;
          fDeviceConfiguration   = 0;
       }
    }
@@ -651,7 +643,7 @@ protected:
     */
    static void handleUnexpectedSetup() {
       if (fUnhandledSetupCallback(fEp0SetupBuffer) != E_NO_ERROR) {
-//         console.WRITE("handleUnexpectedSetup(").WRITE(getSetupPacketDescription(&fEp0SetupBuffer)).WRITELN(")");
+//         console.WRITELN("handleUnexpectedSetup(", getSetupPacketDescription(&fEp0SetupBuffer), ")");
          fControlEndpoint.stall();
       }
    }
@@ -709,7 +701,7 @@ protected:
          // Remove this call-back
          fControlEndpoint.setCallback(ep0DummyTransactionCallback);
          return EPIdle;
-         // console.WRITE("setAddr(").WRITE(newAddress, Radix_16).WRITE(")");
+         // console.WRITE("setAddr(", newAddress, Radix_16, ")");
       };
       // Call-back to execute when transaction completed
       fControlEndpoint.setCallback(callback);
@@ -758,6 +750,15 @@ protected:
    }
 
 public:
+   /**
+    * Checks if the USB device is configured i.e. connected and enumerated etc.
+    *
+    * @return true if configured
+    */
+   static bool isConfigured() {
+      return fConnectionState == USBconfigured;
+   }
+
    static void irqHandler();
 
 };
@@ -797,11 +798,11 @@ volatile DeviceConnectionStates UsbBase_T<Info, EP0_SIZE>::fConnectionState;
 
 /** Active USB configuration */
 template<class Info, int EP0_SIZE>
-volatile uint8_t UsbBase_T<Info, EP0_SIZE>::fDeviceConfiguration;
+uint8_t UsbBase_T<Info, EP0_SIZE>::fDeviceConfiguration;
 
 /** USB Device status */
 template<class Info, int EP0_SIZE>
-volatile UsbBase::DeviceStatus UsbBase_T<Info, EP0_SIZE>::fDeviceStatus;
+UsbBase::DeviceStatus UsbBase_T<Info, EP0_SIZE>::fDeviceStatus;
 
 /** Buffer for EP0 Setup transaction (copied from USB RAM) */
 template<class Info, int EP0_SIZE>
@@ -809,7 +810,7 @@ SetupPacket UsbBase_T<Info, EP0_SIZE>::fEp0SetupBuffer;
 
 /** USB activity indicator */
 template<class Info, int EP0_SIZE>
-volatile bool UsbBase_T<Info, EP0_SIZE>::fActivityFlag = false;
+bool UsbBase_T<Info, EP0_SIZE>::fActivityFlag = false;
 
 /** USB Control endpoint - always EP0 */
 template <class Info, int EP0_SIZE>
@@ -879,11 +880,11 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetupToken() {
    // Call-backs only persist during a SETUP transaction
    fControlEndpoint.setCallback(ep0DummyTransactionCallback);
 
-//   console.WRITE("handleSetupToken - ").WRITELN(getSetupPacketDescription(&fEp0SetupBuffer));
+//   console.WRITELN("handleSetupToken - ", getSetupPacketDescription(&fEp0SetupBuffer));
 
    switch(REQ_TYPE(fEp0SetupBuffer.bmRequestType)) {
       case UsbRequestType_STANDARD :
-         // console.WRITE("Se(").WRITE(getRequestName(fEp0SetupBuffer.bRequest)).WRITE("),");
+         // console.WRITE("Se(", getRequestName(fEp0SetupBuffer.bRequest), "),");
          // Standard device requests
          switch (fEp0SetupBuffer.bRequest) {
             case CLEAR_FEATURE :       handleClearFeature();         break;
@@ -967,11 +968,11 @@ bool UsbBase_T<Info, EP0_SIZE>::handleTokenComplete(UsbStat usbStat) {
       // Indicate wasn't processed
       return false;
    }
-   // console.WRITE("Tc-").WRITE(fControlEndpoint.getStateName()).WRITE(",");
-   // console.WRITE("Stat(").WRITE(usbStat>>4,Radix_16).WRITE(usbStat&(1<<3)?",Tx,":",Rx,").WRITE(usbStat&(1<<2)?"Odd,":"Even,").WRITE("),");
+   // console.WRITE("Tc-", fControlEndpoint.getStateName(), ",");
+   // console.WRITE("Stat(", usbStat>>4,Radix_16, usbStat&(1<<3)?",Tx,":",Rx,", usbStat&(1<<2)?"Odd,":"Even,", "),");
 
    // Relevant BDT
-   BdtEntry *bdt = &bdts()[usbStat.raw>>2];
+   volatile BdtEntry *bdt = &bdts()[usbStat.raw>>2];
 
    // Control - Accept SETUP, IN or OUT token
 #if 0
@@ -979,28 +980,28 @@ bool UsbBase_T<Info, EP0_SIZE>::handleTokenComplete(UsbStat usbStat) {
       console.WRITELN("\n=====");
    }
    console.
-      WRITE("\nTOKEN=").WRITE(getTokenName(bdt->u.result.tok_pid)).
-      WRITE(", STATE=").WRITE(fControlEndpoint.getStateName()).
-      WRITE(", size=").WRITE(bdt->bc).
+      WRITE("\nTOKEN=", getTokenName(bdt->u.result.tok_pid)).
+      WRITE(", STATE=", fControlEndpoint.getStateName()).
+      WRITE(", size=", bdt->bc).
       WRITE((usbStat&USB_STAT_TX_MASK)?", Tx":", Rx").
       WRITE(bdt->u.result.data0_1?", DATA1":", DATA0").
       WRITELN((usbStat&USB_STAT_ODD_MASK)?", Odd":", Even");
 #endif
    switch (bdt->result.tok_pid) {
       case SETUPToken:
+//         console.WRITELN(fControlEndpoint.getStateName(), " Set");
          handleSetupToken();
-//          console.WRITE(fControlEndpoint.getStateName()).WRITELN(" Set");
          break;
       case INToken:
          fControlEndpoint.handleInToken();
-//          console.WRITE(fControlEndpoint.getStateName()).WRITELN(" In");
+//          console.WRITELN(fControlEndpoint.getStateName(), " In");
          break;
       case OUTToken:
          fControlEndpoint.handleOutToken();
-//          console.WRITE(fControlEndpoint.getStateName()).WRITELN(" Out");
+//          console.WRITELN(fControlEndpoint.getStateName(), " Out");
          break;
       default:
-         console.WRITE("Unexpected token on EP0 = ").WRITELN(getTokenName(bdt->result.tok_pid));
+         console.WRITELN("Unexpected token on EP0 = ", getTokenName(bdt->result.tok_pid));
          break;
    }
    // Indicate processed
@@ -1396,13 +1397,13 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetFeature() {
  */
 template<class Info, int EP0_SIZE>
 void UsbBase_T<Info, EP0_SIZE>::handleGetDescriptor() {
-   unsigned                 descriptorIndex = fEp0SetupBuffer.wValue.lo();
-   uint16_t                 dataSize = 0;
-   volatile const uint8_t  *dataPtr = nullptr;
+   unsigned        descriptorIndex = fEp0SetupBuffer.wValue.lo();
+   uint16_t        dataSize = 0;
+   const uint8_t  *dataPtr = nullptr;
 
-   // console.WRITE("(").WRITE(fEp0SetupBuffer.wValue.hi()).WRITE(")");
+   // console.WRITE("(", fEp0SetupBuffer.wValue.hi(), ")");
 
-//   console.WRITE("handleGetDescriptor").WRITE(fEp0SetupBuffer.wValue.hi()).WRITE(":").WRITELN(fEp0SetupBuffer.wValue.lo());
+//   console.WRITELN("handleGetDescriptor", fEp0SetupBuffer.wValue.hi(), ":", fEp0SetupBuffer.wValue.lo());
    constexpr uint8_t bmRequestType = REQUEST_TYPE(UsbRequestDirection_IN, UsbRequestType_STANDARD, UsbRequestRecipient_DEVICE);
 
    if (fEp0SetupBuffer.bmRequestType != bmRequestType) {
@@ -1431,7 +1432,7 @@ void UsbBase_T<Info, EP0_SIZE>::handleGetDescriptor() {
          fControlEndpoint.stall();
          return;
       case DT_STRING: // Get String Desc.- 3
-         //      console.WRITE("getDescriptor-string - ).WRITELN(descriptorIndex);
+         //      console.WRITELN("getDescriptor-string - , descriptorIndex);
 #ifdef MS_COMPATIBLE_ID_FEATURE
          if (descriptorIndex == 0xEE) {
             //         console.WRITELN("getDescriptor-string - MS_COMPATIBLE_ID_FEATURE");
@@ -1498,7 +1499,7 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetConfiguration() {
    setUSBconfiguredState(fEp0SetupBuffer.wValue.lo());
 
    // Initialise non-control end-points
-//   console.WRITE("RxOdd").WRITELN((bool)UsbImplementation::epBulkOut.fRxOdd);
+//   console.WRITELN("RxOdd", (bool)UsbImplementation::epBulkOut.fRxOdd);
    UsbImplementation::initialiseEndpoints();
    fUserCallbackFunction(UserEvent::UserEvent_Configure);
 
@@ -1551,10 +1552,10 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
       }
 //      if (pendingInterruptFlags != USB_ISTAT_SOFTOK_MASK) {
 //         // Report other than SOF
-//         console.WRITE("Irq ").WRITELN(pendingInterruptFlags&~USB_ISTAT_SOFTOK_MASK, Radix_2);
+//         console.WRITELN("Irq ", pendingInterruptFlags&~USB_ISTAT_SOFTOK_MASK, Radix_2);
 //      }
       if ((pendingInterruptFlags&USB_ISTAT_USBRST_MASK) != 0) {
-//         console.WRITELN("========\nRes");
+//         console.WRITELN("===");
          // Reset signaled on Bus
          handleUSBReset();
          return;
@@ -1562,14 +1563,14 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
       if ((pendingInterruptFlags&USB_ISTAT_TOKDNE_MASK) != 0) {
          // Get endpoint status
          UsbStat usbStat = (UsbStat)fUsb->STAT;
-//         console.WRITE("St ").WRITE(usbStat.endp).WRITE(',').WRITE((unsigned)usbStat.tx).WRITE(',').WRITELN((unsigned)usbStat.odd);
+//         console.WRITELN("St ", usbStat.endp, ',', (unsigned)usbStat.tx, ',', (unsigned)usbStat.odd);
          // Token complete interrupt
          if (usbStat.endp == fControlEndpoint.fEndpointNumber) {
             handleTokenComplete(usbStat);
          }
          else {
             // Pass to extension routine
-//            console.WRITE("(").WRITE(usbStat.endp).WRITE(usbStat.tx?",T,":",R,").WRITE(usbStat.odd?"O,":"E,").WRITE("),");
+//            console.WRITE("(", usbStat.endp, usbStat.tx?",T,":",R,", usbStat.odd?"O,":"E,", "),");
 //            console.WRITELN(UsbImplementation::epBulkOut.getStateName());
             UsbImplementation::handleTokenComplete(usbStat);
          }
@@ -1594,7 +1595,7 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
       }
       if ((pendingInterruptFlags&USB_ISTAT_ERROR_MASK) != 0) {
          // Any Error
-         console.WRITE("Error = 0b").WRITELN(fUsb->ERRSTAT, Radix_2);
+         console.WRITELN("Error = 0b", fUsb->ERRSTAT, Radix_2);
          fUsb->ERRSTAT = 0xFF;
       }
       fUsb->ISTAT = pendingInterruptFlags;

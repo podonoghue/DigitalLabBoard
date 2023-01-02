@@ -274,7 +274,7 @@ protected:
    // Count of bytes processed
    unsigned    byteCounter = 0;
 
-   // Count of bits in current shif operation (for debug)
+   // Count of bits in current shift operation (for debug)
    unsigned    bitCounter = 0;
 
    /**

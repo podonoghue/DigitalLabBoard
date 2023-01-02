@@ -24,6 +24,7 @@ static const FontArraySubset
  * @param[in] status Flags indicating interrupt source channel(s)
  */
 void FrequencyGenerator::ftmCallback(uint8_t status) {
+
    static unsigned iterationCounter = 0;
 
    // Check channel
@@ -32,11 +33,11 @@ void FrequencyGenerator::ftmCallback(uint8_t status) {
       if (iterationCounter >= LOW_FREQ_DIVISION_FACTOR) {
          iterationCounter = 0;
          // Set on next edge
-         FrequencyGeneratorTimerChannel::setMode(FtmChMode_OutputCompareSet);
+         FrequencyGeneratorTimerChannel::setMode(FtmChannelMode_OutputCompareSet);
       }
       else if (iterationCounter == (LOW_FREQ_DIVISION_FACTOR/2)) {
          // Clear on next edge
-         FrequencyGeneratorTimerChannel::setMode(FtmChMode_OutputCompareClear);
+         FrequencyGeneratorTimerChannel::setMode(FtmChannelMode_OutputCompareClear);
       }
       // Note: The pin is toggled directly by hardware
       // Counter roll-over is used to control interval
@@ -47,6 +48,7 @@ void FrequencyGenerator::ftmCallback(uint8_t status) {
  * Initialise Clock generator
  */
 void FrequencyGenerator::initialiseWaveform() {
+
    FrequencyButtons::setInput(PinPull_Up, PinAction_None, PinFilter_None);
 
    /**
@@ -54,8 +56,8 @@ void FrequencyGenerator::initialiseWaveform() {
     */
    // Configure base FTM (affects all channels)
    FrequencyGeneratorTimer::configure(
-         FtmMode_LeftAlign,       // Left-aligned is required for OC/IC
-         FtmClockSource_System);  // Bus clock most accurate source
+         FtmMode_LeftAligned,          // Left-aligned is required for OC/IC
+         FtmClockSource_SystemClock);  // Bus clock most accurate source
 
    static auto cb = [](uint8_t status) {
       This->ftmCallback(status);
@@ -84,7 +86,8 @@ void FrequencyGenerator::initialiseWaveform() {
  *
  * @note Frequency generator is initialised on 1st call to this routine.
  */
-void FrequencyGenerator::setFrequency(unsigned frequency) {
+void FrequencyGenerator::setFrequency(Hertz frequency) {
+
    usbdm_assert((frequency == Frequency_Off)||((frequency>=Frequency_Min)&&(frequency<=Frequency_Max)), "Illegal frequency");
 
    currentFrequency = frequency;
@@ -95,7 +98,7 @@ void FrequencyGenerator::setFrequency(unsigned frequency) {
        * No interrupts
        * Output pin stays low (cleared on all events)
        */
-      FrequencyGeneratorTimerChannel::configure(FtmChMode_OutputCompareClear, FtmChannelAction_None);
+      FrequencyGeneratorTimerChannel::configure(FtmChannelMode_OutputCompareClear, FtmChannelAction_None);
    }
    else if (frequency < 100_Hz) {
       /*
@@ -106,8 +109,8 @@ void FrequencyGenerator::setFrequency(unsigned frequency) {
        * Output pin action manipulated by call-back
        * Set x50, Clear x50 so effectively /100 of event frequency
        */
-      FrequencyGeneratorTimer::setPeriod(1/((float)LOW_FREQ_DIVISION_FACTOR*frequency));
-      FrequencyGeneratorTimerChannel::configure(FtmChMode_OutputCompareClear, FtmChannelAction_Irq);
+      FrequencyGeneratorTimer::setPeriod((Seconds)(1/((double)LOW_FREQ_DIVISION_FACTOR*frequency)));
+      FrequencyGeneratorTimerChannel::configure(FtmChannelMode_OutputCompareClear, FtmChannelAction_Interrupt);
    }
    else {
       /*
@@ -118,12 +121,12 @@ void FrequencyGenerator::setFrequency(unsigned frequency) {
        * Event at fixed counter value (1 tick)
        * Event interval is controlled by changing the FTM period.
        */
-      FrequencyGeneratorTimerChannel::configure(FtmChMode_OutputCompareToggle, FtmChannelAction_None);
+      FrequencyGeneratorTimerChannel::configure(FtmChannelMode_OutputCompareToggle, FtmChannelAction_None);
 
       FrequencyGeneratorTimer::setPeriod(Seconds(1/(2.0*frequency)));
 
       // Trigger pin action when counter crosses 1 tick
-      FrequencyGeneratorTimerChannel::setEventTime(1);
+      FrequencyGeneratorTimerChannel::setEventTime(1_ticks);
    }
 }
 
@@ -147,7 +150,7 @@ void FrequencyGenerator::refreshFrequency() {
    // Updating OLED is time consuming and uses shared I2C so done on function queue
    static auto f = []() {
       const char *units     = "    ";
-      unsigned    frequency = This->currentFrequency;
+      Hertz    frequency = This->currentFrequency;
 
       This->oled.clearDisplay();
       This->oled.setFont(myFont);
@@ -159,16 +162,16 @@ void FrequencyGenerator::refreshFrequency() {
       else {
          if (frequency >= 1_MHz) {
             units = " MHz";
-            frequency /= 1000000;
+            frequency = frequency / 1000000;
          }
          else if (frequency >= 1_kHz) {
             units = " kHz";
-            frequency /= 1000;
+            frequency = frequency / 1000;
          }
-         else if (frequency != 0) {
+         else if (frequency != 0_Hz) {
             units = "  Hz";
          }
-         This->oled.setWidth(3).setPadding(Padding_LeadingSpaces).write(frequency).write(units).write(" ");
+         This->oled.setWidth(3).setPadding(Padding_LeadingSpaces).write(frequency, units, " ");
       }
       This->oled.resetFormat();
       This->oled.refreshImage();
@@ -179,12 +182,13 @@ void FrequencyGenerator::refreshFrequency() {
 
 /**
  * Table of available frequencies
+ * Eclipse code parser has problems with this as class member
  */
-const float FrequencyGenerator::freqs[] = {
-      0,
-      1,2,5,
-      10,20,50,
-      100,200,500,
+static const Hertz freqs[] = {
+      0_Hz,
+      1_Hz,2_Hz,5_Hz,
+      10_Hz,20_Hz,50_Hz,
+      100_Hz,200_Hz,500_Hz,
       1_kHz,2_kHz,5_kHz,
       10_kHz,20_kHz,50_kHz,
       100_kHz,200_kHz,500_kHz,
@@ -195,6 +199,7 @@ const float FrequencyGenerator::freqs[] = {
  * Do all polling operations
  */
 void FrequencyGenerator::pollButtons() {
+
    /// Frequency generator - Mask for UP button (see FrequencyButtons)
    static constexpr unsigned FREQUENCY_UP_BUTTON = 1<<(USBDM::FrequencyUpButton::BITNUM - USBDM::FrequencyButtons::RIGHT);
 
@@ -287,6 +292,7 @@ void FrequencyGenerator::softPowerOff() {
  * Test loop for debug
  */
 void FrequencyGenerator::testLoop() {
+
    for(;;) {
       for (unsigned index=0; index<sizeof(freqs)/sizeof(freqs[0]); index++) {
          setFrequency(freqs[index]);

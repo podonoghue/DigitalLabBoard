@@ -21,8 +21,6 @@
  */
 namespace USBDM {
 
-enum PitChannelNum : unsigned;
-
 /**
  * @addtogroup DMA_Group DMA, Direct Memory Access (DMA)
  * @brief Support for DMA operations
@@ -975,7 +973,7 @@ public:
       return (DmaChannelNum) pitChannelNum;
    }
 
-#ifdef USBDM_LPIT0_IS_DEFINED
+#if false
    /**
     * Allocate Periodic DMA channel.
     * This is a channel that may be throttled by an associated PIT channel.
@@ -995,7 +993,7 @@ public:
    }
 #endif
 
-#ifdef USBDM_PIT_IS_DEFINED
+#if true
    /**
     * Allocate Periodic DMA channel.
     * This is a channel that may be throttled by an associated PIT channel.
@@ -1377,21 +1375,14 @@ template<class Info> DmaErrorCallbackFunction DmaBase_T<Info>::errorCallback = n
 /** Bit-mask of allocated channels */
 template<class Info> uint32_t DmaBase_T<Info>::allocatedChannels = -1;
 
-#ifdef USBDM_DMAMUX0_IS_DEFINED
-typedef DmaMux_T<Dmamux0Info, Dma0Info::NumChannels> DmaMux0;
-#endif
-
-#ifdef USBDM_DMAMUX1_IS_DEFINED
-typedef DmaMux_T<Dmamux1Info, Dma1Info::NumChannels> DmaMux1;
-#endif
-
-#ifdef USBDM_DMA0_IS_DEFINED
-typedef DmaBase_T<Dma0Info> Dma0;
-#endif
-
-#ifdef USBDM_DMA1_IS_DEFINED
-typedef DmaBase_T<Dma1Info> Dma1;
-#endif
+   /**
+    * Class representing DMAMUX0
+    */
+   typedef DmaMux_T<Dmamux0Info, Dma0Info::NumChannels> DmaMux0;
+   /**
+    * Class representing DMA0
+    */
+   typedef DmaBase_T<Dma0Info> Dma0;
 
 /**
  * End DMA_Group

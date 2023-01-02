@@ -93,7 +93,7 @@ protected:
    /**
     * Launch & wait for Flash command to complete.
     */
-   static void executeFlashCommand_asm();
+   static void executeFlashCommand_ram();
 
    /**
     * Launch & wait for Flash command to complete.
@@ -184,6 +184,12 @@ protected:
 
 public:
 
+   static void Command_irqHandler() {
+   }
+   
+   static void ReadCollision_irqHandler() {
+   }
+   
    /**
     * Hardware instance pointer
     *
@@ -377,6 +383,9 @@ class Nonvolatile {
 
    static_assert((sizeof(T) == 1)||(sizeof(T) == 2)||(sizeof(T) == 4), "Size of non-volatile object must be 1, 2 or 4 bytes in size");
 
+    // Don't allow construction of copies
+   Nonvolatile(const Nonvolatile<T> &) = delete;
+
 private:
    /**
     * Data value in FlexRAM.
@@ -391,6 +400,9 @@ public:
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #pragma GCC diagnostic ignored "-Wuninitialized"
+
+   Nonvolatile() = default;
+
    /**
     * Assignment
     * This adds a wait for the Flash to be updated.

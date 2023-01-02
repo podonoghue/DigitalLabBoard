@@ -29,8 +29,11 @@
  *
  * Under Linux drivers for bulk and CDC are automatically loaded
  */
+
 #define MS_COMPATIBLE_ID_FEATURE
 
+/** Causes a semi-unique serial number to be generated for each USB device */
+// Done on command line where needed
 #define UNIQUE_ID
 //#include "configure.h"
 
@@ -65,7 +68,6 @@ static constexpr unsigned  CONTROL_EP_MAXSIZE           = 64; //!< Control in/ou
 static constexpr unsigned  BULK_OUT_EP_MAXSIZE          = 64; //!< Bulk out
 static constexpr unsigned  BULK_IN_EP_MAXSIZE           = 64; //!< Bulk in
 
-#ifdef USBDM_USB0_IS_DEFINED
 /**
  * Class representing USB0
  */
@@ -160,6 +162,64 @@ protected:
     */
 
 public:
+   /**
+    * Device Descriptor
+    */
+   static const DeviceDescriptor deviceDescriptor;
+
+   /**
+    * Other descriptors type
+    */
+   struct Descriptors {
+      ConfigurationDescriptor                  configDescriptor;
+
+      InterfaceDescriptor                      bulk_interface;
+      EndpointDescriptor                       bulk_out_endpoint;
+      EndpointDescriptor                       bulk_in_endpoint;
+
+      /*
+       * TODO Add additional Descriptors here
+       */
+   };
+
+   /**
+    * All other descriptors
+    */
+   static const Descriptors otherDescriptors;
+
+   /**
+    * Handler for Token Complete USB interrupts for
+    * end-points other than EP0
+    *
+    * @param usbStat USB Status value from USB hardware
+    */
+   static void handleTokenComplete(UsbStat usbStat);
+   /**
+    * Clear value reflecting selected hardware based ping-pong buffer.
+    * This would normally only be called when resetting the USB hardware or using
+    * USBx_CTL_ODDRST.
+    */
+   static void clearPinPongToggle() {
+      epBulkOut.clearPinPongToggle();
+      epBulkIn.clearPinPongToggle();
+   }
+
+   /**
+    * Initialises all end-points
+    */
+   static void initialiseEndpoints(void) {
+      epBulkOut.initialise();
+      addEndpoint(&epBulkOut);
+      epBulkOut.setCallback(bulkOutTransactionCallback);
+
+      epBulkIn.initialise();
+      addEndpoint(&epBulkIn);
+      epBulkIn.setCallback(bulkInTransactionCallback);
+
+      /*
+       * TODO Initialise additional End-points here
+       */
+   }
 
    /**
     * Initialise the USB0 interface
@@ -171,9 +231,9 @@ public:
    /**
     *  Blocking transmission of data over bulk IN end-point
     *
-    *  @param[IN] size    Number of bytes to send
-    *  @param[IN] buffer  Pointer to bytes to send
-    *  @param[IN] timeout Maximum time to wait for packet
+    *  @param[in] size   Number of bytes to send
+    *  @param[in] buffer Pointer to bytes to send
+    *  @param[in] timeout Maximum time to wait for packet
     *
     *  @note : Waits for idle BEFORE transmission but\n
     *          returns before data has been transmitted
@@ -203,58 +263,6 @@ public:
     */
    static ErrorCode receiveBulkData(uint16_t &size, uint8_t *buffer);
 
-   /**
-    * Device Descriptor
-    */
-   static const DeviceDescriptor deviceDescriptor;
-
-   /**
-    * Other descriptors type
-    */
-   struct Descriptors {
-      ConfigurationDescriptor                  configDescriptor;
-
-      InterfaceDescriptor                      bulk_interface;
-      EndpointDescriptor                       bulk_out_endpoint;
-      EndpointDescriptor                       bulk_in_endpoint;
-
-      /*
-       * TODO Add additional Descriptors here
-       */
-   };
-
-   /**
-    * All other descriptors
-    */
-   static const Descriptors otherDescriptors;
-
-protected:
-   /**
-    * Clear value reflecting selected hardware based ping-pong buffer.
-    * This would normally only be called when resetting the USB hardware or using
-    * USBx_CTL_ODDRST.
-    */
-   static void clearPinPongToggle() {
-      epBulkOut.clearPinPongToggle();
-      epBulkIn.clearPinPongToggle();
-   }
-
-   /**
-    * Initialises all end-points
-    */
-   static void initialiseEndpoints(void) {
-      epBulkOut.initialise();
-      addEndpoint(&epBulkOut);
-      epBulkOut.setCallback(bulkOutTransactionCallback);
-
-      epBulkIn.initialise();
-      addEndpoint(&epBulkIn);
-      epBulkIn.setCallback(bulkInTransactionCallback);
-
-      /*
-       * TODO Initialise additional End-points here
-       */
-   }
 
    /**
     * Callback for SOF tokens
@@ -283,19 +291,10 @@ protected:
     */
    static EndpointState bulkInTransactionCallback(EndpointState state);
 
-   /**
-    * Handler for Token Complete USB interrupts for
-    * end-points other than EP0
-    *
-    * @param usbStat USB Status value from USB hardware
-    */
-   static void handleTokenComplete(UsbStat usbStat);
 
 };
 
 using UsbImplementation = Usb0;
-
-#endif // USBDM_USB0_IS_DEFINED
 
 } // End namespace USBDM
 

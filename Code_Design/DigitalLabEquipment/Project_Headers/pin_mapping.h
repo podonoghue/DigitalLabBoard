@@ -32,6 +32,21 @@ namespace USBDM {
  */
 /* Template:_common_settings.xml */
 
+   /**
+    *  Enables mapping of all allocated pins during startup using mapAllPins() 
+    */
+   static constexpr bool MapAllPinsOnStartup = true;
+
+   /**
+    * Controls forcing all pins to be locked in mapAllPins() 
+    */
+   static constexpr PinLock ForceLockedPins = PinLock_Unlocked;
+
+   /**
+    *  Enables forcing unbonded pins to analogue function in mapAllPins() 
+    */
+   static constexpr bool ForceLockoutUnbondedPins = false;
+   
 // Use when in-lining makes the release build smaller
 #ifdef DEBUG_BUILD
 #define INLINE_RELEASE __attribute__((noinline))
@@ -44,22 +59,6 @@ namespace USBDM {
 #else
 #define NOINLINE_DEBUG
 #endif
-
-   /**
-    *  Enables mapping of all allocated pins during startup using mapAllPins() 
-    */
-   static constexpr bool MapAllPinsOnStartup = true;
-
-   /**
-    * Controls forcing all pins to be locked in mapAllPins() 
-    */
-   static constexpr PinLock ForceLockedPins = PinLock_Locked;
-
-   /**
-    *  Enables forcing unbonded pins to analogue function in mapAllPins() 
-    */
-   static constexpr bool ForceLockoutUnbondedPins = true;
-
 
    /* MCGFFCLK - Fixed frequency clock (input to FLL) */
    extern volatile uint32_t SystemMcgffClock;
@@ -128,12 +127,20 @@ namespace USBDM {
    /** Dummy port information for pins without an associated PCR */
    constexpr PortInfo  __attribute__((unused)) NoPortInfo {0, 0, IRQn_None, 0, NvicPriority_NotInstalled};
 
-   /** Class to static check signal mapping is valid */
-   template<class Info, int signalNum> class CheckSignal {
-      static_assert((signalNum<Info::numSignals), "Non-existent signal - Modify Configure.usbdm");
-      static_assert((signalNum>=Info::numSignals)||(Info::info[signalNum].gpioBit != UNMAPPED_PCR), "Signal is not mapped to a pin - Modify Configure.usbdm");
-      static_assert((signalNum>=Info::numSignals)||(Info::info[signalNum].gpioBit != INVALID_PCR),  "Signal doesn't exist in this device/package");
-      static_assert((signalNum>=Info::numSignals)||((Info::info[signalNum].gpioBit == UNMAPPED_PCR)||(Info::info[signalNum].gpioBit == INVALID_PCR)||(Info::info[signalNum].gpioBit >= 0)), "Illegal signal");
+   /**
+    * Class to static check signal mapping is valid
+    * Conditions are chained so only a single assert is reported
+    */
+   template<class Info, int signalNum> class CheckSignalMapping {
+      static constexpr bool check1 = signalNum<Info::numSignals;
+      static constexpr bool check2 = !check1 || (Info::info[signalNum].gpioBit != UNMAPPED_PCR);
+      static constexpr bool check3 = !check1 || !check2 || (Info::info[signalNum].gpioBit != INVALID_PCR);
+      static constexpr bool check4 = !check1 || !check2 || !check3 || (Info::info[signalNum].gpioBit >= 0);
+   
+      static_assert(check1, "Non-existent signal - Modify Configure.usbdm");
+      static_assert(check2, "Signal is not mapped to a pin - Modify Configure.usbdm");
+      static_assert(check3, "Signal doesn't exist in this device/package");
+      static_assert(check4, "Illegal signal");
    };
 
    /**
@@ -252,7 +259,6 @@ namespace USBDM {
  * @brief Abstraction for Digital Input/Output
  * @{
  */
-#define USBDM_GPIOA_IS_DEFINED
 /**
  * Peripheral information for GPIO, Digital Input/Output.
  * 
@@ -263,22 +269,23 @@ namespace USBDM {
 
 #if defined(PCC_PCC_PORTA_CGC_MASK)
    /** Port information for PORTA */
-   constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTA)), PORTA_IRQn, GPIOA_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTA)), PORTA_IRQn, GPIOA_BasePtr, NvicPriority_Normal};
 #elif defined(SIM_SCGC5_PORTA_MASK)
 #ifndef PORTA_IRQS
    /** Port information for PORTA */
-   constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, SIM_SCGC5_PORTA_MASK, IRQn_None, GPIOA_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, SIM_SCGC5_PORTA_MASK, IRQn_None, GPIOA_BasePtr, NvicPriority_Normal};
 #else
    constexpr IRQn_Type PORTA_IRQS_AR[] = PORTA_IRQS;
    /** Port information for PORTA */
-   constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, SIM_SCGC5_PORTA_MASK, PORTA_IRQS_AR[0], GPIOA_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortAInfo {PORTA_BasePtr, SIM_SCGC5_PORTA_MASK, PORTA_IRQS_AR[0], GPIOA_BasePtr, NvicPriority_Normal};
 #endif
 #endif
 
 class GpioAInfo {
 public:
-   // Template:gpioa_0x400ff000
-
+   /*
+    * Template:gpioa_0x400ff000
+    */
    //! Number of signals available in info table
    static constexpr int numSignals  = 20;
 
@@ -316,12 +323,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK);
 #endif
 
-PORTA->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
+   PORTA->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
    }
 
    /**
@@ -332,17 +339,16 @@ PORTA->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK);
 #endif
 
-PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0010UL);
    }
 
 };
 
-#define USBDM_GPIOB_IS_DEFINED
 /**
  * Peripheral information for GPIO, Digital Input/Output.
  * 
@@ -353,22 +359,23 @@ PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
 
 #if defined(PCC_PCC_PORTB_CGC_MASK)
    /** Port information for PORTB */
-   constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTB)), PORTB_IRQn, GPIOB_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTB)), PORTB_IRQn, GPIOB_BasePtr, NvicPriority_Normal};
 #elif defined(SIM_SCGC5_PORTB_MASK)
 #ifndef PORTB_IRQS
    /** Port information for PORTB */
-   constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, SIM_SCGC5_PORTB_MASK, IRQn_None, GPIOB_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, SIM_SCGC5_PORTB_MASK, IRQn_None, GPIOB_BasePtr, NvicPriority_Normal};
 #else
    constexpr IRQn_Type PORTB_IRQS_AR[] = PORTB_IRQS;
    /** Port information for PORTB */
-   constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, SIM_SCGC5_PORTB_MASK, PORTB_IRQS_AR[0], GPIOB_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortBInfo {PORTB_BasePtr, SIM_SCGC5_PORTB_MASK, PORTB_IRQS_AR[0], GPIOB_BasePtr, NvicPriority_Normal};
 #endif
 #endif
 
 class GpioBInfo {
 public:
-   // Template:gpioa_0x400ff000
-
+   /*
+    * Template:gpioa_0x400ff000
+    */
    //! Number of signals available in info table
    static constexpr int numSignals  = 20;
 
@@ -406,13 +413,13 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTB_CLOCK_MASK);
+   enablePortClocks(PORTB_CLOCK_MASK);
 #endif
 
-PORTB->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x000CUL);
-PORTB->GPCHR = 0x0100UL|PORT_GPCHR_GPWE(0x0003UL);
+   PORTB->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x000CUL);
+   PORTB->GPCHR = 0x0100UL|PORT_GPCHR_GPWE(0x0003UL);
    }
 
    /**
@@ -423,18 +430,17 @@ PORTB->GPCHR = 0x0100UL|PORT_GPCHR_GPWE(0x0003UL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTB_CLOCK_MASK);
+   enablePortClocks(PORTB_CLOCK_MASK);
 #endif
 
-PORTB->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
-PORTB->GPCHR = PinMux_Disabled|PORT_GPCHR_GPWE(0x0U);
+   PORTB->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x000CUL);
+   PORTB->GPCHR = PinMux_Disabled|PORT_GPCHR_GPWE(0x0003UL);
    }
 
 };
 
-#define USBDM_GPIOC_IS_DEFINED
 /**
  * Peripheral information for GPIO, Digital Input/Output.
  * 
@@ -445,22 +451,23 @@ PORTB->GPCHR = PinMux_Disabled|PORT_GPCHR_GPWE(0x0U);
 
 #if defined(PCC_PCC_PORTC_CGC_MASK)
    /** Port information for PORTC */
-   constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTC)), PORTC_IRQn, GPIOC_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTC)), PORTC_IRQn, GPIOC_BasePtr, NvicPriority_Normal};
 #elif defined(SIM_SCGC5_PORTC_MASK)
 #ifndef PORTC_IRQS
    /** Port information for PORTC */
-   constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, SIM_SCGC5_PORTC_MASK, IRQn_None, GPIOC_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, SIM_SCGC5_PORTC_MASK, IRQn_None, GPIOC_BasePtr, NvicPriority_Normal};
 #else
    constexpr IRQn_Type PORTC_IRQS_AR[] = PORTC_IRQS;
    /** Port information for PORTC */
-   constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, SIM_SCGC5_PORTC_MASK, PORTC_IRQS_AR[0], GPIOC_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortCInfo {PORTC_BasePtr, SIM_SCGC5_PORTC_MASK, PORTC_IRQS_AR[0], GPIOC_BasePtr, NvicPriority_Normal};
 #endif
 #endif
 
 class GpioCInfo {
 public:
-   // Template:gpioa_0x400ff000
-
+   /*
+    * Template:gpioa_0x400ff000
+    */
    //! Number of signals available in info table
    static constexpr int numSignals  = 12;
 
@@ -490,12 +497,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTC_CLOCK_MASK);
+   enablePortClocks(PORTC_CLOCK_MASK);
 #endif
 
-PORTC->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x00FFUL);
+   PORTC->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x00FFUL);
    }
 
    /**
@@ -506,17 +513,16 @@ PORTC->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x00FFUL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTC_CLOCK_MASK);
+   enablePortClocks(PORTC_CLOCK_MASK);
 #endif
 
-PORTC->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTC->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x00FFUL);
    }
 
 };
 
-#define USBDM_GPIOD_IS_DEFINED
 /**
  * Peripheral information for GPIO, Digital Input/Output.
  * 
@@ -527,22 +533,23 @@ PORTC->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
 
 #if defined(PCC_PCC_PORTD_CGC_MASK)
    /** Port information for PORTD */
-   constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTD)), PORTD_IRQn, GPIOD_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTD)), PORTD_IRQn, GPIOD_BasePtr, NvicPriority_Normal};
 #elif defined(SIM_SCGC5_PORTD_MASK)
 #ifndef PORTD_IRQS
    /** Port information for PORTD */
-   constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, SIM_SCGC5_PORTD_MASK, IRQn_None, GPIOD_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, SIM_SCGC5_PORTD_MASK, IRQn_None, GPIOD_BasePtr, NvicPriority_Normal};
 #else
    constexpr IRQn_Type PORTD_IRQS_AR[] = PORTD_IRQS;
    /** Port information for PORTD */
-   constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, SIM_SCGC5_PORTD_MASK, PORTD_IRQS_AR[0], GPIOD_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortDInfo {PORTD_BasePtr, SIM_SCGC5_PORTD_MASK, PORTD_IRQS_AR[0], GPIOD_BasePtr, NvicPriority_Normal};
 #endif
 #endif
 
 class GpioDInfo {
 public:
-   // Template:gpioa_0x400ff000
-
+   /*
+    * Template:gpioa_0x400ff000
+    */
    //! Number of signals available in info table
    static constexpr int numSignals  = 8;
 
@@ -568,12 +575,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTD_CLOCK_MASK);
+   enablePortClocks(PORTD_CLOCK_MASK);
 #endif
 
-PORTD->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x00DFUL);
+   PORTD->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x00DFUL);
    }
 
    /**
@@ -584,17 +591,16 @@ PORTD->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x00DFUL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTD_CLOCK_MASK);
+   enablePortClocks(PORTD_CLOCK_MASK);
 #endif
 
-PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x00DFUL);
    }
 
 };
 
-#define USBDM_GPIOE_IS_DEFINED
 /**
  * Peripheral information for GPIO, Digital Input/Output.
  * 
@@ -605,22 +611,23 @@ PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
 
 #if defined(PCC_PCC_PORTE_CGC_MASK)
    /** Port information for PORTE */
-   constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTE)), PORTE_IRQn, GPIOE_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, static_cast<uint32_t>(PCC_BasePtr+offsetof(PCC_Type, PCC_PORTE)), PORTE_IRQn, GPIOE_BasePtr, NvicPriority_Normal};
 #elif defined(SIM_SCGC5_PORTE_MASK)
 #ifndef PORTE_IRQS
    /** Port information for PORTE */
-   constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, SIM_SCGC5_PORTE_MASK, IRQn_None, GPIOE_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, SIM_SCGC5_PORTE_MASK, IRQn_None, GPIOE_BasePtr, NvicPriority_Normal};
 #else
    constexpr IRQn_Type PORTE_IRQS_AR[] = PORTE_IRQS;
    /** Port information for PORTE */
-   constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, SIM_SCGC5_PORTE_MASK, PORTE_IRQS_AR[0], GPIOE_BasePtr, NvicPriority_NotInstalled};
+   constexpr PortInfo  __attribute__((unused)) PortEInfo {PORTE_BasePtr, SIM_SCGC5_PORTE_MASK, PORTE_IRQS_AR[0], GPIOE_BasePtr, NvicPriority_Normal};
 #endif
 #endif
 
 class GpioEInfo {
 public:
-   // Template:gpioa_0x400ff000
-
+   /*
+    * Template:gpioa_0x400ff000
+    */
    //! Number of signals available in info table
    static constexpr int numSignals  = 2;
 
@@ -655,21 +662,177 @@ public:
  * @}
  */
 /**
+ * @addtogroup PMC_Group PMC, Power Management Controller
+ * @brief Abstraction for Power Management Controller
+ * @{
+ */
+/**
+ * Peripheral information for PMC, Power Management Controller.
+ * 
+ * This may include pin information, constants, register addresses, and default register values,
+ * along with simple accessor functions.
+ */
+   /**
+    * Low-Voltage Detect action select
+    *
+    * Selects the action to take on low voltage detect
+    * Note that Reset action is a write-once selection
+    */
+   enum PmcLowVoltageDetectAction : uint8_t {
+      PmcLowVoltageDetectAction_None      = (PMC_LVDSC1_LVDRE(0)|PMC_LVDSC1_LVDIE(0)), ///< No Action
+      PmcLowVoltageDetectAction_Interrupt = (PMC_LVDSC1_LVDRE(0)|PMC_LVDSC1_LVDIE(1)), ///< Interrupt
+      PmcLowVoltageDetectAction_Reset     = (PMC_LVDSC1_LVDRE(1)|PMC_LVDSC1_LVDIE(0)), ///< Reset
+
+   };
+
+   /**
+    * Low-Voltage Detect voltage select
+    *
+    * Selects the LVD trip point voltage (Vlvd)
+    */
+   enum PmcLowVoltageDetectLevel : uint8_t {
+      PmcLowVoltageDetectLevel_Low  = PMC_LVDSC1_LVDV(0), ///< Low trip point selected
+      PmcLowVoltageDetectLevel_High = PMC_LVDSC1_LVDV(1), ///< High trip point selected
+
+   };
+
+   /**
+    * Low-Voltage Warning Interrupt Enable
+    *
+    * Action to take on Low Voltage Warning
+    */
+   enum PmcLowVoltageWarningAction : uint8_t {
+      PmcLowVoltageWarningAction_None      = PMC_LVDSC2_LVWIE(0), ///< No action
+      PmcLowVoltageWarningAction_Interrupt = PMC_LVDSC2_LVWIE(1), ///< Interrupt
+
+   };
+
+   /**
+    * Low-Voltage Warning Voltage Select
+    *
+    * Selects the LVW trip point voltage (Vlvw)
+    * The actual voltage for the warning depends on pmc_lvdsc1_lvdv
+    */
+   enum PmcLowVoltageWarningLevel : uint8_t {
+      PmcLowVoltageWarningLevel_Low     = PMC_LVDSC2_LVWV(0), ///< Low trip point selected
+      PmcLowVoltageWarningLevel_MidLow  = PMC_LVDSC2_LVWV(1), ///< Mid 1 trip point selected
+      PmcLowVoltageWarningLevel_MidHigh = PMC_LVDSC2_LVWV(2), ///< Mid 2 trip point selected
+      PmcLowVoltageWarningLevel_High    = PMC_LVDSC2_LVWV(3), ///< High trip point selected
+
+   };
+
+   /**
+    * Bandgap Enable In VLPx Operation
+    *
+    * BGEN controls whether the bandgap is enabled in 
+    * lower power modes of operation (VLPx, LLS, and VLLSx)
+    */
+   enum PmcBandgapOperationInLowPower : uint8_t {
+      PmcBandgapOperationInLowPower_Disabled = PMC_REGSC_BGEN(0), ///< Disabled
+      PmcBandgapOperationInLowPower_Enabled  = PMC_REGSC_BGEN(1), ///< Enabled
+
+   };
+
+   /**
+    * Bandgap Buffer Enable
+    *
+    * Controls whether the band-gap reference is available to internal devices e.g. CMP etc
+    */
+   enum PmcBandgapBuffer : uint8_t {
+      PmcBandgapBuffer_Disabled = PMC_REGSC_BGBE(0), ///< Disabled
+      PmcBandgapBuffer_Enabled  = PMC_REGSC_BGBE(1), ///< Enabled
+
+   };
+
+class PmcInfo {
+public:
+   /*
+    * Template:pmc_mk
+    */
+   //! Hardware base address as uint32_t 
+   static constexpr uint32_t baseAddress = PMC_BasePtr;
+
+   //! Hardware base pointer
+   static constexpr HardwarePtr<PMC_Type> pmc = baseAddress;
+
+   //! Frequency of Low Power Oscillator (LPO) Clock [~1kHz]
+   static constexpr uint32_t system_low_power_clock = 1000UL;
+
+   /**
+    * Get LPO clock
+    *
+    * @return frequency in Hz as uint32_t
+    */
+   static constexpr uint32_t getLpoClock() {
+      return system_low_power_clock;
+   }
+
+   //! Default value for Low Voltage Detect Status And Control 1 register
+   static constexpr uint32_t pmc_lvdsc1  = 
+      PmcLowVoltageDetectAction_None | // Low-Voltage Detect action select 
+      PmcLowVoltageDetectLevel_Low | // Low-Voltage Detect voltage select 
+      0;
+
+   //! Default value for Low Voltage Detect Status And Control 2 register
+   static constexpr uint32_t pmc_lvdsc2  = 
+      PmcLowVoltageWarningAction_None | // Low-Voltage Warning Interrupt Enable 
+      PmcLowVoltageWarningLevel_Low | // Low-Voltage Warning Voltage Select 
+      0;
+
+   //! Default value for Regulator Status And Control register
+   static constexpr uint32_t pmc_regsc  = 
+      PmcBandgapOperationInLowPower_Disabled | // Bandgap Enable In VLPx Operation 
+      PmcBandgapBuffer_Disabled | // Bandgap Buffer Enable 
+      0;
+
+   /* Template_irqOption.xml */
+
+   //! IRQ numbers for hardware
+   static constexpr IRQn_Type irqNums[]  = PMC_IRQS;
+
+   //! Number of IRQs for hardware
+   static constexpr uint32_t irqCount  = sizeofArray(irqNums);
+
+   //! Class based callback handler has been installed in vector table
+   static constexpr bool irqHandlerInstalled = false;
+
+   //! Default IRQ level
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
+
+};
+
+/** 
+ * End group PMC_Group
+ * @}
+ */
+/**
  * @addtogroup OSC_Group OSC, Crystal Oscillator
  * @brief Abstraction for Crystal Oscillator
  * @{
  */
-#define USBDM_OSC0_IS_DEFINED
 /**
  * Peripheral information for OSC, Crystal Oscillator.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * External Reference Enable
+    *
+    * Enables the OSC clock [OSCERCLK] for use by peripherals
+    * The oscillator will also be enabled if used by MCG
+    */
+   enum OscErClkEn {
+      OscErClkEn_Disabled = OSC_CR_ERCLKEN(0), ///< Disabled
+      OscErClkEn_Enabled  = OSC_CR_ERCLKEN(1), ///< Enabled
+
+   };
+
 class Osc0Info {
 public:
-   // Template:osc0_mk
-
+   /*
+    * Template:osc0_mk
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = OSC0_BasePtr;
 
@@ -714,10 +877,20 @@ public:
     *
     * @return Clock frequency as uint32_t in Hz
    
-    * @note This clock is only available if a 32kHz crystal or external clock is used 
+    * @note This clock is only available if a 32kHz crystal or external clock is used
     */
    static uint32_t getOsc32kClock() {
       return osc32k_clock;
+   }
+
+   /**
+    * External Reference Enable
+    *
+    * @param oscErClkEn  Enables the OSC clock [OSCERCLK] for use by peripherals
+    *        The oscillator will also be enabled if used by MCG
+    */
+   static void enableExternalReference(OscErClkEn oscErClkEn) {
+      osc->CR = (osc->CR&~OSC_CR_ERCLKEN_MASK) | oscErClkEn;
    }
 
    //! Number of signals available in info table
@@ -739,12 +912,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK);
 #endif
 
-PORTA->GPCHR = 0x0000UL|PORT_GPCHR_GPWE(0x000CUL);
+   PORTA->GPCHR = 0x0000UL|PORT_GPCHR_GPWE(0x000CUL);
    }
 
    /**
@@ -755,12 +928,12 @@ PORTA->GPCHR = 0x0000UL|PORT_GPCHR_GPWE(0x000CUL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK);
 #endif
 
-PORTA->GPCHR = PinMux_Disabled|PORT_GPCHR_GPWE(0x0U);
+   PORTA->GPCHR = PinMux_Disabled|PORT_GPCHR_GPWE(0x000CUL);
    }
 
 };
@@ -774,7 +947,6 @@ PORTA->GPCHR = PinMux_Disabled|PORT_GPCHR_GPWE(0x0U);
  * @brief Abstraction for Real Time Clock
  * @{
  */
-#define USBDM_RTC_IS_DEFINED
 /**
  * Peripheral information for RTC, Real Time Clock.
  * 
@@ -783,8 +955,9 @@ PORTA->GPCHR = PinMux_Disabled|PORT_GPCHR_GPWE(0x0U);
  */
 class RtcInfo {
 public:
-   // Template:rtc_war_rar_tsie
-
+   /*
+    * Template:rtc_war_rar_tsie
+    */
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
 
@@ -795,60 +968,53 @@ public:
    static constexpr HardwarePtr<RTC_Type> rtc = baseAddress;
 
    //! Whether to configure RTC
-   //! If disabled then no RTC registers are touched.
+   //! If disabled then no RTC registers are accessed.
    //! This is useful if RTC is not powered as register access will trap.
-   static constexpr bool configure_rtc = 1;
-
-   //! Frequency of RTC External Clock or Crystal
-   static constexpr uint32_t osc_input_freq = 32768UL;
-
+   static constexpr bool EnableRtc = 0;
+   
    //! Oscillator control register
-   static constexpr uint32_t cr =
-      RTC_CR_OSCE(1) | // Enables 32kHz oscillator [RTC_32K]
-      RTC_CR_CLKO(0) | // Disables RTC 32kHz Clock Output
-      RTC_CR_UM(0)   | // Update Mode
-      RTC_CR_SUP(0)  | // Supervisor access
-      RTC_CR_WPE(0)  | // Wakeup Pin Enable
-      RTC_CR_SCP(2);   // RTC Oscillator load capacitance
-
+   static constexpr uint32_t cr = 
+      RTC_CR_OSCE(0) | // Enable RTC oscillator - Disabled
+      RTC_CR_CLKO(1) | // Enable RTC 32kHz Clock Output - Clock not output to peripherals
+      RTC_CR_UM(0) | // Update Mode - SR[TCE] cannot be written when locked
+      RTC_CR_SUP(0) | // Supervisor access - Non-supervisor write accesses not supported
+      RTC_CR_WPE(0) | // Wakeup Pin Enable - Wakeup pin is disabled
+      RTC_CR_SCP(2);  // Oscillator load capacitance - 8 pF
+   
    //! RTC Time Compensation Register
-   static constexpr uint32_t tcr =
+   static constexpr uint32_t tcr = 
       RTC_TCR_CIR(0) | // Compensation Interval Register
       RTC_TCR_TCR(0);  // Time Compensation Register
-
+   
    //! RTC Lock Register
-   static constexpr uint32_t lr =
-      RTC_LR_LRL(1) | // Lock Register Lock
-      RTC_LR_SRL(1) | // Status Register Lock 
-      RTC_LR_CRL(1) | // Control Register Lock
-      RTC_LR_TCL(1);  // Time Compensation Lock
-
-   #if defined(RTC_WAR_TSRW)
+   static constexpr uint32_t lr = 
+      RTC_LR_LRL(1) | // Lock Register Lock - Unlocked
+      RTC_LR_SRL(1) | // Status Register Lock - Unlocked
+      RTC_LR_CRL(1) | // Control Register Lock - Unlocked
+      RTC_LR_TCL(1);  // Time Compensation Lock - Unlocked
+   
    //! RTC Write Access Register
-   static constexpr uint32_t war =
-      RTC_WAR_IERW(1) | // Interrupt Enable Register Write
-      RTC_WAR_LRW(1)  | // Lock Register Write
-      RTC_WAR_SRW(1)  | // Status Register Write
-      RTC_WAR_CRW(1)  | // Control Register Write
-      RTC_WAR_TCRW(1) | // Time Compensation Register Write
-      RTC_WAR_TARW(1) | // Time Alarm Register Write
-      RTC_WAR_TPRW(1) | // Time Prescaler Register Write
-      RTC_WAR_TSRW(1);  // Time Seconds Register Write
-   #endif
-
-   #if defined(RTC_RAR_TSRR)
+   static constexpr uint32_t war = 
+      RTC_WAR_IERW(1) | // Interrupt Enable Register Write - Writes allowed
+      RTC_WAR_LRW(1) | // Lock Register Write - Writes allowed
+      RTC_WAR_SRW(1) | // Status Register Write - Writes allowed
+      RTC_WAR_CRW(1) | // Control Register Write - Writes allowed
+      RTC_WAR_TCRW(1) | // Time Compensation Register Write - Writes allowed
+      RTC_WAR_TARW(1) | // Time Alarm Register Write - Writes allowed
+      RTC_WAR_TPRW(1) | // Time Prescaler Register Write - Writes allowed
+      RTC_WAR_TSRW(1);  // Time Seconds Register Write - Writes allowed
+   
    //! RTC Read Access Register
-   static constexpr uint32_t rar =
-      RTC_RAR_IERR(1) | // Interrupt Enable Register Read  
-      RTC_RAR_LRR(1)  | // Lock Register Read              
-      RTC_RAR_SRR(1)  | // Status Register Read            
-      RTC_RAR_CRR(1)  | // Control Register Read           
-      RTC_RAR_TCRR(1) | // Time Compensation Register Read 
-      RTC_RAR_TARR(1) | // Time Alarm Register Read        
-      RTC_RAR_TPRR(1) | // Time Prescaler Register Read    
-      RTC_RAR_TSRR(1);  // Time Seconds Register Read
-   #endif
-
+   static constexpr uint32_t rar = 
+      RTC_RAR_IERR(1) | // Interrupt Enable Register Read - Reads allowed
+      RTC_RAR_LRR(1) | // Lock Register Read - Reads allowed
+      RTC_RAR_SRR(1) | // Status Register Read - Reads allowed
+      RTC_RAR_CRR(1) | // Control Register Read - Reads allowed
+      RTC_RAR_TCRR(1) | // Time Compensation Register Read - Reads allowed
+      RTC_RAR_TARR(1) | // Time Alarm Register Read - Reads allowed
+      RTC_RAR_TPRR(1) | // Time Prescaler Register Read - Reads allowed
+      RTC_RAR_TSRR(1);  // Time Seconds Register Read - Reads allowed
+   
    /* Template_irqOptionSubstituted.xml */
 
    //! IRQ numbers for hardware
@@ -858,19 +1024,15 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
 
-   //! Time for cold start (corrected for 12 leap years since 1970)
-   static constexpr uint32_t coldStartTime = 
-            ((((2021-1970)*365UL +
-               (0) +
-               (1+12-1))*24 +
-              (12))*60 +
-             (0))*60;
-
+   //! Time for cold start (corrected for time zone)
+   static constexpr uint32_t coldStartTime =
+          1672538401 + 10*60*60;
+   
    /** 
     *  Enable clock to Rtc
     */
@@ -893,13 +1055,16 @@ public:
 #endif
    }
 
+   
+   //! Frequency of RTC External Clock or Crystal
+   static constexpr uint32_t osc_input_freq = 0UL;
+   
    /**
     * Get RTC clock frequency (internal, not masked by RTC_CR_CLKO)
     *
     * @return Clock frequency as uint32_t
     */
    static uint32_t getInternalClock() {
-      // RTC uses EXTAL32/XTAL32 clock
       return (rtc->CR&RTC_CR_OSCE_MASK)?osc_input_freq:0;
    }
 
@@ -911,7 +1076,7 @@ public:
    static uint32_t getExternalClock() {
       return (rtc->CR&RTC_CR_CLKO_MASK)?0:getInternalClock();
    }
-
+   
    //! Number of signals available in info table
    static constexpr int numSignals  = 3;
 
@@ -951,17 +1116,145 @@ public:
  * @brief Abstraction for Multipurpose Clock Generator
  * @{
  */
-#define USBDM_MCG_IS_DEFINED
 /**
  * Peripheral information for MCG, Multipurpose Clock Generator.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * OSC0 source control
+    *
+    * Determines whether an external clock or crystal is used
+    * and oscillator mode for OSC0
+    */
+   enum OscMode {
+      OscMode_ExternalClock       = MCG_C2_EREFS0(0)|MCG_C2_HGO0(0), ///< External clock
+      OscMode_LowPowerOscillator  = MCG_C2_EREFS0(1)|MCG_C2_HGO0(0), ///< Low Power Oscillator
+      OscMode_HighPowerOscillator = MCG_C2_EREFS0(1)|MCG_C2_HGO0(1), ///< High Gain Oscillator
+
+   };
+
+   /**
+    * Default Clock Mode
+    *
+    * FLL Engaged Internal(FEI)
+    * In FEI mode, MCGOUT is derived from the FLL clock (DCOCLK) that is controlled by the 32 kHz Internal Reference Clock (IRC).
+    * The FLL loop will lock the DCO frequency to the FLL factor, as selected by the C4[DRST_DRS] and C4[DMX32] bits, times the
+    * internal reference frequency.
+    * 
+    * FLL Engaged External(FEE)
+    * In FEE mode, MCGOUT is derived from the FLL clock (DCOCLK) that is controlled by the external reference clock. The FLL loop
+    * will lock the DCO frequency to the FLL factor, as selected by C4[DRST_DRS] and C4[DMX32] bits, times the external reference
+    * frequency, as specified by the C1[FRDIV] and C2[RANGE].
+    * 
+    * FLL Bypassed Internal(FBI)
+    * In FBI mode, the MCGOUT clock is derived either from the slow (32 kHz IRC) or fast (2/4 MHz IRC) internal reference clock,
+    * as selected by the C2[IRCS] bit. The FLL is operational but its output is not used. This mode is useful to allow the FLL
+    * to acquire its target frequency while the MCGOUT clock is driven from the C2[IRCS] selected internal reference clock. The
+    * FLL clock (DCOCLK) is controlled by the slow internal reference clock, and the DCO clock frequency locks to a multiplication
+    * factor, as selected by the C4[DRST_DRS] and C4[DMX32] bits, times the internal reference frequency.
+    * 
+    * FLL Bypassed External(FBE)
+    * In FBE mode, the MCGOUT clock is derived from the external reference clock. The FLL is operational but its output is not
+    * used. This mode is useful to allow the FLL to acquire its target frequency while the MCGOUT clock is driven from the
+    * external reference clock. The FLL clock (DCOCLK) is controlled by the external reference clock, and the DCO clock frequency
+    * locks to a multiplication factor, as selected by the C4[DRST_DRS] and C4[DMX32] bits, times the divided external reference
+    * frequency.
+    * 
+    * PLL Engaged External(PEE)
+    * In PEE mode, the MCGOUT is derived from the PLL clock, which is controlled by the external reference clock. The PLL clock
+    * frequency locks to a multiplication factor, as specified by C6[VDIV0], times the external reference frequency, as specified
+    * by C5[PRDIV0].
+    * 
+    * PLL Bypassed External(PBE)
+    * In PBE mode, MCGOUT is derived from the OSCSEL external reference clock; the PLL is operational, but its output clock is
+    * not used. This mode is useful to allow the PLL to acquire its target frequency while MCGOUT is driven from the external
+    * reference clock. The PLL clock frequency locks to a multiplication factor, as specified by its [VDIV0], times the external
+    * reference frequency, as specified by its [PRDIV0].
+    * 
+    * Bypassed Low Power Internal (BLPI/FBILP)
+    * In BLPI mode, MCGOUT is derived from the internal reference clock. The FLL and PLL are disabled.                      
+    * Bypassed Low Power External (BLPE/FBELP)
+    * In BLPE mode, MCGOUT is derived from the external reference clock. The FLL and PLL are disabled,
+    */
+   enum McgClockMode : uint8_t {
+      McgClockMode_FEI  = 0, ///< FLL Engaged Internal (FEI)
+      McgClockMode_FEE  = 1, ///< FLL Engaged External (FEE)
+      McgClockMode_FBI  = 2, ///< FLL bypassed internal (FBI)
+      McgClockMode_FBE  = 4, ///< FLL bypassed external (FBE)
+      McgClockMode_PBE  = 6, ///< PLL Bypassed External (PBE)
+      McgClockMode_PEE  = 7, ///< PLL Engaged External (PEE)
+      McgClockMode_BLPI = 3, ///< Bypassed low power internal (BLPI)
+      McgClockMode_BLPE = 5, ///< Bypassed low power external (BLPE)
+
+   };
+
+   /**
+    * Internal Reference Clock [MCGIRCLK] Source
+    *
+    * Clock Source for MCGIRCLK
+    */
+   enum McgIrClkSrc {
+      McgIrClkSrc_Slow = MCG_C2_IRCS(0), ///< Slow internal reference clock
+      McgIrClkSrc_Fast = MCG_C2_IRCS(1), ///< Fast internal reference clock
+
+   };
+
+   /**
+    * Internal Reference Clock [MCGIRCLK]
+    *
+    * Enables the internal reference clock for use by peripherals
+    */
+   enum McgIrClkEn {
+      McgIrClkEn_Disabled = MCG_C1_IRCLKEN(0), ///< Disabled
+      McgIrClkEn_Enabled  = MCG_C1_IRCLKEN(1), ///< Enabled
+
+   };
+
+   /**
+    * MCG External reference clock
+    *
+    * Source for MCG External Reference Clock
+    */
+   enum McgErcSelect {
+      McgErcSelect_OscClk = MCG_C7_OSCSEL(0), ///< OSC0 Clock
+      McgErcSelect_RtcClk = MCG_C7_OSCSEL(1), ///< RTC 32kHz clock
+
+   };
+
+   /**
+    * FLL External Reference Divider
+    *
+    * Selects the amount to divide down the external reference clock for the FLL.
+    * The resulting frequency must be in [31.25 kHz to 39.0625 kHz] to be suitable for the FLL
+    * Division factors choices depends on clock Range [MGC_C2_RANGE0] and clock source [MCG_C6_OSCSEL]
+    */
+   enum McgFllPrescale {
+      McgFllPrescale_LowDivBy1     = MCG_C1_FRDIV(0), ///< /1 (low)
+      McgFllPrescale_LowDivBy2     = MCG_C1_FRDIV(1), ///< /2 (low)
+      McgFllPrescale_LowDivBy3     = MCG_C1_FRDIV(2), ///< /4 (low)
+      McgFllPrescale_LowDivBy8     = MCG_C1_FRDIV(3), ///< /8 (low)
+      McgFllPrescale_LowDivBy16    = MCG_C1_FRDIV(4), ///< /16 (low)
+      McgFllPrescale_LowDivBy32    = MCG_C1_FRDIV(5), ///< /32 (low)
+      McgFllPrescale_LowDivBy64    = MCG_C1_FRDIV(6), ///< /64 (low)
+      McgFllPrescale_LowDivBy128   = MCG_C1_FRDIV(7), ///< /128 (low)
+      McgFllPrescale_HighDivBy32   = MCG_C1_FRDIV(0), ///< /32 (high)
+      McgFllPrescale_HighDivBy64   = MCG_C1_FRDIV(1), ///< /64 (high)
+      McgFllPrescale_HighDivBy128  = MCG_C1_FRDIV(2), ///< /128 (high)
+      McgFllPrescale_HighDivBy256  = MCG_C1_FRDIV(3), ///< /256 (high)
+      McgFllPrescale_HighDivBy512  = MCG_C1_FRDIV(4), ///< /512 (high)
+      McgFllPrescale_HighDivBy1024 = MCG_C1_FRDIV(5), ///< /1024 (high)
+      McgFllPrescale_HighDivBy1280 = MCG_C1_FRDIV(6), ///< /1280 (high)
+      McgFllPrescale_HighDivBy1536 = MCG_C1_FRDIV(7), ///< /1536 (high)
+
+   };
+
 class McgInfo {
 public:
-   // Template:mcg_mk
-
+   /*
+    * Template:mcg_mk
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = MCG_BasePtr;
 
@@ -977,134 +1270,109 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
-
-   //! Indicates need for special handling of CLKDIV1 register
-   static constexpr int ERRATA_E2448 = 0;
-
-   enum ClockMode : uint8_t {
-      ClockMode_FEI      = 0,
-      ClockMode_FEE,
-      ClockMode_FBI,
-      ClockMode_BLPI,
-      ClockMode_FBE,
-      ClockMode_BLPE,
-      ClockMode_PBE,
-      ClockMode_PEE,
-   };
-
-   #if defined(USB_CLK_RECOVER_IRC_EN_REG_EN_MASK)
-   //! Frequency of Internal 48MHz Clock
-   static constexpr uint32_t irc48m_clock = 0UL;
-   #endif
-
-   //! Frequency of Slow Internal Reference Clock [~32kHz]
-   static constexpr uint32_t system_slow_irc_clock = 32768UL;
-
-   //! Frequency of Fast Internal Reference Clock [~4MHz]
-   static constexpr uint32_t system_fast_irc_clock = 4000000UL;
-
-   //! PLL VDIV min value
-   static constexpr uint32_t pll_vdiv_min = 24;
-
-   //! PLL post divider
-   static constexpr uint32_t pll_post_divider = 1;
-
-   //! Structure for clock configurations
-   struct ClockInfo {
-      //! System Clock Divider Register 1
-      const uint32_t clkdiv1;
-
-   #ifdef SIM_CLKDIV3_PLLFLLDIV
-      //! PLLFLL clock divider divisor & fraction
-      const uint32_t clkdiv3;
-   #endif
-
-      //! SIM SOPT2 - Clock selectors for various peripherals
-      const uint32_t sopt2;
-
-      //! Clock Mode
-      const ClockMode clockMode;
-
-      //! Control Register 1 - FRDIV, IRCLKEN, IREFSTEN, (-CLKS, -IREFS)
-      const uint8_t c1;
-      //! Control Register 2 - LOCRE0, RANGE0, HGO0, EREFS0, IRCS, (-LP)
-      const uint8_t c2;
-      //! Control Register 4 - DMX32, DRST_DRS
-      const uint8_t c4;
-      //! Control Register 5 - PLLCLKEN0, PLLSTEN0, PRDIV0
-      const uint8_t c5;
-      //! Control Register 6 - LOLIE0, CME0, VDIV0, (-PLLS)
-      const uint8_t c6;
-      //! Status and Control Register - FCRDIV
-      const uint8_t sc;
-      //! Control Register 7 - OSCSEL
-      const uint8_t c7;
-      //! Control Register 8 - LOCRE1, LOLRE, CME1
-      const uint8_t c8;
-   #ifdef MCG_C9_PLL_CME
-      //! Control Register 9
-      const uint8_t c9;
-   #endif
-   #ifdef MCG_C11_PLLCS
-      //! Control Register 11
-      const uint8_t c11;
-   #endif
-   };
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /**
-    * Get MCGERCLK
+    * Get MCG External reference clock
     *
-    * @return MCGERCLK as uint32_t
+    * @return Clock frequency in Hz
     */
-   static uint32_t getErcClock() {
+   static uint32_t getExternalReferenceClock() {
    
-      switch((mcg->C7&MCG_C7_OSCSEL_MASK)) {
-         default               : return 0;
-         case MCG_C7_OSCSEL(0) : return Osc0Info::getOscClock();
-   #if defined(SIM_SOPT1_OSC32KSEL)
-         case MCG_C7_OSCSEL(1) : return RtcInfo::getInternalClock();
-   #endif
-   #if defined(USB_CLK_RECOVER_IRC_EN_REG_EN_MASK)
-         case MCG_C7_OSCSEL(2) : return McgInfo::irc48m_clock;
-   #endif
+      switch(mcg->C7&MCG_C7_OSCSEL_MASK) {
+         default: return 0;
+         case McgErcSelect_OscClk : return Osc0Info::getOscClock();     ///< OSC0 Clock
+         case McgErcSelect_RtcClk : return RtcInfo::getInternalClock(); ///< RTC 32kHz clock
+
       }
    }
 
    /**
-    * Get Internal MCGIRCLK (ungated by MCG_C1_IRCLKEN_MASK)
+    * Get Fast Internal Reference Clock (undivided)
     *
-    * @return MCGIRCLK as uint32_t
+    * @return Clock frequency in Hz
     */
-   static uint32_t getInternalIrcClock() {
-         if (mcg->C2&MCG_C2_IRCS_MASK) {
-   #ifdef MCG_SC_FCRDIV_MASK
-            return (system_fast_irc_clock/(1<<((mcg->SC&MCG_SC_FCRDIV_MASK)>>MCG_SC_FCRDIV_SHIFT)));
-   #else
-            return system_fast_irc_clock;
-   #endif
-         }
-         else {
-            return system_slow_irc_clock;
-         }
+   static uint32_t getFastInternalReferenceClock() {
+   
+      return (system_fast_irc_clock/(1<<((mcg->SC&MCG_SC_FCRDIV_MASK)>>MCG_SC_FCRDIV_SHIFT)));
    }
 
    /**
-    * Get MCGIRCLK (gated by MCG_C1_IRCLKEN_MASK)
+    * Set Internal Reference Clock [MCGIRCLK] Source
     *
-    * @return MCGIRCLK as uint32_t
+    * @param mcgIrClkSrc Clock Source for MCGIRCLK
+    */
+   static void setInternalReferenceClock(McgIrClkSrc mcgIrClkSrc) {
+      mcg->C2 = (mcg->C2&~MCG_C2_IRCS_MASK) | mcgIrClkSrc;
+   }
+
+   /**
+    * Get Internal Reference Clock [MCGIRCLK] Source
+    *
+    * @return Clock frequency in Hz
+    */
+   static uint32_t getInternalReferenceClock() {
+   
+      switch(mcg->C2&MCG_C2_IRCS_MASK) {
+         default: return 0;
+         case McgIrClkSrc_Slow : return system_slow_irc_clock;           ///< Slow internal reference clock
+         case McgIrClkSrc_Fast : return getFastInternalReferenceClock(); ///< Fast internal reference clock
+
+      }
+   }
+
+   /**
+    * Set Internal Reference Clock [MCGIRCLK]
+    *
+    * @param mcgIrClkEn Enables the internal reference clock for use by peripherals
+    */
+   static void enableMcgIrClock(McgIrClkEn mcgIrClkEn) {
+      mcg->C1 = (mcg->C1&~MCG_C1_IRCLKEN_MASK) | mcgIrClkEn;
+   }
+
+   /**
+    * Get Internal Reference Clock [MCGIRCLK]
+    *
+    * @return Clock frequency in Hz
     */
    static uint32_t getMcgIrClock() {
-      if (mcg->C1&MCG_C1_IRCLKEN_MASK) {
-         return getInternalIrcClock();
-      }
-      else {
-         return 0;
+   
+      switch(mcg->C1&MCG_C1_IRCLKEN_MASK) {
+         default: return 0;
+         case McgIrClkEn_Disabled : return 0;                           ///< Disabled
+         case McgIrClkEn_Enabled  : return getInternalReferenceClock(); ///< Enabled
+
       }
    }
+
+   /*
+      Errata     : e2448
+      Issue      : Flash prefetch could result in incorrect read data when CLKDIV1 changed
+      Workaround : Use code in RAM that disabled/restores prefetch around changing CLKDIV1
+    */
+#define USBDM_ERRATA_E2448 1
+
+   /*
+      Errata     : e7993
+      Issue      : FLL frequency may be incorrect after changing the FLL reference clock
+      Workaround : Invert MCG_C4[DMX32] before clock source changes and restore afterwards.
+    */
+#define USBDM_ERRATA_E7993 1
+
+   /// Frequency of Slow Internal Reference Clock [~32kHz]
+   static constexpr uint32_t system_slow_irc_clock = 32768UL;
+
+   /// Frequency of Fast Internal Reference Clock [~4MHz]
+   static constexpr uint32_t system_fast_irc_clock = 4000000UL;
+
+   /// PLL VDIV min value
+   static constexpr uint32_t pll_vdiv_min = 24;
+
+   /// PLL post divider
+   static constexpr uint32_t pll_post_divider = 1;
 
 };
 
@@ -1117,577 +1385,365 @@ public:
  * @brief Abstraction for System Integration Module
  * @{
  */
-#define USBDM_SIM_IS_DEFINED
 /**
  * Peripheral information for SIM, System Integration Module.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
-   // Template:sim_common_templates.xml
-   
-   #if defined(SIM_SOPT1_RAMSIZE)
+   /**
+    * USB voltage regulator power control
+    *
+    * Controls when the USB voltage regulator is enabled in
+    * (RUN), (STOP, VLPS, LLS and VLLS) or (VLPR and VLPW) modes
+    */
+   enum SimUsbPower {
+      SimUsbPower_Disabled              = SIM_SOPT1_USBREGEN(0)|SIM_SOPT1_USBSSTBY(0)|SIM_SOPT1_USBVSTBY(0), ///< Disabled in all modes
+      SimUsbPower_EnabledInAll          = SIM_SOPT1_USBREGEN(1)|SIM_SOPT1_USBSSTBY(0)|SIM_SOPT1_USBVSTBY(0), ///< Enabled in all modes
+      SimUsbPower_EnabledInRun_LowPower = SIM_SOPT1_USBREGEN(1)|SIM_SOPT1_USBSSTBY(1)|SIM_SOPT1_USBVSTBY(0), ///< Enabled in run and low power
+      SimUsbPower_EnabledInRun_Stop     = SIM_SOPT1_USBREGEN(1)|SIM_SOPT1_USBSSTBY(0)|SIM_SOPT1_USBVSTBY(1), ///< Enabled in run and stop
+      SimUsbPower_EnabledInRun          = SIM_SOPT1_USBREGEN(1)|SIM_SOPT1_USBSSTBY(1)|SIM_SOPT1_USBVSTBY(1), ///< Enabled in run only
+
+   };
+
+   /**
+    * PTD7 pad drive strength
+    *
+    * Controls the output drive strength of the PTD7 pin
+    * by selecting either one or two pads to drive it
+    */
+   enum SimPortDPad {
+      SimPortDPad_Single = SIM_SOPT2_PTD7PAD(0), ///< Single-pad drive strength
+      SimPortDPad_Double = SIM_SOPT2_PTD7PAD(1), ///< Double-pad drive strength
+
+   };
+
+   /**
+    * Debug trace clock select
+    *
+    * Selects the core/system clock or MCG output clock (MCGOUTCLK)
+    * as the trace clock source
+    */
+   enum SimTraceClockoutSel {
+      SimTraceClockoutSel_McgOutClk = SIM_SOPT2_TRACECLKSEL(0), ///< MCGOUTCLK
+      SimTraceClockoutSel_CoreClk   = SIM_SOPT2_TRACECLKSEL(1), ///< Core/system clock
+
+   };
+
+   /**
+    * FTM0 Hardware Trigger 0 Source
+    *
+    * Source of FTM hardware trigger 0
+    */
+   enum SimFtm0Trg0Src {
+      SimFtm0Trg0Src_Cmp0 = SIM_SOPT4_FTM0TRG0SRC(0), ///< CMP0 output
+      SimFtm0Trg0Src_Ftm1 = SIM_SOPT4_FTM0TRG0SRC(1), ///< FTM1 channel match
+
+   };
+
+   /**
+    * FTM0 External Clock Pin
+    *
+    * External pin used to drive the clock to the FTM module
+    */
+   enum SimFtm0ClkSel {
+      SimFtm0ClkSel_FtmClkin0 = SIM_SOPT4_FTM0CLKSEL(0), ///< FTM_CLKIN0 pin
+      SimFtm0ClkSel_FtmClkin1 = SIM_SOPT4_FTM0CLKSEL(1), ///< FTM_CLKIN1 pin
+
+   };
+
+   /**
+    * FTM1 External Clock Pin
+    *
+    * External pin used to drive the clock to the FTM module
+    */
+   enum SimFtm1ClkSel {
+      SimFtm1ClkSel_FtmClkin0 = SIM_SOPT4_FTM1CLKSEL(0), ///< FTM_CLKIN0 pin
+      SimFtm1ClkSel_FtmClkin1 = SIM_SOPT4_FTM1CLKSEL(1), ///< FTM_CLKIN1 pin
+
+   };
+
+   /**
+    * FTM 1 channel 0 input capture source
+    *
+    * Source for FTM channel 0 input capture
+    * NOTE: When the FTM is not in input capture mode, clear this field
+    */
+   enum SimFtm1Ch0Src {
+      SimFtm1Ch0Src_IcPin  = SIM_SOPT4_FTM1CH0SRC(0), ///< FTM1_CH0 signal
+      SimFtm1Ch0Src_Cmp0   = SIM_SOPT4_FTM1CH0SRC(1), ///< CMP0 output
+      SimFtm1Ch0Src_Cmp1   = SIM_SOPT4_FTM1CH0SRC(2), ///< CMP1 output
+      SimFtm1Ch0Src_UsbSof = SIM_SOPT4_FTM1CH0SRC(3), ///< USB start of frame pulse
+
+   };
+
+   /**
+    * FTM0 Fault 0 Select
+    *
+    * Source of FTM fault input 0
+    */
+   enum SimFtm0Flt0 {
+      SimFtm0Flt0_Ftm0Fault0 = SIM_SOPT4_FTM0FLT0(0), ///< FTM0_FLT0 pin
+      SimFtm0Flt0_Cmp0       = SIM_SOPT4_FTM0FLT0(1), ///< CMP0 output
+
+   };
+
+   /**
+    * FTM1 Fault 0 Select
+    *
+    * Source of FTM fault input 0
+    */
+   enum SimFtm1Flt0 {
+      SimFtm1Flt0_Ftm1Fault0 = SIM_SOPT4_FTM1FLT0(0), ///< FTM1_FLT0 pin
+      SimFtm1Flt0_Cmp0       = SIM_SOPT4_FTM1FLT0(1), ///< CMP0 output
+
+   };
+
+   /**
+    * FTM0 Fault 1 Select
+    *
+    * Source of FTM fault input 1
+    */
+   enum SimFtm0Flt1 {
+      SimFtm0Flt1_Ftm0Fault1 = SIM_SOPT4_FTM0FLT1(0), ///< FTM0_FLT1 pin
+      SimFtm0Flt1_Cmp1       = SIM_SOPT4_FTM0FLT1(1), ///< CMP1 output
+
+   };
+
+   /**
+    * UART0 receive data source
+    *
+    * Source for the UART0 receive data
+    */
+   enum SimUart0RxSrc {
+      SimUart0RxSrc_RxPin = SIM_SOPT5_UART0RXSRC(0), ///< Rx pin
+      SimUart0RxSrc_Cmp0  = SIM_SOPT5_UART0RXSRC(1), ///< CMP0 output
+      SimUart0RxSrc_Cmp1  = SIM_SOPT5_UART0RXSRC(2), ///< CMP1 output
+
+   };
+
+   /**
+    * UART0 transmit data source
+    *
+    * Source for the UART0 transmit data
+    */
+   enum SimUart0TxSrc {
+      SimUart0TxSrc_Direct             = SIM_SOPT5_UART0TXSRC(0), ///< Tx pin
+      SimUart0TxSrc_ModulatedByFtm1Ch0 = SIM_SOPT5_UART0TXSRC(1), ///< Tx pin modulated by FTM1 channel 0
+      SimUart0TxSrc_ModulatedByFtm2Ch0 = SIM_SOPT5_UART0TXSRC(2), ///< Tx pin modulated by FTM2 channel 0
+
+   };
+
+   /**
+    * UART1 receive data source
+    *
+    * Source for the UART1 receive data
+    */
+   enum SimUart1RxSrc {
+      SimUart1RxSrc_RxPin = SIM_SOPT5_UART1RXSRC(0), ///< Rx pin
+      SimUart1RxSrc_Cmp0  = SIM_SOPT5_UART1RXSRC(1), ///< CMP0 output
+      SimUart1RxSrc_Cmp1  = SIM_SOPT5_UART1RXSRC(2), ///< CMP1 output
+
+   };
+
+   /**
+    * UART1 transmit data source
+    *
+    * Source for the UART1 transmit data
+    */
+   enum SimUart1TxSrc {
+      SimUart1TxSrc_Direct             = SIM_SOPT5_UART1TXSRC(0), ///< Tx pin
+      SimUart1TxSrc_ModulatedByFtm1Ch0 = SIM_SOPT5_UART1TXSRC(1), ///< Tx pin modulated by FTM1 channel 0
+      SimUart1TxSrc_ModulatedByFtm2Ch0 = SIM_SOPT5_UART1TXSRC(2), ///< Tx pin modulated by FTM2 channel 0
+
+   };
+
+   /**
+    * ADC0 trigger mode
+    *
+    * Alternative conversion triggers for ADC
+    * _Pdb              - ADC is triggered by PDB
+    * _Alt_PreTrigger_0 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 0 = A (SC1[0]/R[0])
+    * _Alt_PreTrigger_1 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 1 = B (SC1[1]/R[1])
+    */
+   enum SimAdc0TriggerMode {
+      SimAdc0TriggerMode_Pdb              = SIM_SOPT7_ADC0ALTTRGEN(0)|SIM_SOPT7_ADC0PRETRGSEL(0), ///< Triggered by PDB
+      SimAdc0TriggerMode_Alt_PreTrigger_0 = SIM_SOPT7_ADC0ALTTRGEN(1)|SIM_SOPT7_ADC0PRETRGSEL(0), ///< Pre-trigger 0 = A (SC1[0])
+      SimAdc0TriggerMode_Alt_PreTrigger_1 = SIM_SOPT7_ADC0ALTTRGEN(1)|SIM_SOPT7_ADC0PRETRGSEL(1), ///< Pre-trigger 1 = B (SC1[1])
+
+   };
+
+   /**
+    * ADC0 trigger source
+    *
+    * ADC Trigger source in STOP and VLPS modes, or when ADC Alternative Trigger is active
+    */
+   enum SimAdc0TriggerSrc {
+      SimAdc0TriggerSrc_External   = SIM_SOPT7_ADC0TRGSEL(0),  ///< External trigger pin input (PDB0_EXTRG)
+      SimAdc0TriggerSrc_Cmp0       = SIM_SOPT7_ADC0TRGSEL(1),  ///< CMP 0 output
+      SimAdc0TriggerSrc_Cmp1       = SIM_SOPT7_ADC0TRGSEL(2),  ///< CMP 1 output
+      SimAdc0TriggerSrc_PitCh0     = SIM_SOPT7_ADC0TRGSEL(4),  ///< PIT trigger 0
+      SimAdc0TriggerSrc_PitCh1     = SIM_SOPT7_ADC0TRGSEL(5),  ///< PIT trigger 1
+      SimAdc0TriggerSrc_PitCh2     = SIM_SOPT7_ADC0TRGSEL(6),  ///< PIT trigger 2
+      SimAdc0TriggerSrc_PitCh3     = SIM_SOPT7_ADC0TRGSEL(7),  ///< PIT trigger 3
+      SimAdc0TriggerSrc_Ftm0       = SIM_SOPT7_ADC0TRGSEL(8),  ///< FTM0 trigger
+      SimAdc0TriggerSrc_Ftm1       = SIM_SOPT7_ADC0TRGSEL(9),  ///< FTM1 trigger
+      SimAdc0TriggerSrc_RtcAlarm   = SIM_SOPT7_ADC0TRGSEL(12), ///< RTC alarm
+      SimAdc0TriggerSrc_RtcSeconds = SIM_SOPT7_ADC0TRGSEL(13), ///< RTC seconds
+      SimAdc0TriggerSrc_Lptmr      = SIM_SOPT7_ADC0TRGSEL(14), ///< LPTMR trigger
+
+   };
+
+   /**
+    * CLKOUT pin clock
+    *
+    * Clock to output on the CLKOUT pin
+    */
+   enum SimClkoutSel {
+      SimClkoutSel_Unused0   = SIM_SOPT2_CLKOUTSEL(0), ///< Disabled0
+      SimClkoutSel_Unused1   = SIM_SOPT2_CLKOUTSEL(1), ///< Disabled1
+      SimClkoutSel_FlashClk  = SIM_SOPT2_CLKOUTSEL(2), ///< Flash clock
+      SimClkoutSel_LpoClk    = SIM_SOPT2_CLKOUTSEL(3), ///< LPO clock (1 kHz)
+      SimClkoutSel_McgIrClk  = SIM_SOPT2_CLKOUTSEL(4), ///< MCGIRCLK
+      SimClkoutSel_RtcClk    = SIM_SOPT2_CLKOUTSEL(5), ///< RTC 32.768kHz clock
+      SimClkoutSel_OscerClk0 = SIM_SOPT2_CLKOUTSEL(6), ///< OSCERCLK0
+      SimClkoutSel_Unused7   = SIM_SOPT2_CLKOUTSEL(7), ///< Disabled7
+
+   };
+
+   /**
+    * Peripheral Clock
+    *
+    * Clock for various peripherals (LPUART, TPM etc.)
+    * If there is a peripheral clock divider then this is the
+    * Frequency of the undivided peripheral clock
+    */
+   enum SimPeripheralClockSource {
+      SimPeripheralClockSource_McgFllClk = SIM_SOPT2_PLLFLLSEL(0), ///< MCGFLLCLK clock
+      SimPeripheralClockSource_McgPllClk = SIM_SOPT2_PLLFLLSEL(1), ///< MCGPLLCLK clock
+
+   };
+
+   /**
+    * USB clock divider (SIM_CLKDIV2)
+    *
+    * Sets the clock divider when using an internal clock
+    * as the USB clock source
+    */
+   enum SimUsbClockDivider {
+      SimUsbClockDivider_Mult2  = (1),  ///< Multiply by 2 (div=0, frac=1)
+      SimUsbClockDivider_Mult1  = (0),  ///< Multiply by 1 (div=0, frac=0)
+      SimUsbClockDivider_Mult1b = (3),  ///< Multiply by 1 (div=1, frac=1)
+      SimUsbClockDivider_Div1_5 = (5),  ///< Divide by 1.5 (div=2, frac=1)
+      SimUsbClockDivider_Div2   = (2),  ///< Divide by 2 (div=1, frac=0)
+      SimUsbClockDivider_Div2b  = (7),  ///< Divide by 2 (div=3, frac=1)
+      SimUsbClockDivider_Div2_5 = (9),  ///< Divide by 2.5 (div=4, frac=1)
+      SimUsbClockDivider_Div3   = (4),  ///< Divide by 3 (div=2, frac=0)
+      SimUsbClockDivider_Div3b  = (11), ///< Divide by 3 (div=5, frac=1)
+      SimUsbClockDivider_Div3_5 = (13), ///< Divide by 3.5 (div=6, frac=1)
+      SimUsbClockDivider_Div4   = (6),  ///< Divide by 4 (div=3, frac=0)
+      SimUsbClockDivider_Div4b  = (15), ///< Divide by 4 (div=7, frac=1)
+      SimUsbClockDivider_Div5   = (8),  ///< Divide by 5 (div=4, frac=0)
+      SimUsbClockDivider_Div6   = (10), ///< Divide by 6 (div=5, frac=0)
+      SimUsbClockDivider_Div7   = (12), ///< Divide by 7 (div=6, frac=0)
+      SimUsbClockDivider_Div8   = (14), ///< Divide by 8 (div=7, frac=0)
+
+   };
+
+   /**
+    * USB Clock
+    *
+    * Source for the USB clock
+    */
+   enum SimUsbFullSpeedClockSource {
+      SimUsbFullSpeedClockSource_External      = SIM_SOPT2_USBSRC(0), ///< External bypass clock (USB_CLKIN)
+      SimUsbFullSpeedClockSource_PeripheralClk = SIM_SOPT2_USBSRC(1), ///< Peripheral Clock/SIM_CLKDIV2
+
+   };
+
+   /**
+    * ERCLK32K clock source
+    *
+    * Clock source for External 32k Reference Clock [ERCLK32K]
+    */
+   enum SimErc32kSel {
+      SimErc32kSel_Osc32kClk = SIM_SOPT1_OSC32KSEL(0), ///< OSC0 in low range (OSC32KCLK)
+      SimErc32kSel_Rtc32kClk = SIM_SOPT1_OSC32KSEL(2), ///< RTC 32kHz clock
+      SimErc32kSel_LpoClk    = SIM_SOPT1_OSC32KSEL(3), ///< LPO 1kHz clock
+
+   };
+
+   /**
+    * RTC clock out source
+    *
+    * Clock output on the RTC_CLKOUT pin
+    */
+   enum SimRtcClkoutSel {
+      SimRtcClkoutSel_1Hz   = SIM_SOPT2_RTCCLKOUTSEL(0), ///< RTC 1 Hz clock
+      SimRtcClkoutSel_32kHz = SIM_SOPT2_RTCCLKOUTSEL(1), ///< RTC 32kHz clock
+
+   };
+
    /**
     * RAM size
     */
    enum SimRamSize {
-      SimRamSize_8KiB    = SIM_SOPT1_RAMSIZE(1),  //!< 8KiB RAM
-      SimRamSize_16KiB   = SIM_SOPT1_RAMSIZE(3),  //!< 16KiB RAM
-      SimRamSize_24KiB   = SIM_SOPT1_RAMSIZE(4),  //!< 24KiB RAM
-      SimRamSize_32KiB   = SIM_SOPT1_RAMSIZE(5),  //!< 32KiB RAM
-      SimRamSize_48KiB   = SIM_SOPT1_RAMSIZE(6),  //!< 32KiB RAM
-      SimRamSize_64KiB   = SIM_SOPT1_RAMSIZE(7),  //!< 64KiB RAM
-      SimRamSize_96KiB   = SIM_SOPT1_RAMSIZE(8),  //!< 96KiB RAM
-      SimRamSize_128KiB  = SIM_SOPT1_RAMSIZE(9),  //!< 128KiB RAM
-      SimRamSize_256KiB  = SIM_SOPT1_RAMSIZE(11), //!< 256KiB RAM
-      SimRamSize_512KiB  = SIM_SOPT1_RAMSIZE(12), //!< 256KiB RAM
-      SimRamSize_1024KiB = SIM_SOPT1_RAMSIZE(13), //!< 256KiB RAM
+      SimRamSize_8KiB    = SIM_SOPT1_RAMSIZE(1),  ///< 8KiB RAM
+      SimRamSize_16KiB   = SIM_SOPT1_RAMSIZE(3),  ///< 16KiB RAM
+      SimRamSize_24KiB   = SIM_SOPT1_RAMSIZE(4),  ///< 24KiB RAM
+      SimRamSize_32KiB   = SIM_SOPT1_RAMSIZE(5),  ///< 32KiB RAM
+      SimRamSize_48KiB   = SIM_SOPT1_RAMSIZE(6),  ///< 32KiB RAM
+      SimRamSize_64KiB   = SIM_SOPT1_RAMSIZE(7),  ///< 64KiB RAM
+      SimRamSize_96KiB   = SIM_SOPT1_RAMSIZE(8),  ///< 96KiB RAM
+      SimRamSize_128KiB  = SIM_SOPT1_RAMSIZE(9),  ///< 128KiB RAM
+      SimRamSize_256KiB  = SIM_SOPT1_RAMSIZE(11), ///< 256KiB RAM
+      SimRamSize_512KiB  = SIM_SOPT1_RAMSIZE(12), ///< 256KiB RAM
+      SimRamSize_1024KiB = SIM_SOPT1_RAMSIZE(13), ///< 256KiB RAM
    };
-   #endif
-
-   #if defined(SIM_SOPT1_OSC32KSEL)
-   /**
-    * Selects the ERCLK32K clock source
-    */
-   enum SimOsc32kSel {
-      SimOsc32kSel_Osc32kClk  = SIM_SOPT1_OSC32KSEL(0), //!< OSC0 operating as 32K oscillator
-      SimOsc32kSel_Rtc32kClk  = SIM_SOPT1_OSC32KSEL(2), //!< Rtc32k clock
-      SimOsc32kSel_LpoClk     = SIM_SOPT1_OSC32KSEL(3), //!< LPO Clock
-   };
-   #endif
-
-   #if defined(SIM_SOPT2_USBSRC)
-   /**
-    * USB full-speed clock sources
-    */
-   enum SimUsbFullSpeedClockSource {
-      SimUsbFullSpeedClockSource_External   = SIM_SOPT2_USBSRC(0), //!< External bypass clock (USB_CLKIN)
-      SimUsbFullSpeedClockSource_Peripheral = SIM_SOPT2_USBSRC(1), //!< Peripheral clock selected by SIM.SOPT2[PLLFLLSEL] divided by SIM.CLKDIV2
-   //   SimUsbFullSpeedClockSource_McgFll = SIM_SOPT2_USBSRC(0), //!< External bypass clock (USB_CLKIN)
-   //   SimUsbFullSpeedClockSource_McgPll = SIM_SOPT2_USBSRC(1), //!< Peripheral clock selected by SIM.SOPT2[PLLFLLSEL] divided by SIM.CLKDIV2
-   };
-   #endif
-
-   #if defined(SIM_SOPT2_PLLFLLSEL)
-   /**
-    * Peripheral Clock sources
-    */
-   enum SimPeripheralClockSource {
-      SimPeripheralClockSource_McgFll = SIM_SOPT2_PLLFLLSEL(0), //!< MCG FLL Clock
-      SimPeripheralClockSource_McgPll = SIM_SOPT2_PLLFLLSEL(1), //!< MCG PLL Clock
-   #if defined(USBPHY0_BasePtr)
-      SimPeripheralClockSource_UsbPfd = SIM_SOPT2_PLLFLLSEL(2), //!< USB PFD clock
-   #endif
-   #if defined(USB_CLK_RECOVER_IRC_EN_REG_EN_MASK)
-      SimPeripheralClockSource_Irc48m = SIM_SOPT2_PLLFLLSEL(3), //!< IRC 48MHz clock
-   #endif
-   };
-   #endif
-
-   #if defined(SIM_SOPT2_TRACECLKSEL)
-   /**
-    * Debug trace clock select.
-    *
-    * Selects the trace clock source.
-    */
-   enum SimTraceClockoutSel {
-      SimTraceClockoutSel_McgClkout = SIM_SOPT2_TRACECLKSEL(0), //!< MCG output clock (MCGOUTCLK)
-      SimTraceClockoutSel_CoreClk   = SIM_SOPT2_TRACECLKSEL(1), //!< Core/system clock
-   };
-   #endif
-
-   #if defined(SIM_SOPT2_CLKOUTSEL)
-   /**
-    * Selects the clock to output on the CLKOUT pin.
-    */
-   enum SimClkoutSel {
-      SimClkoutSel_FlexBus   = SIM_SOPT2_CLKOUTSEL(0),  //!< FlexBus
-      SimClkoutSel_Reserved1 = SIM_SOPT2_CLKOUTSEL(1),  //!<
-      SimClkoutSel_Flash     = SIM_SOPT2_CLKOUTSEL(2),  //!< Flash
-      SimClkoutSel_Lpo       = SIM_SOPT2_CLKOUTSEL(3),  //!< LPO (1kHz)
-      SimClkoutSel_McgirClk  = SIM_SOPT2_CLKOUTSEL(4),  //!< McgirClk
-      SimClkoutSel_RTC       = SIM_SOPT2_CLKOUTSEL(5),  //!< RTC 32.768kHz
-      SimClkoutSel_OscerClk0 = SIM_SOPT2_CLKOUTSEL(6),  //!< OscerClk0
-   #if defined(USB_CLK_RECOVER_IRC_EN_REG_EN_MASK)
-      SimClkoutSel_Irc48MHz  = SIM_SOPT2_CLKOUTSEL(7),  //!< IRC 48MHz
-   #endif
-   };
-   #endif
-
-   #if defined(SIM_SOPT2_RTCCLKOUTSEL)
-   /**
-    * RTC clock out select
-    * Selects the clock to be output on the RTC_CLKOUT pin.
-    */
-   enum RtcClkoutSel {
-      RtcClkoutSel_1Hz   = SIM_SOPT2_RTCCLKOUTSEL(0),//!< RTC 1 Hz clock is output on the RTC_CLKOUT pin.
-      RtcClkoutSel_32kHz = SIM_SOPT2_RTCCLKOUTSEL(1),//!< RTC 32.768kHz clock is output on the RTC_CLKOUT pin.
-   };
-   #endif
-
-   #if defined(LPUART0_BasePtr)
-   /**
-    * LPUART Clock sources
-    */
-   enum SimLpuartClockSource {
-      SimLpuartClockSource_Disabled   = SIM_SOPT2_LPUARTSRC(0), //!< Disabled
-      SimLpuartClockSource_Peripheral = SIM_SOPT2_LPUARTSRC(1), //!< Peripheral clock selected by SIM.SOPT2[PLLFLLSEL] divided by SIM.CLKDIV3
-      SimLpuartClockSource_OscerClk   = SIM_SOPT2_LPUARTSRC(2), //!< OSCERCLK clock
-      SimLpuartClockSource_McgIrClk   = SIM_SOPT2_LPUARTSRC(3), //!< MCG Internal Reference clock (MCGIRCLK)
-   };
-   #endif
-
-   #if defined(SIM_SOPT2_TPMSRC)
-   /**
-    * TPM Clock sources
-    */
-   enum SimTpmClockSource {
-      SimTpmClockSource_Disabled   = SIM_SOPT2_TPMSRC(0), //!< Disabled
-      SimTpmClockSource_Peripheral = SIM_SOPT2_TPMSRC(1), //!< Peripheral clock selected by SIM.SOPT2[PLLFLLSEL] divided by SIM.CLKDIV3
-      SimTpmClockSource_OscerClk   = SIM_SOPT2_TPMSRC(2), //!< OSCERCLK clock
-      SimTpmClockSource_McgIrClk   = SIM_SOPT2_TPMSRC(3), //!< MCG Internal Reference clock
-   };
-   #endif
-
-   #if defined(SIM_SOPT2_EMVSIMSRC)
-   /**
-    * EMVSIMSRC Clock sources
-    */
-   enum SimEmvsimClockSource {
-      SimEmvsimClockSource_Disabled   = SIM_SOPT2_EMVSIMSRC(0), //!< Disabled
-      SimEmvsimClockSource_Peripheral = SIM_SOPT2_EMVSIMSRC(1), //!< Peripheral clock selected by SIM.SOPT2[PLLFLLSEL] divided by SIM.CLKDIV3
-      SimEmvsimClockSource_OscerClk   = SIM_SOPT2_EMVSIMSRC(2), //!< OSCERCLK clock
-      SimEmvsimClockSource_McgIrClk   = SIM_SOPT2_EMVSIMSRC(3), //!< MCG Internal Reference clock
-   };
-   #endif
-
-   #ifdef SIM_SOPT2_SDHCSRC
-   /**
-    * SDHC Clock sources
-    */
-   enum SimSdhcClockSource {
-      SimSdhcClockSource_System     = SIM_SOPT2_SDHCSRC(0), //!< Core/system clock
-      SimSdhcClockSource_Peripheral = SIM_SOPT2_SDHCSRC(1), //!< Peripheral clock selected by SIM.SOPT2[PLLFLLSEL]
-      SimSdhcClockSource_OscerClk   = SIM_SOPT2_SDHCSRC(2), //!< OSCERCLK clock
-      SimSdhcClockSource_External   = SIM_SOPT2_SDHCSRC(3), //!< External bypass clock (SDHC0_CLKIN)
-   };
-   #endif
-
-   #ifdef SIM_SOPT2_FBSL
-   /**
-    * External Bus security level (FlexBus or SDRAM accesses).
-    */
-   enum SimExternalBusSecurity {
-      SimExternalBusSecurity_AllDisallowed = SIM_SOPT2_FBSL(0b00), /**< All off-chip accesses are disallowed. */
-      SimExternalBusSecurity_DataOnly      = SIM_SOPT2_FBSL(0b10), /**< Only off-chip data accesses are allowed. */
-      SimExternalBusSecurity_AllAllowed    = SIM_SOPT2_FBSL(0b11), /**< Off-chip instruction and data accesses are allowed. */
-   };
-   #endif
-
-   #ifdef SIM_SOPT2_FLEXIOSRC
-   /**
-   * FLEXIO Clock sources
-   */
-   enum SimFlexioClockSource {
-      SimFlexioClockSource_System     = SIM_SOPT2_FLEXIOSRC(0), //!< Core/system clock
-      SimFlexioClockSource_Peripheral = SIM_SOPT2_FLEXIOSRC(1), //!< Peripheral clock selected by SIM.SOPT2[PLLFLLSEL]
-      SimFlexioClockSource_OscerClk   = SIM_SOPT2_FLEXIOSRC(2), //!< OSCERCLK clock
-      SimFlexioClockSource_McgIrClk   = SIM_SOPT2_FLEXIOSRC(3), //!< MCG Internal Reference clock
-   };
-   #endif
-
-   #if defined(SIM_CLKDIV3_PLLFLLDIV)
-   /**
-    * Clock divider for clock for some peripherals (TPM,LPUART)
-    */
-   enum SimPeripheralClockDivider {
-      SimPeripheralClockDivider_Mult2  = SIM_CLKDIV3_PLLFLLDIV(0)|SIM_CLKDIV3_PLLFLLFRAC(1), //!< Multiply by 2
-      SimPeripheralClockDivider_Mult1  = SIM_CLKDIV3_PLLFLLDIV(0)|SIM_CLKDIV3_PLLFLLFRAC(0), //!< Multiply by 1
-      SimPeripheralClockDivider_Div1_5 = SIM_CLKDIV3_PLLFLLDIV(2)|SIM_CLKDIV3_PLLFLLFRAC(1), //!< Divide by 1.5
-      SimPeripheralClockDivider_Div2   = SIM_CLKDIV3_PLLFLLDIV(1)|SIM_CLKDIV3_PLLFLLFRAC(0), //!< Divide by 2
-      SimPeripheralClockDivider_Div2_5 = SIM_CLKDIV3_PLLFLLDIV(4)|SIM_CLKDIV3_PLLFLLFRAC(1), //!< Divide by 2.5
-      SimPeripheralClockDivider_Div3   = SIM_CLKDIV3_PLLFLLDIV(2)|SIM_CLKDIV3_PLLFLLFRAC(0), //!< Divide by 3
-      SimPeripheralClockDivider_Div3_5 = SIM_CLKDIV3_PLLFLLDIV(6)|SIM_CLKDIV3_PLLFLLFRAC(1), //!< Divide by 3.5
-      SimPeripheralClockDivider_Div4   = SIM_CLKDIV3_PLLFLLDIV(3)|SIM_CLKDIV3_PLLFLLFRAC(0), //!< Divide by 4
-      SimPeripheralClockDivider_Div5   = SIM_CLKDIV3_PLLFLLDIV(4)|SIM_CLKDIV3_PLLFLLFRAC(0), //!< Divide by 5
-      SimPeripheralClockDivider_Div6   = SIM_CLKDIV3_PLLFLLDIV(5)|SIM_CLKDIV3_PLLFLLFRAC(0), //!< Divide by 6
-      SimPeripheralClockDivider_Div7   = SIM_CLKDIV3_PLLFLLDIV(6)|SIM_CLKDIV3_PLLFLLFRAC(0), //!< Divide by 7
-      SimPeripheralClockDivider_Div8   = SIM_CLKDIV3_PLLFLLDIV(7)|SIM_CLKDIV3_PLLFLLFRAC(0), //!< Divide by 8
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM3TRG1SRC)
-   /**
-    * FlexTimer 3 Hardware Trigger 1 Source Select
-    */
-   enum SimFtm3Trg1Src {
-      SimFtm3Trg1Src_Reserved = SIM_SOPT4_FTM3TRG1SRC(0),//!< Reserved
-      SimFtm3Trg1Src_Ftm2     = SIM_SOPT4_FTM3TRG1SRC(1),//!< Ftm2 channel match
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM3TRG0SRC)
-   /**
-    * FlexTimer 3 Hardware Trigger 0 Source Select
-    */
-   enum SimFtm3Trg0Src {
-      SimFtm3Trg0Src_Reserved = SIM_SOPT4_FTM3TRG0SRC(0),//!< Reserved
-      SimFtm3Trg0Src_Ftm1     = SIM_SOPT4_FTM3TRG0SRC(1),//!< Ftm1 channel match
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0TRG1SRC)
-   /**
-    * FlexTimer 0 Hardware Trigger 1 Source Select
-    */
-   enum SimFtm0Trg1Src {
-      SimFtm0Trg1Src_Pdb0 = SIM_SOPT4_FTM0TRG1SRC(0),//!< Pdb0 output
-      SimFtm0Trg1Src_Ftm2 = SIM_SOPT4_FTM0TRG1SRC(1),//!< Ftm2 channel match
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0TRG0SRC)
-   /**
-    * FlexTimer 0 Hardware Trigger 0 Source Select
-    */
-   enum SimFtm0Trg0Src {
-      SimFtm0Trg0Src_Cmp0 = SIM_SOPT4_FTM0TRG0SRC(0),//!< Cmp0 output
-      SimFtm0Trg0Src_Ftm1 = SIM_SOPT4_FTM0TRG0SRC(1),//!< Ftm1 channel match
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM3CLKSEL)
-   /**
-    * FTM3 External Clock Pin Select
-    *
-    * Selects the external pin used to drive the clock to the FTM3 module.
-    * NOTE: The selected pin must also be configured for the FTM external clock function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm3ClkSel {
-      SimFtm3ClkSel_FtmClk0 = SIM_SOPT4_FTM3CLKSEL(0),//!< FtmClk0 pin
-      SimFtm3ClkSel_FtmClk1 = SIM_SOPT4_FTM3CLKSEL(1),//!< FtmClk1 pin
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM2CLKSEL)
-   /**
-    * FTM2 External Clock Pin Select
-    *
-    * Selects the external pin used to drive the clock to the FTM2 module.
-    * NOTE: The selected pin must also be configured for the FTM external clock function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm2ClkSel {
-      SimFtm2ClkSel_FtmClk0 = SIM_SOPT4_FTM2CLKSEL(0),//!< FtmClk0 pin
-      SimFtm2ClkSel_FtmClk1 = SIM_SOPT4_FTM2CLKSEL(1),//!< FtmClk1 pin
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM1CLKSEL)
-   /**
-    * FTM1 External Clock Pin Select
-    *
-    * Selects the external pin used to drive the clock to the FTM1 module.
-    * NOTE: The selected pin must also be configured for the FTM external clock function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm1ClkSel {
-      SimFtm1ClkSel_FtmClk0 = SIM_SOPT4_FTM1CLKSEL(0),//!< FtmClk0 pin
-      SimFtm1ClkSel_FtmClk1 = SIM_SOPT4_FTM1CLKSEL(1),//!< FtmClk1 pin
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0CLKSEL)
-   /**
-    * FlexTimer 0 External Clock Pin Select
-    *
-    * Selects the external pin used to drive the clock to the FTM0 module.
-    * NOTE: The selected pin must also be configured for the FTM external clock function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm0ClkSel {
-      SimFtm0ClkSel_FtmClk0 = SIM_SOPT4_FTM0CLKSEL(0),//!< FtmClk0 pin
-      SimFtm0ClkSel_FtmClk1 = SIM_SOPT4_FTM0CLKSEL(1),//!< FtmClk1 pin
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM2CH0SRC)
-   /**
-    *  FTM2 channel 0 input capture source select
-    *  
-    *  Selects the source for FTM2 channel 0 input capture.
-    *  NOTE: When the FTM is not in input capture mode, clear this field.
-    */
-   enum SimFtm2Ch0Src {
-      SimFtm2Ch0Src_Ftm2Ch0  = SIM_SOPT4_FTM2CH0SRC(0),//!< Ftm2Ch0 pin
-      SimFtm2Ch0Src_Cmp0     = SIM_SOPT4_FTM2CH0SRC(1),//!< Cmp0 output
-      SimFtm2Ch0Src_Cmp1     = SIM_SOPT4_FTM2CH0SRC(2),//!< Cmp1 output
-      SimFtm2Ch0Src_Reserved = SIM_SOPT4_FTM2CH0SRC(3),//!< Reserved 
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM2CH1SRC)
-   /**
-    *  FTM2 channel 1 input capture source select
-    *  
-    *  Selects the source for FTM2 channel 1 input capture.
-    *  NOTE: When the FTM is not in input capture mode, clear this field.
-    */
-   enum SimFtm2Ch1Src {
-      SimFtm2Ch1Src_Ftm2Ch0  = SIM_SOPT4_FTM2CH1SRC(0),//!< Ftm2Ch1 pin
-      SimFtm2Ch1Src_Xor3Ftm  = SIM_SOPT4_FTM2CH1SRC(1),//!< XOR of FTM2_CH1, FTM2_CH0 and FTM1_CH1.
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM1CH0SRC)
-   /**
-    *  FTM1 channel 0 input capture source select
-    *  
-    *  Selects the source for FTM1 channel 0 input capture.
-    *  NOTE: When the FTM is not in input capture mode, clear this field.
-    */
-   enum SimFtm1Ch0Src {
-      SimFtm1Ch0Src_Ftm1Ch0 = SIM_SOPT4_FTM1CH0SRC(0),//!< Ftm1Ch0
-      SimFtm1Ch0Src_Cmp0    = SIM_SOPT4_FTM1CH0SRC(1),//!< Cmp0 output
-      SimFtm1Ch0Src_Cmp1    = SIM_SOPT4_FTM1CH0SRC(2),//!< Cmp1 output
-      SimFtm1Ch0Src_UsbSof  = SIM_SOPT4_FTM1CH0SRC(3),//!< USB SOF 
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM3FLT0)
-   /**
-    * FTM3 Fault 0 Select
-    * 
-    * Selects the source of FTM3 fault 0.
-    * NOTE: The pin source for fault 0 must be configured for the FTM module fault function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm3Flt0 {
-      SimFtm3Flt0_Ftm2Flt0 = SIM_SOPT4_FTM3FLT0(0),//!< FTM3 Fault 0 pin
-      SimFtm3Flt0_Cmp0     = SIM_SOPT4_FTM3FLT0(1),//!< Cmp0 output
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM2FLT0)
-   /**
-    * FTM2 Fault 0 Select
-    * 
-    * Selects the source of FTM2 fault 0.
-    * NOTE: The pin source for fault 0 must be configured for the FTM module fault function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm2Flt0 {
-      SimFtm2Flt0_Ftm2Flt0 = SIM_SOPT4_FTM2FLT0(0),//!< FTM2 Fault 0 pin
-      SimFtm2Flt0_Cmp0     = SIM_SOPT4_FTM2FLT0(1),//!< Cmp0 output
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM1FLT0)
-   /**
-    * FTM1 Fault 0 Select
-    * 
-    * Selects the source of FTM1 fault 0.
-    * NOTE: The pin source for fault 0 must be configured for the FTM module fault function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm1Flt0 {
-      SimFtm1Flt0_Ftm1Flt0 = SIM_SOPT4_FTM1FLT0(0),//!< FTM1 Fault 0 pin
-      SimFtm1Flt0_Cmp0     = SIM_SOPT4_FTM1FLT0(1),//!< Cmp0 output
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0FLT2)
-   /**
-    * FTM0 Fault 2 Select
-    * 
-    * Selects the source of FTM0 fault 2.
-    * NOTE: The pin source for fault 2 must be configured for the FTM module fault function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm0Flt2 {
-      SimFtm0Flt2_Ftm0Flt2 = SIM_SOPT4_FTM0FLT2(0),//!< FTM0 Fault 2 pin
-      SimFtm0Flt2_Cmp2     = SIM_SOPT4_FTM0FLT2(1),//!< Cmp2 output
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0FLT1)
-   /**
-    * FTM0 Fault 1 Select
-    * 
-    * Selects the source of FTM0 fault 1.
-    * NOTE: The pin source for fault 1 must be configured for the FTM module fault function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm0Flt1 {
-      SimFtm0Flt1_Ftm0Flt1 = SIM_SOPT4_FTM0FLT1(0),//!< FTM0 Fault 1 pin
-      SimFtm0Flt1_Cmp1     = SIM_SOPT4_FTM0FLT1(1),//!< Cmp1 output
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0FLT0)
-   /**
-    * FTM0 Fault 0 Select
-    * 
-    * Selects the source of FTM0 fault 0.
-    * NOTE: The pin source for fault 0 must be configured for the FTM module fault function through the
-    * appropriate pin control register in the port control module.
-    */
-   enum SimFtm0Flt0 {
-      SimFtm0Flt0_Ftm0Flt0 = SIM_SOPT4_FTM0FLT0(0),//!< FTM0 Fault 0 pin
-      SimFtm0Flt0_Cmp0     = SIM_SOPT4_FTM0FLT0(1),//!< Cmp0 output
-   };
-   #endif
-
-   #if defined(SIM_SOPT5_UART1RXSRC)
-   /**
-    * UART 1 receive data source select
-    *
-    * Selects the source for the UART 1 receive data.
-    */
-   enum SimUart1RxSrc {
-      SimUart1RxSrc_Uart1Rx   = SIM_SOPT5_UART1RXSRC(0),//!< Uart1 Rx direct
-      SimUart1RxSrc_Cmp0      = SIM_SOPT5_UART1RXSRC(1),//!< Cmp0 output
-      SimUart1RxSrc_Cmp1      = SIM_SOPT5_UART1RXSRC(2),//!< Cmp1 output
-      SimUart1RxSrc_Reserved3 = SIM_SOPT5_UART1RXSRC(3),//!< Reserved
-   };
-   #endif
-
-   #if defined(SIM_SOPT5_UART1TXSRC)
-   /**
-    * UART 1 transmit data source select
-    *
-    * Selects the source for the UART 1 transmit data.
-    */
-   enum SimUart1TxSrc {
-      SimUart1TxSrc_Direct             = SIM_SOPT5_UART1TXSRC(0),//!< Uart1 Tx Direct
-      SimUart1TxSrc_ModulatedbyFtm1Ch0 = SIM_SOPT5_UART1TXSRC(1),//!< Uart1 Tx Modulated by Ftm1 Ch0
-   #if defined(FTM2_BASE_PTR)
-      SimUart1TxSrc_ModulatedbyFtm2Ch0 = SIM_SOPT5_UART1TXSRC(2),//!< Uart1 Tx Modulated by Ftm2 Ch0
-   #endif
-   };
-   #endif
-
-   #if defined(SIM_SOPT5_UART0RXSRC)
-   /**
-    * UART 0 receive data source select
-    *
-    * Selects the source for the UART 0 receive data.
-    */
-   enum SimUart0RxSrc {
-      SimUart0RxSrc_Uart0Rx   = SIM_SOPT5_UART0RXSRC(0),//!< Uart0 Rx direct
-      SimUart0RxSrc_Cmp0      = SIM_SOPT5_UART0RXSRC(1),//!< Cmp0 output
-      SimUart0RxSrc_Cmp1      = SIM_SOPT5_UART0RXSRC(2),//!< Cmp1 output
-      SimUart0RxSrc_Reserved3 = SIM_SOPT5_UART0RXSRC(3),//!< Reserved
-   };
-   #endif
-
-   #if defined(SIM_SOPT5_UART0TXSRC)
-   /**
-    * UART 0 transmit data source select
-    *
-    * Selects the source for the UART 0 transmit data.
-    */
-   enum SimUart0TxSrc {
-      SimUart0TxSrc_Direct             = SIM_SOPT5_UART0TXSRC(0),//!< Uart0 Tx Direct
-      SimUart0TxSrc_ModulatedbyFtm1Ch0 = SIM_SOPT5_UART0TXSRC(1),//!< Uart0 Tx Modulated by Ftm1 Ch0
-   #if defined(FTM2_BASE_PTR)
-      SimUart0TxSrc_ModulatedbyFtm2Ch0 = SIM_SOPT5_UART0TXSRC(2),//!< Uart0 Tx Modulated by Ftm2 Ch0
-   #endif
-   };
-   #endif
-
-   #if defined(SIM_SOPT7_ADC0TRGSEL)
-   /**
-    * Selects the ADC0 Trigger source in STOP and VLPS modes, or when ADC0 Alternative Trigger is active.
-    */
-   enum SimAdc0Trigger {
-      SimAdc0Trigger_PdbExTrig    = SIM_SOPT7_ADC0TRGSEL(0),   //!< External Trigger Source PDBx_EXTRG
-      SimAdc0Trigger_Cmp0         = SIM_SOPT7_ADC0TRGSEL(1),   //!< Comparator 0
-      SimAdc0Trigger_Cmp1         = SIM_SOPT7_ADC0TRGSEL(2),   //!< Comparator 1
-      SimAdc0Trigger_Cmp2         = SIM_SOPT7_ADC0TRGSEL(3),   //!< Comparator 2 (if present)
-      SimAdc0Trigger_PitCh0       = SIM_SOPT7_ADC0TRGSEL(4),   //!< PIT Channel 0
-      SimAdc0Trigger_PitCh1       = SIM_SOPT7_ADC0TRGSEL(5),   //!< PIT Channel 1
-      SimAdc0Trigger_PitCh2       = SIM_SOPT7_ADC0TRGSEL(6),   //!< PIT Channel 2
-      SimAdc0Trigger_PitCh3       = SIM_SOPT7_ADC0TRGSEL(7),   //!< PIT Channel 3
-      SimAdc0Trigger_Ftm0         = SIM_SOPT7_ADC0TRGSEL(8),   //!< FTM0 Init and Ext Trigger Outputs
-      SimAdc0Trigger_Ftm1         = SIM_SOPT7_ADC0TRGSEL(9),   //!< FTM1 Init and Ext Trigger Outputs
-      SimAdc0Trigger_Ftm2         = SIM_SOPT7_ADC0TRGSEL(10),  //!< FTM2 Init and Ext Trigger Outputs (if present)
-      SimAdc0Trigger_Ftm3         = SIM_SOPT7_ADC0TRGSEL(11),  //!< FTM3 Init and Ext Trigger Outputs (if present)
-      SimAdc0Trigger_RtcAlarm     = SIM_SOPT7_ADC0TRGSEL(12),  //!< RTC Alarm
-      SimAdc0Trigger_RtcSeconds   = SIM_SOPT7_ADC0TRGSEL(13),  //!< RTC Seconds
-      SimAdc0Trigger_Lptrm        = SIM_SOPT7_ADC0TRGSEL(14),  //!< LPTMR
-      SimAdc0Trigger_15           = SIM_SOPT7_ADC0TRGSEL(15),  //!< Reserved
-   };
-   #endif
-
-   #if defined(SIM_SOPT7_ADC0ALTTRGEN)
-   /**
-    * Selects the ADC0 trigger mode.
-    * 
-    *    _Pdb              - ADC is triggered by PDB which selects the pretrigger (SC1[0..n]/R[0..n]
-    *    _Alt_PreTrigger_0 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 0 = A (SC1[0]/R[0])
-    *    _Alt_PreTrigger_1 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 1 = B (SC1[1]/R[1])
-    */
-   enum SimAdc0TriggerMode {
-      SimAdc0TriggerMode_Pdb               = SIM_SOPT7_ADC0ALTTRGEN(0),                              //!< PDB trigger
-      SimAdc0TriggerMode_Alt_PreTrigger_0  = SIM_SOPT7_ADC0ALTTRGEN(1)|SIM_SOPT7_ADC0PRETRGSEL(0),   //!< Pre-trigger 0 = A (SC1[0])
-      SimAdc0TriggerMode_Alt_PreTrigger_1  = SIM_SOPT7_ADC0ALTTRGEN(1)|SIM_SOPT7_ADC0PRETRGSEL(1),   //!< Pre-trigger 1 = B (SC1[1])
-   };
-   #endif
-
-   #if defined(SIM_SOPT7_ADC1TRGSEL)
-   /**
-    * Selects the ADC1 Trigger source in STOP and VLPS modes, or when ADC1 Alternative Trigger is active.
-    */
-   enum SimAdc1Trigger {
-      SimAdc1Trigger_PdbExTrig    = SIM_SOPT7_ADC1TRGSEL(0),   //!< External Trigger Source PDBx_EXTRG
-      SimAdc1Trigger_Cmp0         = SIM_SOPT7_ADC1TRGSEL(1),   //!< Comparator 0
-      SimAdc1Trigger_Cmp1         = SIM_SOPT7_ADC1TRGSEL(2),   //!< Comparator 1
-      SimAdc1Trigger_Cmp2         = SIM_SOPT7_ADC1TRGSEL(3),   //!< Comparator 2 (if present)
-      SimAdc1Trigger_PitCh0       = SIM_SOPT7_ADC1TRGSEL(4),   //!< PIT Channel 0
-      SimAdc1Trigger_PitCh1       = SIM_SOPT7_ADC1TRGSEL(5),   //!< PIT Channel 1
-      SimAdc1Trigger_PitCh2       = SIM_SOPT7_ADC1TRGSEL(6),   //!< PIT Channel 2
-      SimAdc1Trigger_PitCh3       = SIM_SOPT7_ADC1TRGSEL(7),   //!< PIT Channel 3
-      SimAdc1Trigger_Ftm0         = SIM_SOPT7_ADC1TRGSEL(8),   //!< FTM0 Init and Ext Trigger Outputs
-      SimAdc1Trigger_Ftm1         = SIM_SOPT7_ADC1TRGSEL(9),   //!< FTM1 Init and Ext Trigger Outputs
-      SimAdc1Trigger_Ftm2         = SIM_SOPT7_ADC1TRGSEL(10),  //!< FTM2 Init and Ext Trigger Outputs (if present)
-      SimAdc1Trigger_Ftm3         = SIM_SOPT7_ADC1TRGSEL(11),  //!< FTM3 Init and Ext Trigger Outputs (if present)
-      SimAdc1Trigger_RtcAlarm     = SIM_SOPT7_ADC1TRGSEL(12),  //!< RTC Alarm
-      SimAdc1Trigger_RtcSeconds   = SIM_SOPT7_ADC1TRGSEL(13),  //!< RTC Seconds
-      SimAdc1Trigger_Lptrm        = SIM_SOPT7_ADC1TRGSEL(14),  //!< LPTMR
-      SimAdc1Trigger_15           = SIM_SOPT7_ADC1TRGSEL(15),  //!< Reserved
-   };
-   #endif
-
-   #if defined(SIM_SOPT7_ADC1ALTTRGEN)
-   /**
-    * Selects the ADC1 trigger mode.
-    * 
-    *    _Pdb              - ADC is triggered by PDB which selects the pretrigger (SC1[0..n]/R[0..n]
-    *    _Alt_PreTrigger_0 - ADC is triggered by SimAdc1Trigger selection and uses pretrigger 0 = A (SC1[0]/R[0])
-    *    _Alt_PreTrigger_1 - ADC is triggered by SimAdc1Trigger selection and uses pretrigger 1 = B (SC1[1]/R[1])
-    */
-   enum SimAdc1TriggerMode {
-      SimAdc1TriggerMode_Pdb               = SIM_SOPT7_ADC1ALTTRGEN(0),                              //!< PDB trigger
-      SimAdc1TriggerMode_Alt_PreTrigger_0  = SIM_SOPT7_ADC1ALTTRGEN(1)|SIM_SOPT7_ADC1PRETRGSEL(0),   //!< Alt trigger source, pre-trigger 0 = A (SC1[0])
-      SimAdc1TriggerMode_Alt_PreTrigger_1  = SIM_SOPT7_ADC1ALTTRGEN(1)|SIM_SOPT7_ADC1PRETRGSEL(1),   //!< Alt trigger source, pre-trigger 1 = B (SC1[1])
-   };
-   #endif
 
 class SimInfo {
 public:
-   // Template:sim_mk20d5
-
+   /*
+    * Template:sim_mk20d5
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = SIM_BasePtr;
 
    //! Hardware base pointer
    static constexpr HardwarePtr<SIM_Type> sim = baseAddress;
 
-   // Template:sim_common_templates.xml
+   /**
+    * Update system clock values
+    *
+    * @param systemClock Frequency of clock provided to system clock dividers
+    */
+   static void updateSystemClocks(unsigned systemClock) {
    
-   #if defined(SIM_SOPT1_RAMSIZE)
+      SystemCoreClock    = systemClock/(((SIM->CLKDIV1&SIM_CLKDIV1_OUTDIV1_MASK)>>SIM_CLKDIV1_OUTDIV1_SHIFT)+1);
+      SystemBusClock     = systemClock/(((SIM->CLKDIV1&SIM_CLKDIV1_OUTDIV2_MASK)>>SIM_CLKDIV1_OUTDIV2_SHIFT)+1);
+   #ifdef SIM_CLKDIV1_OUTDIV3_MASK
+      SystemFlexbusClock = systemClock/(((SIM->CLKDIV1&SIM_CLKDIV1_OUTDIV3_MASK)>>SIM_CLKDIV1_OUTDIV3_SHIFT)+1);
+   #endif
+   #ifdef SIM_CLKDIV1_OUTDIV4_MASK
+   //   SystemFlashClock = systemClock/(((SIM->CLKDIV1&SIM_CLKDIV1_OUTDIV4_MASK)>>SIM_CLKDIV1_OUTDIV4_SHIFT)+1);
+   #endif
+   }
+
+   /*
+    * Template:sim_commonTemplates.xml
+    */ 
+   /**
+    * Set RTC clock out source
+    *
+    * @param simRtcClkoutSel Clock output on the RTC_CLKOUT pin
+    */
+   static void setRtcClockout(SimRtcClkoutSel simRtcClkoutSel) {
+      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_RTCCLKOUTSEL_MASK) | simRtcClkoutSel;
+   }
+
+   ///  Frequency of External USB Clock
+   static constexpr uint32_t usbExternalClock=0;
+
    /**
     * Get RAM size
     *
@@ -1697,83 +1753,134 @@ public:
    
       return static_cast<SimRamSize>(sim->SOPT1&SIM_SOPT1_RAMSIZE_MASK);
    }
-   #endif
-
-   #if defined(SIM_SOPT1_OSC32KSEL)
-   /**
-    * Get ERCLK32K clock frequency
-    *
-    * @return Clock frequency as a uint32_t in Hz
-    */
-   static uint32_t getErc32kClock() {
-   
-      switch(sim->SOPT1&SIM_SOPT1_OSC32KSEL_MASK) {
-         default                     : return 0;
-         case SimOsc32kSel_Osc32kClk : return Osc0Info::getOsc32kClock();
-         case SimOsc32kSel_Rtc32kClk : return RtcInfo::getExternalClock();
-         case SimOsc32kSel_LpoClk    : return 1000;
-      }
-   }
-   #endif
 
    /**
     * Set ERCLK32K clock source
     *
-    * @param simOsc32kSel Clock source
+    * @param simErc32kSel Clock source for External 32k Reference Clock [ERCLK32K]
     */
-   static void setErc32kClock(SimOsc32kSel simOsc32kSel) {
-      sim->SOPT1 = (sim->SOPT1&~SIM_SOPT1_OSC32KSEL_MASK) | simOsc32kSel;
+   static void setErc32kClock(SimErc32kSel simErc32kSel) {
+      sim->SOPT1 = (sim->SOPT1&~SIM_SOPT1_OSC32KSEL_MASK) | simErc32kSel;
    }
 
-   //! System Options Register 1
-   static constexpr uint32_t sopt1 = 
-   #ifdef SIM_SOPT1_OSC32KOUT
-      SIM_SOPT1_OSC32KOUT(-1) |    // 32K oscillator clock out pin select
-   #endif
-      SIM_SOPT1_OSC32KSEL(2);     // 32K oscillator clock select
+   /**
+    * Get ERCLK32K clock source
+    *
+    * @return Clock frequency in Hz
+    */
+   static uint32_t getErc32kClock() {
+   
+      switch(sim->SOPT1&SIM_SOPT1_OSC32KSEL_MASK) {
+         default: return 0;
+         case SimErc32kSel_Osc32kClk : return Osc0Info::getOsc32kClock();  ///< OSC0 in low range (OSC32KCLK)
+         case SimErc32kSel_Rtc32kClk : return RtcInfo::getExternalClock(); ///< RTC 32kHz clock
+         case SimErc32kSel_LpoClk    : return PmcInfo::getLpoClock();      ///< LPO 1kHz clock
+
+      }
+   }
 
    /**
-    * Selects the clock to output on the CLKOUT pin.
+    * Set USB voltage regulator power control
     *
-    * @param simClkoutSel
+    * @param simUsbPower Controls when the USB voltage regulator is enabled in
+    *        (RUN), (STOP, VLPS, LLS and VLLS) or (VLPR and VLPW) modes
+    */
+   static void setUsbPowerModes(SimUsbPower simUsbPower) {
+      sim->SOPT1CFG = SIM_SOPT1CFG_USSWE_MASK|SIM_SOPT1CFG_UVSWE_MASK|SIM_SOPT1CFG_URWE_MASK;
+      sim->SOPT1 = (sim->SOPT1&~(SIM_SOPT1_USBREGEN_MASK|SIM_SOPT1_USBSSTBY_MASK|SIM_SOPT1_USBVSTBY_MASK)) | simUsbPower;
+   }
+
+   /**
+    * Set CLKOUT pin clock
+    *
+    * @param simClkoutSel Clock to output on the CLKOUT pin
     */
    static void setClkout(SimClkoutSel simClkoutSel) {
       sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_CLKOUTSEL_MASK) | simClkoutSel;
    }
+   
+   /**
+    * Get CLKOUT pin clock
+    *
+    * @return Clock to output on the CLKOUT pin
+    */
+   static uint32_t getClkout() {
+   
+      return sim->SOPT2&SIM_SOPT2_CLKOUTSEL_MASK;
+   }
 
    /**
-    * Set Peripheral clock source
+    * Set Debug trace clock select
     *
-    * @param simPeripheralClockSource Clock source for peripheral clock
+    * @param simTraceClockoutSel Selects the core/system clock or MCG output clock (MCGOUTCLK)
+    *        as the trace clock source
+    */
+   static void setTraceClockout(SimTraceClockoutSel simTraceClockoutSel) {
+      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_TRACECLKSEL_MASK) | simTraceClockoutSel;
+   }
+   
+   /**
+    * Get Debug trace clock select
+    *
+    * @return Selects the core/system clock or MCG output clock (MCGOUTCLK)
+    *        as the trace clock source
+    */
+   static uint32_t getTraceClockout() {
+   
+      return sim->SOPT2&SIM_SOPT2_TRACECLKSEL_MASK;
+   }
+
+   /**
+    * Set PTD7 pad drive strength
+    *
+    * @param simPortDPad Controls the output drive strength of the PTD7 pin
+    *        by selecting either one or two pads to drive it
+    */
+   static void setPortDPad(SimPortDPad simPortDPad) {
+      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_PTD7PAD_MASK) | simPortDPad;
+   }
+   
+   /**
+    * Get PTD7 pad drive strength
+    *
+    * @return Controls the output drive strength of the PTD7 pin
+    *        by selecting either one or two pads to drive it
+    */
+   static uint32_t getPortDPad() {
+   
+      return sim->SOPT2&SIM_SOPT2_PTD7PAD_MASK;
+   }
+
+   /**
+    * Set Peripheral Clock
+    *
+    * @param simPeripheralClockSource Clock for various peripherals (LPUART, TPM etc.)
+    *        If there is a peripheral clock divider then this is the
+    *        Frequency of the undivided peripheral clock
     */
    static void setPeripheralClock(SimPeripheralClockSource simPeripheralClockSource) {
       sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_PLLFLLSEL_MASK) | simPeripheralClockSource;
    }
 
    /**
-    * Get Peripheral clock frequency
+    * Get Peripheral Clock
+    *  Clock for various peripherals (LPUART, TPM etc.)
+    *        If there is a peripheral clock divider then this is the
+    *        Frequency of the undivided peripheral clock
     *
-    * @return Frequency as a uint32_t in Hz
-    *
-    * @note If there is a peripheral clock divider then this is the frequency of the undivided peripheral clock
+    * @return Clock frequency in Hz
     */
    static uint32_t getPeripheralClock() {
-      
+   
       switch(sim->SOPT2&SIM_SOPT2_PLLFLLSEL_MASK) {
-         default:                     return 0;
-         case SimPeripheralClockSource_McgFll : return SystemMcgFllClock;   // FLL clock
-         case SimPeripheralClockSource_McgPll : return SystemMcgPllClock;   // PLL clock
-   #if defined(USBPHY0_BasePtr)
-         //case SimPeripheralClockSource_UsbPfd : return UsbPfdClock;         // USB PFD clock - not implemented
-   #endif
-   #if defined(USB_CLK_RECOVER_IRC_EN_REG_EN_MASK)                          // IRC 48MHz clock
-         case SimPeripheralClockSource_Irc48m : return McgInfo::irc48m_clock;
-   #endif
+         default: return 0;
+         case SimPeripheralClockSource_McgFllClk : return SystemMcgFllClock; ///< MCGFLLCLK clock
+         case SimPeripheralClockSource_McgPllClk : return SystemMcgPllClock; ///< MCGPLLCLK clock
+
       }
    }
 
-   #if defined(UART0_BasePtr)
-   /** 
+   /**
     * Get UART0 input clock frequency
     *
     * @return Clock frequency in Hz
@@ -1781,10 +1888,8 @@ public:
    static inline uint32_t getUart0Clock() {
       return SystemCoreClock;
    }
-   #endif
 
-   #if defined(UART1_BasePtr)
-   /** 
+   /**
     * Get UART1 input clock frequency
     *
     * @return Clock frequency in Hz
@@ -1792,10 +1897,8 @@ public:
    static inline uint32_t getUart1Clock() {
       return SystemCoreClock;
    }
-   #endif
 
-   #if defined(UART2_BasePtr)
-   /** 
+   /**
     * Get UART2 input clock frequency
     *
     * @return Clock frequency in Hz
@@ -1803,106 +1906,612 @@ public:
    static inline uint32_t getUart2Clock() {
       return SystemBusClock;
    }
-   #endif
 
-   #if defined(UART3_BasePtr)
-   /** 
-    * Get UART3 input clock frequency
-    *
-    * @return Clock frequency in Hz
-    */
-   static inline uint32_t getUart3Clock() {
-      return 0;
-   }
-   #endif
-
-   #if defined(UART4_BasePtr)
-   /** 
-    * Get UART4 input clock frequency
-    *
-    * @return Clock frequency in Hz
-    */
-   static inline uint32_t getUart4Clock() {
-      return 0;
-   }
-   #endif
-
-   #if defined(UART5_BasePtr)
-   /** 
-    * Get UART5 input clock frequency
-    *
-    * @return Clock frequency in Hz
-    */
-   static inline uint32_t getUart5Clock() {
-      return 0;
-   }
-   #endif
-
-   #if defined(LPUART0_BasePtr)
    /**
-    * Set LPUART input clock source
+    * Class used to do initialisation of SIM Clock control (SOPT2)
     *
-    * @param simLpuartClockSource Clock source for LPUART
-    */
-   static void setLpuartClock(SimLpuartClockSource simLpuartClockSource) {
-      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_LPUARTSRC_MASK) | simLpuartClockSource;
-   }
-      
-   /**
-    * Get LPUART input clock frequency
+    * This class has a templated constructor that accepts various values:
     *
-    * @return Frequency as a uint32_t in Hz
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Generic Example: (see Sim::DefaultSopt2Values for device specific example)
+    * @code
+    * static const ClockInit clockInit {
+    *    SimUsbFullSpeedClockSource_McgPClk, // USB Clock - Peripheral clock (MCGPCLK)
+    *    SimTpmClockSource_McgPClk,          // TPM Clock source - MCGPCLK (HIRC=IRC48M) Clock
+    *    SimFlexioClockSource_McgPClk,       // FLEXIO Clock select - MCGPCLK (HIRC=IRC48M) Clock
+    *    SimClkoutSel_LpoClk,                // CLKOUT pin clock - LPO clock (1 kHz)
+    *    SimRtcClkoutSel_32kHz,              // RTC clock out source - OSC32KCLK clock (from OSC0)
+    *    SimLpuart0ClockSource_McgPClk,      // LPUART0 Clock - MCGPCLK (HIRC=IRC48M) Clock
+    *    SimLpuart1ClockSource_McgPClk,      // LPUART1 Clock - MCGPCLK (HIRC=IRC48M) Clock
+    *
+    *    // Base value modified by above
+    *    Sim::DefaultSopt2Values[McgClockMode_HIRC_48MHz]
+    * };
+    *
+    * // Initialise SIM Clock control from values specified above
+    * clockInit.configure()
+    * @endcode
     */
-   static uint32_t getLpuartClock() {
-      
-      switch(sim->SOPT2&SIM_SOPT2_LPUARTSRC_MASK) {
-      default:
-      case SIM_SOPT2_LPUARTSRC(0): return 0;
-   #if defined(SIM_CLKDIV3_PLLFLLFRAC_MASK)
-      case SIM_SOPT2_LPUARTSRC(1): return getDividedPeripheralClock();
-   #else
-      case SIM_SOPT2_LPUARTSRC(1): return getPeripheralClock();
-   #endif
-      case SIM_SOPT2_LPUARTSRC(2): return Osc0Info::getOscerClock();
-      case SIM_SOPT2_LPUARTSRC(3): return McgInfo::getMcgIrClock();
+   class ClockInit {
+   
+   public:
+   
+      /// System Options Register 2
+      uint32_t sopt2 = 0;
+   
+      /**
+       * Copy Constructor
+       */
+      constexpr ClockInit(const ClockInit &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr ClockInit() = default;
+   
+      /**
+       * Configure SIM Clock control from values specified in constructor.
+       */
+      void configure() const {
+
+         sim->SOPT2 = sopt2;
       }
-   }
-   #endif
 
-   #ifdef SIM_SOPT2_USBSRC_MASK
+      /**
+       * Constructor for Peripheral Clock
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simPeripheralClockSource Clock for various peripherals (LPUART, TPM etc.)
+       *        If there is a peripheral clock divider then this is the
+       *        Frequency of the undivided peripheral clock
+       */
+      template <typename... Types>
+      constexpr ClockInit(SimPeripheralClockSource simPeripheralClockSource, Types... rest) : ClockInit(rest...) {
+   
+         sopt2 |= simPeripheralClockSource;
+      }
+   
+      /**
+       * Constructor for USB Clock
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simUsbFullSpeedClockSource Source for the USB clock
+       */
+      template <typename... Types>
+      constexpr ClockInit(SimUsbFullSpeedClockSource simUsbFullSpeedClockSource, Types... rest) : ClockInit(rest...) {
+   
+         sopt2 |= simUsbFullSpeedClockSource;
+      }
+   
+      /**
+       * Constructor for CLKOUT pin clock
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simClkoutSel Clock to output on the CLKOUT pin
+       */
+      template <typename... Types>
+      constexpr ClockInit(SimClkoutSel simClkoutSel, Types... rest) : ClockInit(rest...) {
+   
+         sopt2 |= simClkoutSel;
+      }
+   
+      /**
+       * Constructor for RTC clock out source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simRtcClkoutSel Clock output on the RTC_CLKOUT pin
+       */
+      template <typename... Types>
+      constexpr ClockInit(SimRtcClkoutSel simRtcClkoutSel, Types... rest) : ClockInit(rest...) {
+   
+         sopt2 |= simRtcClkoutSel;
+      }
+   
+      /**
+       * Constructor for Debug trace clock select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simTraceClockoutSel Selects the core/system clock or MCG output clock (MCGOUTCLK)
+       *        as the trace clock source
+       */
+      template <typename... Types>
+      constexpr ClockInit(SimTraceClockoutSel simTraceClockoutSel, Types... rest) : ClockInit(rest...) {
+   
+         sopt2 |= simTraceClockoutSel;
+      }
+   
+      /**
+       * Constructor for PTD7 pad drive strength
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simPortDPad Controls the output drive strength of the PTD7 pin
+       *        by selecting either one or two pads to drive it
+       */
+      template <typename... Types>
+      constexpr ClockInit(SimPortDPad simPortDPad, Types... rest) : ClockInit(rest...) {
+   
+         sopt2 |= simPortDPad;
+      }
+   
+   };
+
    /**
-    * Set USB Full-speed clock source
+    * Set FTM0 Fault 0 Select
+    *
+    * @param simFtm0Flt0 Source of FTM fault input 0
+    */
+   static void setFtm0Flt0(SimFtm0Flt0 simFtm0Flt0) {
+      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0FLT0_MASK) | simFtm0Flt0;
+   }
+
+   /**
+    * Set FTM0 Fault 1 Select
+    *
+    * @param simFtm0Flt1 Source of FTM fault input 1
+    */
+   static void setFtm0Flt1(SimFtm0Flt1 simFtm0Flt1) {
+      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0FLT1_MASK) | simFtm0Flt1;
+   }
+
+   /**
+    * Set FTM1 Fault 0 Select
+    *
+    * @param simFtm1Flt0 Source of FTM fault input 0
+    */
+   static void setFtm1Flt0(SimFtm1Flt0 simFtm1Flt0) {
+      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM1FLT0_MASK) | simFtm1Flt0;
+   }
+
+   /**
+    * Set FTM 1 channel 0 input capture source
+    *
+    * @param simFtm1Ch0Src Source for FTM channel 0 input capture
+    *        NOTE: When the FTM is not in input capture mode, clear this field
+    */
+   static void setFtm1Ch0Src(SimFtm1Ch0Src simFtm1Ch0Src) {
+      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM1CH0SRC_MASK) | simFtm1Ch0Src;
+   }
+
+   /**
+    * Set FTM0 External Clock Pin
+    *
+    * @param simFtm0ClkSel External pin used to drive the clock to the FTM module
+    */
+   static void setFtm0ClkSel(SimFtm0ClkSel simFtm0ClkSel) {
+      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0CLKSEL_MASK) | simFtm0ClkSel;
+   }
+
+   /**
+    * Set FTM1 External Clock Pin
+    *
+    * @param simFtm1ClkSel External pin used to drive the clock to the FTM module
+    */
+   static void setFtm1ClkSel(SimFtm1ClkSel simFtm1ClkSel) {
+      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM1CLKSEL_MASK) | simFtm1ClkSel;
+   }
+
+   /**
+    * Set FTM0 Hardware Trigger 0 Source
+    *
+    * @param simFtm0Trg0Src Source of FTM hardware trigger 0
+    */
+   static void setFtm0Trg0Src(SimFtm0Trg0Src simFtm0Trg0Src) {
+      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0TRG0SRC_MASK) | simFtm0Trg0Src;
+   }
+
+   /**
+    * Class used to do initialisation of Uart0 signals
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Uart0Init uart0Init {
+    * };
+    *
+    * // Initialise Uart0 signals from values specified above
+    * uart0Init.configure()
+    * @endcode
+    */
+   class Uart0Init {
+   
+   public:
+      /// Uart0 signals
+      uint32_t sopt5 = 0;
+   
+      /**
+       * Copy Constructor
+       */
+      constexpr Uart0Init(const Uart0Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Uart0Init() = default;
+   
+      /**
+       * Constructor
+       * @param simUart0TxSrc Source for the UART0 transmit data
+       * @param simUart0RxSrc Source for the UART0 receive data
+       */
+      constexpr Uart0Init(
+            SimUart0TxSrc simUart0TxSrc,
+            SimUart0RxSrc simUart0RxSrc = SimUart0RxSrc_RxPin) {
+   
+         sopt5 = (sopt5 & ~(SIM_SOPT5_UART0TXSRC_MASK|SIM_SOPT5_UART0RXSRC_MASK)) |
+                          simUart0TxSrc|simUart0RxSrc;
+      }
+      /**
+       * Configure Uart0 signals from values specified in constructor.
+       */
+      void configure() const {
+
+         sim->SOPT5 = (sim->SOPT5&~(SIM_SOPT5_UART0TXSRC_MASK|SIM_SOPT5_UART0RXSRC_MASK)) | sopt5;
+      }
+   /**
+    * Set UART0 transmit data source
+    *
+    * @tparam   Types
+    * @param    rest
+    *
+    * @param simUart0TxSrc Source for the UART0 transmit data
+    */
+      template <typename... Types>
+      constexpr Uart0Init(SimUart0TxSrc simUart0TxSrc, Types... rest) : Init(rest...) {
+         sopt5 = (sopt5 & ~SIM_SOPT5_UART0TXSRC_MASK) | simUart0TxSrc;
+   }
+
+   /**
+    * Set UART0 receive data source
+    *
+    * @tparam   Types
+    * @param    rest
+    *
+    * @param simUart0RxSrc Source for the UART0 receive data
+    */
+      template <typename... Types>
+      constexpr Uart0Init(SimUart0RxSrc simUart0RxSrc, Types... rest) : Init(rest...) {
+         sopt5 = (sopt5 & ~SIM_SOPT5_UART0RXSRC_MASK) | simUart0RxSrc;
+   }
+
+   };
+
+   /**
+    * Set UART0 transmit data source
+    *
+    * @param simUart0TxSrc Source for the UART0 transmit data
+    * @param simUart0RxSrc Source for the UART0 receive data
+    */
+   static void configureUart0(
+         SimUart0TxSrc simUart0TxSrc,
+         SimUart0RxSrc simUart0RxSrc = SimUart0RxSrc_RxPin) {
+      sim->SOPT5 = (sim->SOPT5&~(SIM_SOPT5_UART0TXSRC_MASK|SIM_SOPT5_UART0RXSRC_MASK)) | simUart0TxSrc|simUart0RxSrc;
+   }
+
+   /**
+    * Set UART0 receive data source
+    *
+    * @param simUart0RxSrc Source for the UART0 receive data
+    */
+   static void setUart0RxSrc(SimUart0RxSrc simUart0RxSrc) {
+      sim->SOPT5 = (sim->SOPT5&~SIM_SOPT5_UART0RXSRC_MASK) | simUart0RxSrc;
+   }
+
+   /**
+    * Set UART0 transmit data source
+    *
+    * @param simUart0TxSrc Source for the UART0 transmit data
+    */
+   static void setUart0TxSrc(SimUart0TxSrc simUart0TxSrc) {
+      sim->SOPT5 = (sim->SOPT5&~SIM_SOPT5_UART0TXSRC_MASK) | simUart0TxSrc;
+   }
+
+   /**
+    * Class used to do initialisation of Uart1 signals
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Uart1Init uart1Init {
+    * };
+    *
+    * // Initialise Uart1 signals from values specified above
+    * uart1Init.configure()
+    * @endcode
+    */
+   class Uart1Init {
+   
+   public:
+      /// Uart1 signals
+      uint32_t sopt5 = 0;
+   
+      /**
+       * Copy Constructor
+       */
+      constexpr Uart1Init(const Uart1Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Uart1Init() = default;
+   
+      /**
+       * Constructor
+       * @param simUart1TxSrc Source for the UART1 transmit data
+       * @param simUart1RxSrc Source for the UART1 receive data
+       */
+      constexpr Uart1Init(
+            SimUart1TxSrc simUart1TxSrc,
+            SimUart1RxSrc simUart1RxSrc = SimUart1RxSrc_RxPin) {
+   
+         sopt5 = (sopt5 & ~(SIM_SOPT5_UART1TXSRC_MASK|SIM_SOPT5_UART1RXSRC_MASK)) |
+                          simUart1TxSrc|simUart1RxSrc;
+      }
+      /**
+       * Configure Uart1 signals from values specified in constructor.
+       */
+      void configure() const {
+
+         sim->SOPT5 = (sim->SOPT5&~(SIM_SOPT5_UART1TXSRC_MASK|SIM_SOPT5_UART1RXSRC_MASK)) | sopt5;
+      }
+   /**
+    * Set UART1 transmit data source
+    *
+    * @tparam   Types
+    * @param    rest
+    *
+    * @param simUart1TxSrc Source for the UART1 transmit data
+    */
+      template <typename... Types>
+      constexpr Uart1Init(SimUart1TxSrc simUart1TxSrc, Types... rest) : Init(rest...) {
+         sopt5 = (sopt5 & ~SIM_SOPT5_UART1TXSRC_MASK) | simUart1TxSrc;
+   }
+
+   /**
+    * Set UART1 receive data source
+    *
+    * @tparam   Types
+    * @param    rest
+    *
+    * @param simUart1RxSrc Source for the UART1 receive data
+    */
+      template <typename... Types>
+      constexpr Uart1Init(SimUart1RxSrc simUart1RxSrc, Types... rest) : Init(rest...) {
+         sopt5 = (sopt5 & ~SIM_SOPT5_UART1RXSRC_MASK) | simUart1RxSrc;
+   }
+
+   };
+
+   /**
+    * Set UART1 transmit data source
+    *
+    * @param simUart1TxSrc Source for the UART1 transmit data
+    * @param simUart1RxSrc Source for the UART1 receive data
+    */
+   static void configureUart1(
+         SimUart1TxSrc simUart1TxSrc,
+         SimUart1RxSrc simUart1RxSrc = SimUart1RxSrc_RxPin) {
+      sim->SOPT5 = (sim->SOPT5&~(SIM_SOPT5_UART1TXSRC_MASK|SIM_SOPT5_UART1RXSRC_MASK)) | simUart1TxSrc|simUart1RxSrc;
+   }
+
+   /**
+    * Set UART1 receive data source
+    *
+    * @param simUart1RxSrc Source for the UART1 receive data
+    */
+   static void setUart1RxSrc(SimUart1RxSrc simUart1RxSrc) {
+      sim->SOPT5 = (sim->SOPT5&~SIM_SOPT5_UART1RXSRC_MASK) | simUart1RxSrc;
+   }
+
+   /**
+    * Set UART1 transmit data source
+    *
+    * @param simUart1TxSrc Source for the UART1 transmit data
+    */
+   static void setUart1TxSrc(SimUart1TxSrc simUart1TxSrc) {
+      sim->SOPT5 = (sim->SOPT5&~SIM_SOPT5_UART1TXSRC_MASK) | simUart1TxSrc;
+   }
+
+   /**
+    * Class used to do initialisation of Adc trigger sources
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const AdcInit adcInit {
+    * };
+    *
+    * // Initialise Adc signals from values specified above
+    * adcInit.configure()
+    * @endcode
+    */
+   class AdcInit {
+   
+   public:
+      /// Adc signals
+      uint32_t sopt7 = 0;
+   
+      /**
+       * Copy Constructor
+       */
+      constexpr AdcInit(const AdcInit &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr AdcInit() = default;
+   
+      /**
+       * Constructor for ADC0 trigger mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simAdc0TriggerMode Alternative conversion triggers for ADC
+       *        _Pdb              - ADC is triggered by PDB
+       *        _Alt_PreTrigger_0 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 0 = A (SC1[0]/R[0])
+       *        _Alt_PreTrigger_1 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 1 = B (SC1[1]/R[1])
+       */
+      template <typename... Types>
+      constexpr AdcInit(SimAdc0TriggerMode simAdc0TriggerMode, Types... rest) : AdcInit(rest...) {
+   
+         sopt7 = (sopt7 & ~(SIM_SOPT7_ADC0ALTTRGEN_MASK|SIM_SOPT7_ADC0PRETRGSEL_MASK)) | simAdc0TriggerMode;
+      }
+   
+      /**
+       * Constructor for ADC0 trigger mode and ADC0 trigger source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simAdc0TriggerMode Alternative conversion triggers for ADC
+       *        _Pdb              - ADC is triggered by PDB
+       *        _Alt_PreTrigger_0 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 0 = A (SC1[0]/R[0])
+       *        _Alt_PreTrigger_1 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 1 = B (SC1[1]/R[1])
+       * @param simAdc0TriggerSrc  ADC Trigger source in STOP and VLPS modes, or when ADC Alternative Trigger is active
+       */
+      template <typename... Types>
+      constexpr AdcInit(
+            SimAdc0TriggerMode simAdc0TriggerMode,
+            SimAdc0TriggerSrc  simAdc0TriggerSrc, Types... rest) : AdcInit(rest...) {
+   
+         sopt7 = (sopt7 & ~(SIM_SOPT7_ADC0ALTTRGEN_MASK|SIM_SOPT7_ADC0PRETRGSEL_MASK|SIM_SOPT7_ADC0TRGSEL_MASK)) | simAdc0TriggerMode|simAdc0TriggerSrc;
+      }
+   
+      /**
+       * Configure ADC trigger sources from values specified in constructor.
+       */
+      void configure() const {
+
+         sim->SOPT7 = (sim->SOPT7&~(SIM_SOPT7_ADC0ALTTRGEN_MASK|SIM_SOPT7_ADC0PRETRGSEL_MASK|SIM_SOPT7_ADC0TRGSEL_MASK)) |
+                      sopt7;
+      }
+   };
+
+   /**
+    * Class used to do initialisation of Adc0 trigger sources
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Adc0Init adc0Init {
+    * };
+    *
+    * // Initialise Adc signals from values specified above
+    * adc0Init.configure()
+    * @endcode
+    */
+   class Adc0Init {
+   
+   public:
+      /// Adc signals
+      uint32_t sopt7 = 0;
+   
+      /**
+       * Copy Constructor
+       */
+      constexpr Adc0Init(const Adc0Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Adc0Init() = default;
+   
+      /**
+       * Constructor
+       * @param simAdc0TriggerMode Alternative conversion triggers for ADC
+       *        _Pdb              - ADC is triggered by PDB
+       *        _Alt_PreTrigger_0 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 0 = A (SC1[0]/R[0])
+       *        _Alt_PreTrigger_1 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 1 = B (SC1[1]/R[1])
+       * @param simAdc0TriggerSrc  ADC Trigger source in STOP and VLPS modes, or when ADC Alternative Trigger is active
+       */
+      constexpr Adc0Init(
+            SimAdc0TriggerMode simAdc0TriggerMode,
+            SimAdc0TriggerSrc  simAdc0TriggerSrc  = SimAdc0TriggerSrc_External) {
+   
+         sopt7 = simAdc0TriggerMode|simAdc0TriggerSrc;
+      }
+      /**
+       * Configure Adc signals from values specified in constructor.
+       */
+      void configure() const {
+
+         sim->SOPT7 = (sim->SOPT7&~(SIM_SOPT7_ADC0ALTTRGEN_MASK|SIM_SOPT7_ADC0PRETRGSEL_MASK|SIM_SOPT7_ADC0TRGSEL_MASK)) | sopt7;
+      }
+   };
+
+   /**
+    * Set ADC0 trigger mode and ADC0 trigger mode2
+    *
+    * @param simAdc0TriggerMode Alternative conversion triggers for ADC
+    *        _Pdb              - ADC is triggered by PDB
+    *        _Alt_PreTrigger_0 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 0 = A (SC1[0]/R[0])
+    *        _Alt_PreTrigger_1 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 1 = B (SC1[1]/R[1])
+    * @param simAdc0TriggerSrc  ADC Trigger source in STOP and VLPS modes, or when ADC Alternative Trigger is active
+    *
+    * For example, setAdc0Triggers(SimAdc0TriggerMode_Alt_PreTrigger_1, SimAdc0Trigger_PitCh0) will set the trigger source
+    * to PIT channel 0 and conversion will use SC1[1]/R[1]
+    */
+   static void setAdc0Triggers(
+         SimAdc0TriggerMode simAdc0TriggerMode,
+         SimAdc0TriggerSrc  simAdc0TriggerSrc  = SimAdc0TriggerSrc_External) {
+   
+      sim->SOPT7 = (sim->SOPT7&~(SIM_SOPT7_ADC0ALTTRGEN_MASK|SIM_SOPT7_ADC0PRETRGSEL_MASK|SIM_SOPT7_ADC0TRGSEL_MASK))|(simAdc0TriggerMode|simAdc0TriggerSrc);
+   };
+
+   /**
+    * Set USB Clock
     *
     * If the internal clock is selected then the clock divider will be recalculated
-    *      
-    * @param simUsbFullSpeedClockSource Clock source for peripheral clock
     *
-    * @return E_NO_ERROR on success
+    * @param simUsbFullSpeedClockSource Source for the USB clock
     */
-   static ErrorCode setUsbFullSpeedClock(
-                SimUsbFullSpeedClockSource simUsbFullSpeedClockSource = SimUsbFullSpeedClockSource_Peripheral) {
+   static ErrorCode setUsbFullSpeedClock(SimUsbFullSpeedClockSource simUsbFullSpeedClockSource) {
+      ErrorCode rc = E_NO_ERROR;
+   
+      // The USB interface must be disabled for clock changes to have effect
+      sim->SCGC4 = sim->SCGC4 & ~SIM_SCGC4_USBOTG_MASK;
    
       // Set clock source
       sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_USBSRC_MASK) | simUsbFullSpeedClockSource;
    
-      if (simUsbFullSpeedClockSource != SimUsbFullSpeedClockSource_Peripheral) {
-         // Assume value provided by USBDM configuration is suitable
-         sim->CLKDIV2 = 2;
-         return E_NO_ERROR;
-      }
-      // Try to calculate value
-      unsigned inputFreq = getPeripheralClock();
-      for (unsigned frac = 0; frac < 2; frac++) {
-         for (unsigned div = 0; div < 8; div++) {
-            unsigned usbClock = (inputFreq * (frac+1))/(div+1);
-            if (usbClock == 48000000) {
-               // Found suitable value
-               sim->CLKDIV2 = SIM_CLKDIV2_USBFRAC(frac)|SIM_CLKDIV2_USBDIV(div);
-               return E_NO_ERROR;
+      if (simUsbFullSpeedClockSource == SimUsbFullSpeedClockSource_PeripheralClk) {
+         // Set clock divider for internal clock
+         rc = E_CLOCK_INIT_FAILED;
+         // Try to calculate value
+         unsigned inputFreq = getPeripheralClock();
+         for (unsigned frac = 0; frac < 2; frac++) {
+            for (unsigned div = 0; div < 8; div++) {
+               unsigned usbClock = (inputFreq * (frac+1))/(div+1);
+               if (usbClock == 48000000) {
+                  // Found suitable value
+                  sim->CLKDIV2 = SIM_CLKDIV2_USBFRAC(frac)|SIM_CLKDIV2_USBDIV(div);
+                  rc = E_NO_ERROR;
+               }
             }
          }
       }
-      return setAndCheckErrorCode(E_CLOCK_INIT_FAILED);
+      rc = setErrorCode(rc);
+
+      // Restore USB clock
+      sim->SCGC4 = sim->SCGC4 | SIM_SCGC4_USBOTG_MASK;
+      return rc;
    }
 
    /**
@@ -1910,642 +2519,439 @@ public:
     *
     * @return Clock frequency as a uint32_t in Hz
     */
-   static uint32_t getUsbClock() {
+   static uint32_t getUsbFullSpeedClock() {
       switch ((sim->SOPT2&SIM_SOPT2_USBSRC_MASK)) {
          default:
-         case SimUsbFullSpeedClockSource_External   : return 48000000;
-         case SimUsbFullSpeedClockSource_Peripheral : return  (getPeripheralClock()*
-            (((sim->CLKDIV2&SIM_CLKDIV2_USBFRAC_MASK)>>SIM_CLKDIV2_USBFRAC_SHIFT)+1))/
-            (((sim->CLKDIV2&SIM_CLKDIV2_USBDIV_MASK)>>SIM_CLKDIV2_USBDIV_SHIFT)+1);
+         case SimUsbFullSpeedClockSource_External : return usbExternalClock;
+         case SimUsbFullSpeedClockSource_PeripheralClk :
+            return  (getPeripheralClock()*
+               (((sim->CLKDIV2&SIM_CLKDIV2_USBFRAC_MASK)>>SIM_CLKDIV2_USBFRAC_SHIFT)+1))/
+               (((sim->CLKDIV2&SIM_CLKDIV2_USBDIV_MASK)>>SIM_CLKDIV2_USBDIV_SHIFT)+1);
       }
    }
-   #endif
-
-   #ifdef SIM_SOPT2_SDHCSRC
-   /**
-    * Set SDHC input clock source
-    *
-    * @param simSdhcClockSource Clock source for SDHC
-    */
-   static void setSdhcClock(SimSdhcClockSource simSdhcClockSource) {
-      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_SDHCSRC_MASK) | simSdhcClockSource;
-   }
 
    /**
-    * Get SDHC input clock frequency
-    *
-    * @return Frequency as a uint32_t in Hz
+    * Set USB clock divisors to suitable value and enable clock
     */
-   static uint32_t getSdhcClock() {
-      
-      switch(sim->SOPT2&SIM_SOPT2_SDHCSRC_MASK) {
-      default:
-      case SIM_SOPT2_SDHCSRC(0): return SystemCoreClock;
-      case SIM_SOPT2_SDHCSRC(1): return getPeripheralClock();
-      case SIM_SOPT2_SDHCSRC(2): return Osc0Info::getOscerClock();
-      case SIM_SOPT2_SDHCSRC(3): return 0; // TODO SDHC0_CLKIN
-      }
-   }
-   #endif
-
-   #ifdef SIM_SOPT2_FBSL
-   /**
-    * Set External Bus security level.
-    *
-    * If flash security is enabled, then this sets what CPU operations can access off-chip via the
-    * FlexBus or SDRAMinterface.
-    *
-    * @param simExternalBusSecurity Security level
-    */
-   static void setExternalBusSecurity(SimExternalBusSecurity simExternalBusSecurity) {
-      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_FBSL_MASK) | simExternalBusSecurity;
-   }
-   #endif
-
-   #ifdef SIM_SOPT2_TIMESRC_MASK
-   /**
-    * Get IEEE 1588 Timestamp clock frequency
-    *
-    * @return Clock frequency as a uint32_t in Hz
-    */
-   static uint32_t getTimeClock() {
-      
-      switch(sim->SOPT2&SIM_SOPT2_TIMESRC_MASK) {
-      default:
-      case SIM_SOPT2_TIMESRC(0): return SystemCoreClock;
-      case SIM_SOPT2_TIMESRC(1): return getPeripheralClock();
-      case SIM_SOPT2_TIMESRC(2): return Osc0Info::getOscerClock();
-      case SIM_SOPT2_TIMESRC(3): return 0; // TODO ENET_1588_CLKIN
-      }
-   }
-   #endif
-
-   #ifdef SIM_SOPT2_FLEXIOSRC
-   /**
-    * Set FLEXIO input clock source
-    *
-    * @param simFlexioClockSource Clock source for FLEXIO
-    */
-   static void setFlexioClock(SimFlexioClockSource simFlexioClockSource) {
-      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_FLEXIOSRC_MASK) | simFlexioClockSource;
-   }
+   static void updateUsbClockDivider() {
    
+      setUsbFullSpeedClock((SimUsbFullSpeedClockSource)(sim->SOPT2&SIM_SOPT2_USBSRC_MASK));
+   }
+
    /**
-    * Get FLEXIO input clock frequency
+    * Class used to do initialisation of SIM
     *
-    * @return Frequency as a uint32_t in Hz
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    * @note Actual parameters available vary with device - see Sim::DefaultInitValue for custom example
+    *
+    * Example:
+    * @code
+    * static const Sim::Init simInit {
+    *    SimErc32kClkoutPinSelect_None,            // ERCLK32K Clock Output
+    *    SimErc32kSel_LpoClk,                      // ERCLK32K clock source
+    *    SimUsbPower_EnabledInAll,                 // USB voltage regulator power control
+    *    SimUsbFullSpeedClockSource_PeripheralClk, // USB Clock
+    *    SimTraceClockoutSel_McgOutClk,            // Debug trace clock select
+    *    SimRtcClkoutSel_32kHz ,                   // RTC clock out source
+    *    SimClkoutSel_OscerClk0 ,                  // CLKOUT pin clock
+    *    SimPeripheralClockSource_Irc48mClk ,      // Peripheral Clock
+    *    SimFlexbusSecurity_None,                  // FlexBus off-chip access security level
+    *    SimLpuartClockSource_PeripheralClk,       // LPUART Clock select
+    *    SimTraceClockoutSel_McgOutClk,            // Debug trace clock select
+    *    SimRtcClkoutSel_32kHz,                    // RTC clock out source
+    *    SimClkoutSel_OscerClk0,                   // CLKOUT pin clock
+    *    SimPeripheralClockSource_Irc48mClk,       // Peripheral Clock
+    *    SimFlexbusSecurity_None,                  // FlexBus off-chip access security level
+    *    SimFtm0Flt0_Ftm0Fault0,                   // FTM0 Fault 0 Select
+    *    SimFtm0Trg0Src_Cmp0,                      // FTM0 Hardware Trigger 0 Source
+    *    SimFtm0Flt1_Ftm0Fault1,                   // FTM0 Fault 1 Select
+    *    SimFtm0Trg1Src_PdbTrigger1,               // FTM0 Hardware Trigger 1 Source
+    *    SimFtm0ClkSel_FtmClkin0,                  // FTM0 External Clock Pin
+    *    SimFtm1Flt0_Ftm1Fault0,                   // FTM1 Fault 0 Select
+    *    SimFtm1Ch0Src_IcPin,                      // FTM 1 channel 0 input capture source
+    *    SimFtm1ClkSel_FtmClkin0,                  // FTM1 External Clock Pin
+    *    SimFtm2Flt0_Ftm2Fault0,                   // FTM2 Fault 0 Select
+    *    SimFtm2Ch0Src_IcPin,                      // FTM2 channel 0 input capture source
+    *    SimFtm2Ch1Src_IcPin,                      // FTM2 channel 1 input capture source
+    *    SimFtm2ClkSel_FtmClkin0,                  // FTM2 External Clock Pin
+    *    SimFtm3Flt0_Ftm3Fault0,                   // FTM3 Fault 0 Select
+    *    SimFtm3Trg0Src_Ftm1,                      // FTM3 Hardware Trigger 0 Source
+    *    SimFtm3Trg1Src_Ftm2,                      // FTM3 Hardware Trigger 1 Source
+    *    SimFtm3ClkSel_FtmClkin0,                  // FTM3 External Clock Pin
+    *    SimUart0RxSrc_RxPin,                      // UART 0 receive data source
+    *    SimUart0TxSrc_Direct,                     // UART 0 transmit data source
+    *    SimLpuart0RxSrc_RxPin,                    // LPUART 0 receive data source
+    *    SimUart1RxSrc_RxPin,                      // UART 1 receive data source
+    *    SimUart1TxSrc_Direct,                     // UART 1 transmit data source
+    *    SimAdc0TriggerMode_Pdb ,                  // ADC0 trigger mode
+    *    SimAdc0TriggerSrc_External,               // ADC0 trigger
+    *    SimAdc1TriggerMode_Pdb ,                  // ADC1 trigger mode
+    *    SimAdc1TriggerSrc_External,               // ADC1 trigger
+    *    SimFtm0Ch0OutputSrc_Direct,               // FTM0 channel 0 output source
+    *    SimFtm3Ch0OutputSrc_Direct,               // FTM3 channel 0 output source
+    *    SimFtm0Ch1OutputSrc_Direct,               // FTM0 channel 1 output source
+    *    SimFtm3Ch1OutputSrc_Direct,               // FTM3 channel 1 output source
+    *    SimFtm0Ch2OutputSrc_Direct,               // FTM0 channel 2 output source
+    *    SimFtm3Ch2OutputSrc_Direct,               // FTM3 channel 2 output source
+    *    SimFtm0Ch3OutputSrc_Direct,               // FTM0 channel 3 output source
+    *    SimFtm3Ch3OutputSrc_Direct,               // FTM3 channel 3 output source
+    *    SimFtm0Ch4OutputSrc_Direct,               // FTM0 channel 4 output source
+    *    SimFtm3Ch4OutputSrc_Direct,               // FTM3 channel 4 output source
+    *    SimFtm0Ch5OutputSrc_Direct,               // FTM0 channel 5 output source
+    *    SimFtm3Ch5OutputSrc_Direct,               // FTM3 channel 5 output source
+    *    SimFtm0Ch6OutputSrc_Direct,               // FTM0 channel 6 output source
+    *    SimFtm3Ch6OutputSrc_Direct,               // FTM3 channel 6 output source
+    *    SimFtm0Ch7OutputSrc_Direct,               // FTM0 channel 7 output source
+    *    SimFtm3Ch7OutputSrc_Direct,               // FTM3 channel 7 output source
+    *    SimTpm1ClkSel_TpmClkin0,                  // TPM1 External Clock Pin
+    *    SimTpm1Ch0Src_IcPin,                      // TPM1 channel 0 input capture source
+    *    SimTpm2ClkSel_TpmClkin0,                  // TPM2 External Clock Pin
+    *    SimTpm2Ch0Src_IcPin,                      // TPM2 channel 0 input capture source
+    * };
+    *
+    * // Initialise SIM from values specified above
+    * simInit.configure()
+    * @endcode
     */
-   static uint32_t getFlexioClock() {
+   class Init {
    
-      switch(sim->SOPT2&SIM_SOPT2_FLEXIOSRC_MASK) {
-      default:
-      case SIM_SOPT2_FLEXIOSRC(0): return SystemCoreClock;
-      case SIM_SOPT2_FLEXIOSRC(1): return getDividedPeripheralClock();
-      case SIM_SOPT2_FLEXIOSRC(2): return Osc0Info::getOscerClock();
-      case SIM_SOPT2_FLEXIOSRC(3): return McgInfo::getMcgIrClock();
-      }
-   }
-   #endif
-
-   //! System Options Register 2
-   static constexpr uint32_t sopt2 = 
-   #ifdef SIM_SOPT2_TRACECLKSEL
-      SIM_SOPT2_TRACECLKSEL(0) |      // Debug trace clock select
-   #endif
-   #ifdef SIM_SOPT2_TIMESRC
-      SIM_SOPT2_TIMESRC(-1) |          // IEEE 1588 timestamp clock source select
-   #endif
-   #ifdef SIM_SOPT2_RMIISRC
-      SIM_SOPT2_RMIISRC(-1) |          // Ethernet RMII clock source select
-   #endif
-   #ifdef SIM_SOPT2_SDHCSRC
-         SIM_SOPT2_SDHCSRC(-1) |       // SDHC clock source select
-   #endif
-   #ifdef SIM_SOPT2_UART0SRC
-      SIM_SOPT2_UART0SRC(-1) |         // UART0 clock source select
-   #endif
-   #ifdef SIM_SOPT2_LPUARTSRC
-         SIM_SOPT2_LPUARTSRC(-1) |     // LPUART clock source select
-   #endif
-   #ifdef SIM_SOPT2_LPUART0SRC
-         SIM_SOPT2_LPUART0SRC(-1) |     // LPUART clock source select
-   #endif
-   #ifdef SIM_SOPT2_PTD7PAD
-         SIM_SOPT2_PTD7PAD(0) |       // PTD7 pad drive strength
-   #endif
-   #ifdef SIM_SOPT2_TPMSRC
-         SIM_SOPT2_TPMSRC(-1) |        // TPM clock source select
-   #endif
-   #ifdef SIM_SOPT2_EMVSIMSRC
-         SIM_SOPT2_EMVSIMSRC(-1) | // EMVSIMSRC clock source select
-   #endif
-   #ifdef SIM_SOPT2_USBSRC
-         SIM_SOPT2_USBSRC(1) |        // USB clock source select
-   #endif
-   #ifdef SIM_SOPT2_FBSL
-         SIM_SOPT2_FBSL(-1) |          // FlexBus security level
-   #endif
-   #ifdef SIM_SOPT2_PLLFLLSEL
-         SIM_SOPT2_PLLFLLSEL(1)|      // PLL/FLL clock select
-   #endif
-   #ifdef SIM_SOPT2_RTCCLKOUTSEL
-         SIM_SOPT2_RTCCLKOUTSEL(1) |  // RTC clock out select
-   #endif
-         SIM_SOPT2_CLKOUTSEL(2);      // CLKOUT pin clock source select
-
-   #if defined(SIM_CLKDIV3_PLLFLLDIV)
-   /**
-    * Set clock divider for some peripherals (TPM,LPUART,FLEXIO)
-    *
-    * @param simPeripheralClockDivider Clock divider
-    */
-   static void setPeripheralClockDivider(SimPeripheralClockDivider simPeripheralClockDivider) {
-      // Must disable clock to TPMs, LPUARTs and FLEXIO before changing clock divider
-      uint32_t scgc2 = sim->SCGC2;
-      sim->SCGC2   = 0;
-      sim->CLKDIV3 = simPeripheralClockDivider;
-      sim->SCGC2   = scgc2;
-   }
-
-   /**
-    * Get Peripheral clock frequency after clock divider (TPM,LPUART,FLEXIO)
-    *
-    * @return Frequency as a uint32_t in Hz
-    */
-   static uint32_t getDividedPeripheralClock() {
-      int  pllfllfrac  = (sim->CLKDIV3&SIM_CLKDIV3_PLLFLLFRAC_MASK)>>SIM_CLKDIV3_PLLFLLFRAC_SHIFT;
-      int  pllflldiv   = (sim->CLKDIV3&SIM_CLKDIV3_PLLFLLDIV_MASK)>>SIM_CLKDIV3_PLLFLLDIV_SHIFT;
-      return (getPeripheralClock()*(pllfllfrac+1))/(pllflldiv+1);
-   }
-   #endif
-
-   #if defined(SIM_SOPT2_TPMSRC)
-   /**
-    * Set TPM input clock source
-    *
-    * @param simTpmClockSource Clock source for TPM
-    */
-   static void setTpmClock(SimTpmClockSource simTpmClockSource) {
-      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_TPMSRC_MASK) | simTpmClockSource;
-   }
-
-   /**
-    * Get TPM input clock frequency
-    *
-    * @return TPM input clock frequency as a uint32_t in Hz
-    */
-   static uint32_t getTpmClock() {
-      
-      switch(sim->SOPT2&SIM_SOPT2_TPMSRC_MASK) {
-      default:
-      case SIM_SOPT2_TPMSRC(0): return 0;
-      case SIM_SOPT2_TPMSRC(1): return getDividedPeripheralClock();
-      case SIM_SOPT2_TPMSRC(2): return Osc0Info::getOscerClock();
-      case SIM_SOPT2_TPMSRC(3): return McgInfo::getMcgIrClock();
-      }
-   }
-   #endif
-
-   #if defined(SIM_SOPT2_EMVSIMSRC)
-   /**
-    * Set EMVSIMSRC input clock source
-    *
-    * @param simEmvsimClockSource Clock source for EMVSIMSRC
-    */
-   static void setEmvsimClock(SimEmvsimClockSource simEmvsimClockSource) {
-      sim->SOPT2 = (sim->SOPT2&~SIM_SOPT2_EMVSIMSRC_MASK) | simEmvsimClockSource;
-   }
-
-   /**
-    * Get EMVSIMSRC input clock frequency
-    *
-    * @return EMVSIMSRC input clock frequency as a uint32_t in Hz
-    */
-   static uint32_t getEmvsimClock() {
-      
-      switch(sim->SOPT2&SIM_SOPT2_EMVSIMSRC_MASK) {
-      default:
-      case SIM_SOPT2_EMVSIMSRC(0): return 0;
-      case SIM_SOPT2_EMVSIMSRC(1): return getDividedPeripheralClock();
-      case SIM_SOPT2_EMVSIMSRC(2): return Osc0Info::getOscerClock();
-      case SIM_SOPT2_EMVSIMSRC(3): return McgInfo::getMcgIrClock();
-      }
-   }
-   #endif
-
-   //! System Options Register 4
-   static constexpr uint32_t sopt4 = 
-   #ifdef SIM_SOPT4_FTM3TRG1SRC
-      SIM_SOPT4_FTM3TRG1SRC(-1) |   // FlexTimer 3 Hardware Trigger 1 Source Select
-   #endif
-   #ifdef SIM_SOPT4_FTM3TRG0SRC
-      SIM_SOPT4_FTM3TRG0SRC(-1) |   // FlexTimer 3 Hardware Trigger 0 Source Select
-   #endif
-   #ifdef SIM_SOPT4_FTM0TRG1SRC
-      SIM_SOPT4_FTM0TRG1SRC(-1) |   // FlexTimer 0 Hardware Trigger 1 Source Select
-   #endif
-   #ifdef SIM_SOPT4_FTM0TRG0SRC
-      SIM_SOPT4_FTM0TRG0SRC(0) |   // FlexTimer 0 Hardware Trigger 0 Source Select
-   #endif
-   #ifdef SIM_SOPT4_FTM3CLKSEL
-      SIM_SOPT4_FTM3CLKSEL(-1)  |   // FlexTimer 3 External Clock Pin Select
-   #endif
-   #ifdef SIM_SOPT4_FTM2CLKSEL
-      SIM_SOPT4_FTM2CLKSEL(-1)  |   // FlexTimer 2 External Clock Pin Select
-   #endif
-   #ifdef SIM_SOPT4_FTM1CLKSEL
-      SIM_SOPT4_FTM1CLKSEL(0)  |   // FlexTimer 1 External Clock Pin Select
-   #endif
-   #ifdef SIM_SOPT4_FTM0CLKSEL
-      SIM_SOPT4_FTM0CLKSEL(0)  |   // FlexTimer 0 External Clock Pin Select
-   #endif
-   #ifdef SIM_SOPT4_FTM2CH1SRC
-      SIM_SOPT4_FTM2CH1SRC(-1)  |   // FTM2 channel 1 input capture source select
-   #endif
-   #ifdef SIM_SOPT4_FTM2CH0SRC
-      SIM_SOPT4_FTM2CH0SRC(-1)  |   // FTM2 channel 0 input capture source select
-   #endif
-   #ifdef SIM_SOPT4_FTM1CH0SRC
-      SIM_SOPT4_FTM1CH0SRC(0)  |   // FTM1 channel 0 input capture source select
-   #endif
-   #ifdef SIM_SOPT4_FTM3FLT0
-      SIM_SOPT4_FTM3FLT0(-1)    |   // FlexTimer 3 Fault 0 Select
-   #endif
-   #ifdef SIM_SOPT4_FTM2FLT0
-      SIM_SOPT4_FTM2FLT0(-1)    |   // FlexTimer 2 Fault 0 Select
-   #endif
-   #ifdef SIM_SOPT4_FTM1FLT0
-      SIM_SOPT4_FTM1FLT0(0)    |   // FlexTimer 1 Fault 0 Select
-   #endif
-   #ifdef SIM_SOPT4_FTM0FLT3
-      SIM_SOPT4_FTM0FLT3(-1)    |   // FlexTimer 0 Fault 3 Select
-   #endif
-   #ifdef SIM_SOPT4_FTM0FLT2
-      SIM_SOPT4_FTM0FLT2(-1)    |   // FlexTimer 0 Fault 2 Select
-   #endif
-      SIM_SOPT4_FTM0FLT1(0)    |   // FlexTimer 0 Fault 1 Select
-      SIM_SOPT4_FTM0FLT0(0);       // FlexTimer 0 Fault 0 Select
-
-   #if defined(SIM_SOPT4_FTM3TRG1SRC_MASK)
-   /**
-    * Select FlexTimer 3 Hardware Trigger 1 Source
-    *
-    * @param simFtm3Trg1Src Trigger Source
-    */
-   static void setFtm3Trg1Src(SimFtm3Trg1Src simFtm3Trg1Src) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM3TRG1SRC_MASK)|simFtm3Trg1Src;   
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM3TRG0SRC_MASK)
-   /**
-    * Select FlexTimer 3 Hardware Trigger 0 Source
-    *
-    * @param simFtm3Trg0Src Trigger Source
-    */
-   static void setFtm3Trg0Src(SimFtm3Trg0Src simFtm3Trg0Src) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM3TRG0SRC_MASK)|simFtm3Trg0Src;   
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0TRG1SRC_MASK)
-   /**
-    * Select FlexTimer 0 Hardware Trigger 1 Source
-    *
-    * @param simFtm0Trg1Src Trigger Source
-    */
-   static void setFtm0Trg1Src(SimFtm0Trg1Src simFtm0Trg1Src) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0TRG1SRC_MASK)|simFtm0Trg1Src;   
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0TRG0SRC_MASK)
-   /**
-    * Select FlexTimer 0 Hardware Trigger 0 Source
-    *
-    * @param simFtm0Trg0Src Trigger Source
-    */
-   static void setFtm0Trg0Src(SimFtm0Trg0Src simFtm0Trg0Src) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0TRG0SRC_MASK)|simFtm0Trg0Src;   
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM3CLKSEL_MASK)
-   /**
-    * Select FlexTimer 3 External Clock Pin
-    *
-    * @param simFtm3ClkSel Clock Pin
-    */
-   static void setFtm3ClkSel(SimFtm3ClkSel simFtm3ClkSel) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM3CLKSEL_MASK)|simFtm3ClkSel;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM2CLKSEL_MASK)
-   /**
-    * Select FlexTimer 2 External Clock Pin
-    *
-    * @param simFtm2ClkSel Clock Pin
-    */
-   static void setFtm2ClkSel(SimFtm2ClkSel simFtm2ClkSel) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM2CLKSEL_MASK)|simFtm2ClkSel;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM1CLKSEL_MASK)
-   /**
-    * Select FlexTimer 1 External Clock Pin
-    *
-    * @param simFtm1ClkSel Clock Pin
-    */
-   static void setFtm1ClkSel(SimFtm1ClkSel simFtm1ClkSel) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM1CLKSEL_MASK)|simFtm1ClkSel;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0CLKSEL_MASK)
-   /**
-    * Select FTM0 External Clock Pin
-    *
-    * @param simFtm0ClkSel Clock Pin
-    */
-   static void setFtm0ClkSel(SimFtm0ClkSel simFtm0ClkSel) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0CLKSEL_MASK)|simFtm0ClkSel;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM2CH0SRC_MASK)
-   /**
-    * Select FTM2 channel 0 input capture source
-    *
-    * @param simFtm2Ch0Src Capture Source
-    */
-   static void setFtm2Ch0Src(SimFtm2Ch0Src simFtm2Ch0Src) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM2CH0SRC_MASK)|simFtm2Ch0Src;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM2CH1SRC_MASK)
-   /**
-    * Select FTM2 channel 1 input capture source
-    *
-    * @param simFtm2Ch1Src Capture Source
-    */
-   static void setSimFtm2Ch1Src(SimFtm2Ch0Src simFtm2Ch1Src) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM2CH1SRC_MASK)|simFtm2Ch1Src;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM1CH0SRC_MASK)
-   /**
-    * Select FTM1 channel 0 input capture source
-    *
-    * @param simFtm1Ch0Src Capture Source
-    */
-   static void setFtm1Ch0Src(SimFtm1Ch0Src simFtm1Ch0Src) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM1CH0SRC_MASK)|simFtm1Ch0Src;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM3FLT0_MASK)
-   /**
-    * Select FTM3 Fault 0 Select
-    *
-    * @param simFtm3Flt0 Fault Source
-    */
-   static void setFtm3Flt0(SimFtm3Flt0 simFtm3Flt0) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM3FLT0_MASK)|simFtm3Flt0;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM2FLT0_MASK)
-   /**
-    * Select FTM2 Fault 0 Select
-    *
-    * @param simFtm2Flt0 Fault Source
-    */
-   static void setFtm2Flt0(SimFtm2Flt0 simFtm2Flt0) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM2FLT0_MASK)|simFtm2Flt0;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM1FLT0_MASK)
-   /**
-    * Select FTM1 Fault 0 Select
-    *
-    * @param simFtm1Flt0 Fault Source
-    */
-   static void setFtm1Flt0(SimFtm1Flt0 simFtm1Flt0) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM1FLT0_MASK)|simFtm1Flt0;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0FLT2_MASK)
-   /**
-    * Select FTM0 Fault 2 Select
-    *
-    * @param simFtm0Flt2 Fault Source
-    */
-   static void setFtm0Flt2(SimFtm0Flt2 simFtm0Flt2) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0FLT2_MASK)|simFtm0Flt2;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0FLT1_MASK)
-   /**
-    * Select FTM0 Fault 1 Select
-    *
-    * @param simFtm0Flt1 Fault Source
-    */
-   static void setFtm0Flt1(SimFtm0Flt1 simFtm0Flt1) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0FLT1_MASK)|simFtm0Flt1;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT4_FTM0FLT0_MASK)
-   /**
-    * Select FTM0 Fault 0 Select
-    *
-    * @param simFtm0Flt0 Fault Source
-    */
-   static void setFtm0Flt0(SimFtm0Flt0 simFtm0Flt0) {
-      sim->SOPT4 = (sim->SOPT4&~SIM_SOPT4_FTM0FLT0_MASK)|simFtm0Flt0;      
-   };
-   #endif
-
-   #if defined(SIM_SOPT5_UART1RXSRC_MASK)
-   /**
-    * Select UART 1 receive data source
-    *
-    * @param simUart1RxSrc UART Rx source
-    */
-   static void setUart1RxSrc(SimUart1RxSrc simUart1RxSrc) {
-      sim->SOPT5 = (sim->SOPT5&~SIM_SOPT5_UART1RXSRC_MASK)|simUart1RxSrc;      
-   }
-   #endif
-
-   #if defined(SIM_SOPT5_UART1TXSRC_MASK)
-   /**
-    * Select UART 1 transmit data source select
-    *
-    * @param simUart1TxSrc UART Tx source
-    */
-   static void setUart1TxSrc(SimUart1TxSrc simUart1TxSrc) {
-      sim->SOPT5 = (sim->SOPT5&~SIM_SOPT5_UART1TXSRC_MASK)|simUart1TxSrc;      
-   }
-   #endif
-
-   #if defined(SIM_SOPT5_UART0RXSRC_MASK)
-   /**
-    * Select UART 0 receive data source
-    *
-    * @param simUart0RxSrc UART Rx source
-    */
-   static void setUart0RxSrc(SimUart0RxSrc simUart0RxSrc) {
-      sim->SOPT5 = (sim->SOPT5&~SIM_SOPT5_UART0RXSRC_MASK)|simUart0RxSrc;      
-   }
-   #endif
-
-   #if defined(SIM_SOPT5_UART0TXSRC_MASK)
-   /**
-    * Select UART 0 transmit data source select
-    *
-    * @param simUart0TxSrc UART Tx source
-    */
-   static void setUart0TxSrc(SimUart0TxSrc simUart0TxSrc) {
-      sim->SOPT5 = (sim->SOPT5&~SIM_SOPT5_UART0TXSRC_MASK)|simUart0TxSrc;      
-   }
-   #endif
-
-   //! System Options Register 5
-   static constexpr uint32_t sopt5 = 
-   #ifdef SIM_SOPT5_UART0TXSRC
-      SIM_SOPT5_UART0TXSRC(0) |      // UART 0 transmit data source select
-   #endif
-   #ifdef SIM_SOPT5_UART0RXSRC
-      SIM_SOPT5_UART0RXSRC(0) |      // UART 0 receive data source select
-   #endif
-   #ifdef SIM_SOPT5_UART1TXSRC
-      SIM_SOPT5_UART1TXSRC(0) |      // UART 1 transmit data source select
-   #endif
-   #ifdef SIM_SOPT5_UART1RXSRC
-      SIM_SOPT5_UART1RXSRC(0) |      // UART 1 receive data source select
-   #endif
-   #ifdef SIM_SOPT5_LPUART0RXSRC
-      SIM_SOPT5_LPUART0RXSRC(-1) |  // LPUART 0 receive data source select
-   #endif
-   #ifdef SIM_SOPT5_LPUART0TXSRC
-      SIM_SOPT5_LPUART0TXSRC(-1) |  // LPUART 0 transmit data source select
-   #endif
-   #ifdef SIM_SOPT5_LPUART1TXSRC
-      SIM_SOPT5_LPUART1TXSRC(-1) | // LPUART 1 transmit data source select
-   #endif
-   #ifdef SIM_SOPT5_LPUART1RXSRC
-      SIM_SOPT5_LPUART1RXSRC(-1) | // LPUART 1 receive data source select
-   #endif
-      0;
-
-   #if defined(SIM_SOPT7_ADC0TRGSEL_MASK)
-   /**
-    * Select the ADC0 Trigger source
-    * 
-    * If PDB is selected by SimAdc0Trigger then Pre-trigger 0/1 is determined by the PDB setup,
-    * otherwise Pre-trigger 0/1 is determined by this parameter.
-    * For example, setAdc0Triggers(SimAdc0TriggerMode_Alt_PreTrigger_1, SimAdc0Trigger_PitCh0) will set the trigger source
-    * to PIT channel 0 and conversion will use SC1[1]/R[1]. 
-    *
-    * @param[in] simAdc0TriggerMode Select ADC0 Trigger mode 
-    * @param[in] simAdc0Trigger     Select the ADC0 Trigger source in STOP and VLPS modes, or when ADC0 Alternative Trigger is active.
-    */
-   static void setAdc0Triggers(SimAdc0TriggerMode simAdc0TriggerMode, SimAdc0Trigger simAdc0Trigger=SimAdc0Trigger_PdbExTrig) {
-      sim->SOPT7 = (sim->SOPT7&~(SIM_SOPT7_ADC0TRGSEL_MASK|SIM_SOPT7_ADC0ALTTRGEN_MASK))|simAdc0Trigger|simAdc0TriggerMode;
-   }
-   #endif
-
-   #if defined(SIM_SOPT7_ADC1TRGSEL_MASK)
-   /**
-    * Select the ADC1 Trigger source
-    * 
-    * If PDB is selected by SimAdc0Trigger then Pre-trigger 0/1 is determined by the PDB setup,
-    * otherwise Pre-trigger 0/1 is determined by this parameter.
-    * For example, setAdc1Triggers(SimAdc1TriggerMode_Alt_PreTrigger_1, SimAdc1Trigger_PitCh0) will set the trigger source
-    * to PIT channel 0 and conversion will use SC1[1]/R[1]. 
-    *
-    * @param[in] simAdc1TriggerMode Select ADC1 Trigger mode 
-    * @param[in] simAdc1Trigger     Select the ADC1 Trigger source in STOP and VLPS modes, or when ADC0 Alternative Trigger is active.
-    */
-   static void setAdc1Triggers(SimAdc1TriggerMode simAdc1TriggerMode, SimAdc1Trigger simAdc1Trigger=SimAdc1Trigger_PdbExTrig) {
-      sim->SOPT7 = (sim->SOPT7&~(SIM_SOPT7_ADC1TRGSEL_MASK|SIM_SOPT7_ADC1ALTTRGEN_MASK))|simAdc1Trigger|simAdc1TriggerMode;
-   }
-   #endif
-
-   //! System Options Register 7
-   static constexpr uint32_t sopt7 = 
-   #ifdef SIM_SOPT7_ADC1ALTTRGEN
-      SIM_SOPT7_ADC1ALTTRGEN(-1) |    // ADC1 alternate trigger enable
-      SIM_SOPT7_ADC1PRETRGSEL(-1) |   // ADC1 pretrigger select
-      SIM_SOPT7_ADC1TRGSEL(-1) |      // ADC1 trigger select
-   #endif
-      SIM_SOPT7_ADC0ALTTRGEN(0) |    // ADC0 alternate trigger enable
-      SIM_SOPT7_ADC0PRETRGSEL(0) |   // ADC0 pretrigger select
-      SIM_SOPT7_ADC0TRGSEL(0);       // ADC0 trigger select
-
-   #if defined(SIM_SOPT8_FTM0OCH0SRC)
-   //! System Options Register 8
-   static constexpr uint32_t sopt8 = 
-      SIM_SOPT8_FTM3OCH7SRC(Symbol 'sim_sopt8_ftm3och7src' not found) |   // FTM3 channel 7 output source
-      SIM_SOPT8_FTM3OCH6SRC(Symbol 'sim_sopt8_ftm3och6src' not found) |   // FTM3 channel 6 output source
-      SIM_SOPT8_FTM3OCH5SRC(Symbol 'sim_sopt8_ftm3och5src' not found) |   // FTM3 channel 5 output source
-      SIM_SOPT8_FTM3OCH4SRC(Symbol 'sim_sopt8_ftm3och4src' not found) |   // FTM3 channel 4 output source
-      SIM_SOPT8_FTM3OCH3SRC(Symbol 'sim_sopt8_ftm3och3src' not found) |   // FTM3 channel 3 output source
-      SIM_SOPT8_FTM3OCH2SRC(Symbol 'sim_sopt8_ftm3och2src' not found) |   // FTM3 channel 2 output source
-      SIM_SOPT8_FTM3OCH1SRC(Symbol 'sim_sopt8_ftm3och1src' not found) |   // FTM3 channel 1 output source
-      SIM_SOPT8_FTM3OCH0SRC(Symbol 'sim_sopt8_ftm3och0src' not found) |   // FTM3 channel 0 output source
-      SIM_SOPT8_FTM0OCH7SRC(Symbol 'sim_sopt8_ftm0och7src' not found) |   // FTM0 channel 7 output source
-      SIM_SOPT8_FTM0OCH6SRC(Symbol 'sim_sopt8_ftm0och6src' not found) |   // FTM0 channel 6 output source
-      SIM_SOPT8_FTM0OCH5SRC(Symbol 'sim_sopt8_ftm0och5src' not found) |   // FTM0 channel 5 output source
-      SIM_SOPT8_FTM0OCH4SRC(Symbol 'sim_sopt8_ftm0och4src' not found) |   // FTM0 channel 4 output source
-      SIM_SOPT8_FTM0OCH3SRC(Symbol 'sim_sopt8_ftm0och3src' not found) |   // FTM0 channel 3 output source
-      SIM_SOPT8_FTM0OCH2SRC(Symbol 'sim_sopt8_ftm0och2src' not found) |   // FTM0 channel 2 output source
-      SIM_SOPT8_FTM0OCH1SRC(Symbol 'sim_sopt8_ftm0och1src' not found) |   // FTM0 channel 1 output source
-      SIM_SOPT8_FTM0OCH0SRC(Symbol 'sim_sopt8_ftm0och0src' not found);    // FTM0 channel 0 output source
-   #endif
-
-   #if defined(SIM_SOPT9_TPM1CH0SRC)
-   //! System Options Register 9
-   static constexpr uint32_t sopt9 = 
-      SIM_SOPT9_TPM2CLKSEL(Symbol 'sim_sopt9_tpm2clksel' not found)  |   // TPM2 External Clock Pin Select
-      SIM_SOPT9_TPM1CLKSEL(Symbol 'sim_sopt9_tpm1clksel' not found)  |   // TPM1 External Clock Pin Select
-      SIM_SOPT9_TPM2CH0SRC(Symbol 'sim_sopt9_tpm2ch0src' not found)  |   // TPM2 channel 0 input capture source select
-      SIM_SOPT9_TPM1CH0SRC(Symbol 'sim_sopt9_tpm1ch0src' not found);     // TPM1 channel 0 input capture source select
-   #endif
-
-   /**
-    * Initialise SIM registers
-    */
-   static void initRegs() {
-   #ifdef SIM_SCGC4_USBOTG_MASK
-      // The USB interface must be disabled for clock changes to have effect
-      sim->SCGC4 = sim->SCGC4 & ~SIM_SCGC4_USBOTG_MASK;
-   #endif
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
    
-      sim->SOPT1 = sopt1;
-      // sim->SOPT2(PLLFLLSEL) may also be altered by MCG clock code
-      sim->SOPT2 = sopt2;
-      sim->SOPT4 = sopt4;
-      sim->SOPT5 = sopt5;
-      sim->SOPT7 = sopt7;
-   #if defined(SIM_SOPT8_FTM0OCH0SRC)
-      sim->SOPT8 = sopt8;
-   #endif
-   #if defined(SIM_SOPT9_TPM1CH0SRC)
-      sim->SOPT9 = sopt9;
-   #endif
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
    
-   #ifdef SIM_CLKDIV2_USBDIV_MASK
-      sim->CLKDIV2 = 2;
-   #endif
-   }
+      /**
+       * Configure SIM from values specified in constructor.
+       */
+      void configure() const {
+         sim->SOPT1CFG = SIM_SOPT1CFG_USSWE_MASK|SIM_SOPT1CFG_UVSWE_MASK|SIM_SOPT1CFG_URWE_MASK;
+         sim->SOPT1 = sopt1;
+         sim->SOPT2 = sopt2;   // SOPT2 may also be altered by MCG clock code
+         sim->SOPT4 = sopt4;
+         sim->SOPT5 = sopt5;
+         sim->SOPT7 = sopt7;
+   
+         updateUsbClockDivider();
+      }
+
+      /// System Options Register 1
+      uint32_t sopt1 = 0;
+
+      /// System Options Register 2
+      uint32_t sopt2 = 0;
+
+      /// System Options Register 4
+      uint32_t sopt4 = 0;
+
+      /// System Options Register 5
+      uint32_t sopt5 = 0;
+
+      /// System Options Register 7
+      uint32_t sopt7 = 0;
+
+   
+   public:
+      /**
+       * Constructor for Peripheral Clock
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simPeripheralClockSource Clock for various peripherals (LPUART, TPM etc.)
+       *        If there is a peripheral clock divider then this is the
+       *        Frequency of the undivided peripheral clock
+       */
+      template <typename... Types>
+      constexpr Init(SimPeripheralClockSource simPeripheralClockSource, Types... rest) : Init(rest...) {
+   
+         sopt2 |= simPeripheralClockSource;
+      }
+   
+      /**
+       * Constructor for ERCLK32K clock source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simErc32kSel Clock source for External 32k Reference Clock [ERCLK32K]
+       */
+      template <typename... Types>
+      constexpr Init(SimErc32kSel simErc32kSel, Types... rest) : Init(rest...) {
+   
+         sopt1 |= simErc32kSel;
+      }
+   
+      /**
+       * Constructor for USB voltage regulator power control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simUsbPower Controls when the USB voltage regulator is enabled in
+       *        (RUN), (STOP, VLPS, LLS and VLLS) or (VLPR and VLPW) modes
+       */
+      template <typename... Types>
+      constexpr Init(SimUsbPower simUsbPower, Types... rest) : Init(rest...) {
+   
+         sopt1 |= simUsbPower;
+      }
+   
+      /**
+       * Constructor for PTD7 pad drive strength
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simPortDPad Controls the output drive strength of the PTD7 pin
+       *        by selecting either one or two pads to drive it
+       */
+      template <typename... Types>
+      constexpr Init(SimPortDPad simPortDPad, Types... rest) : Init(rest...) {
+   
+         sopt2 |= simPortDPad;
+      }
+   
+      /**
+       * Constructor for USB Clock
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simUsbFullSpeedClockSource Source for the USB clock
+       */
+      template <typename... Types>
+      constexpr Init(SimUsbFullSpeedClockSource simUsbFullSpeedClockSource, Types... rest) : Init(rest...) {
+   
+         sopt2 |= simUsbFullSpeedClockSource;
+      }
+   
+      /**
+       * Constructor for Debug trace clock select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simTraceClockoutSel Selects the core/system clock or MCG output clock (MCGOUTCLK)
+       *        as the trace clock source
+       */
+      template <typename... Types>
+      constexpr Init(SimTraceClockoutSel simTraceClockoutSel, Types... rest) : Init(rest...) {
+   
+         sopt2 |= simTraceClockoutSel;
+      }
+   
+      /**
+       * Constructor for RTC clock out source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simRtcClkoutSel Clock output on the RTC_CLKOUT pin
+       */
+      template <typename... Types>
+      constexpr Init(SimRtcClkoutSel simRtcClkoutSel, Types... rest) : Init(rest...) {
+   
+         sopt2 |= simRtcClkoutSel;
+      }
+   
+      /**
+       * Constructor for CLKOUT pin clock
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simClkoutSel Clock to output on the CLKOUT pin
+       */
+      template <typename... Types>
+      constexpr Init(SimClkoutSel simClkoutSel, Types... rest) : Init(rest...) {
+   
+         sopt2 |= simClkoutSel;
+      }
+   
+      /**
+       * Constructor for FTM0 Fault 0 Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simFtm0Flt0 Source of FTM fault input 0
+       */
+      template <typename... Types>
+      constexpr Init(SimFtm0Flt0 simFtm0Flt0, Types... rest) : Init(rest...) {
+   
+         sopt4 |= simFtm0Flt0;
+      }
+   
+      /**
+       * Constructor for FTM0 Hardware Trigger 0 Source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simFtm0Trg0Src Source of FTM hardware trigger 0
+       */
+      template <typename... Types>
+      constexpr Init(SimFtm0Trg0Src simFtm0Trg0Src, Types... rest) : Init(rest...) {
+   
+         sopt4 |= simFtm0Trg0Src;
+      }
+   
+      /**
+       * Constructor for FTM0 Fault 1 Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simFtm0Flt1 Source of FTM fault input 1
+       */
+      template <typename... Types>
+      constexpr Init(SimFtm0Flt1 simFtm0Flt1, Types... rest) : Init(rest...) {
+   
+         sopt4 |= simFtm0Flt1;
+      }
+   
+      /**
+       * Constructor for FTM0 External Clock Pin
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simFtm0ClkSel External pin used to drive the clock to the FTM module
+       */
+      template <typename... Types>
+      constexpr Init(SimFtm0ClkSel simFtm0ClkSel, Types... rest) : Init(rest...) {
+   
+         sopt4 |= simFtm0ClkSel;
+      }
+   
+      /**
+       * Constructor for FTM1 Fault 0 Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simFtm1Flt0 Source of FTM fault input 0
+       */
+      template <typename... Types>
+      constexpr Init(SimFtm1Flt0 simFtm1Flt0, Types... rest) : Init(rest...) {
+   
+         sopt4 |= simFtm1Flt0;
+      }
+   
+      /**
+       * Constructor for FTM 1 channel 0 input capture source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simFtm1Ch0Src Source for FTM channel 0 input capture
+       *        NOTE: When the FTM is not in input capture mode, clear this field
+       */
+      template <typename... Types>
+      constexpr Init(SimFtm1Ch0Src simFtm1Ch0Src, Types... rest) : Init(rest...) {
+   
+         sopt4 |= simFtm1Ch0Src;
+      }
+   
+      /**
+       * Constructor for FTM1 External Clock Pin
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simFtm1ClkSel External pin used to drive the clock to the FTM module
+       */
+      template <typename... Types>
+      constexpr Init(SimFtm1ClkSel simFtm1ClkSel, Types... rest) : Init(rest...) {
+   
+         sopt4 |= simFtm1ClkSel;
+      }
+   
+      /**
+       * Constructor for UART0 receive data source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simUart0RxSrc Source for the UART0 receive data
+       */
+      template <typename... Types>
+      constexpr Init(SimUart0RxSrc simUart0RxSrc, Types... rest) : Init(rest...) {
+   
+         sopt5 |= simUart0RxSrc;
+      }
+   
+      /**
+       * Constructor for UART0 transmit data source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simUart0TxSrc Source for the UART0 transmit data
+       */
+      template <typename... Types>
+      constexpr Init(SimUart0TxSrc simUart0TxSrc, Types... rest) : Init(rest...) {
+   
+         sopt5 |= simUart0TxSrc;
+      }
+   
+      /**
+       * Constructor for UART1 receive data source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simUart1RxSrc Source for the UART1 receive data
+       */
+      template <typename... Types>
+      constexpr Init(SimUart1RxSrc simUart1RxSrc, Types... rest) : Init(rest...) {
+   
+         sopt5 |= simUart1RxSrc;
+      }
+   
+      /**
+       * Constructor for UART1 transmit data source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simUart1TxSrc Source for the UART1 transmit data
+       */
+      template <typename... Types>
+      constexpr Init(SimUart1TxSrc simUart1TxSrc, Types... rest) : Init(rest...) {
+   
+         sopt5 |= simUart1TxSrc;
+      }
+   
+      /**
+       * Constructor for ADC0 trigger mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param simAdc0TriggerMode Alternative conversion triggers for ADC
+       *        _Pdb              - ADC is triggered by PDB
+       *        _Alt_PreTrigger_0 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 0 = A (SC1[0]/R[0])
+       *        _Alt_PreTrigger_1 - ADC is triggered by SimAdc0Trigger selection and uses pretrigger 1 = B (SC1[1]/R[1])
+       * @param simAdc0TriggerSrc  ADC Trigger source in STOP and VLPS modes, or when ADC Alternative Trigger is active
+       */
+      template <typename... Types>
+      constexpr Init(
+            SimAdc0TriggerMode simAdc0TriggerMode,
+            SimAdc0TriggerSrc  simAdc0TriggerSrc  = SimAdc0TriggerSrc_External, Types... rest) : Init(rest...) {
+   
+         sopt7 |= simAdc0TriggerMode|simAdc0TriggerSrc;
+      }
+   
+   };
 
 };
 
@@ -2554,115 +2960,568 @@ public:
  * @}
  */
 /**
- * @addtogroup PMC_Group PMC, Power Management Controller
- * @brief Abstraction for Power Management Controller
- * @{
- */
-#define USBDM_PMC_IS_DEFINED
-/**
- * Peripheral information for PMC, Power Management Controller.
- * 
- * This may include pin information, constants, register addresses, and default register values,
- * along with simple accessor functions.
- */
-class PmcInfo {
-public:
-   // Template:pmc_mk
-
-   //! Hardware base address as uint32_t 
-   static constexpr uint32_t baseAddress = PMC_BasePtr;
-
-   //! Hardware base pointer
-   static constexpr HardwarePtr<PMC_Type> pmc = baseAddress;
-
-   //! Default value for Low Voltage Detect Status And Control 1 register
-   static constexpr uint32_t pmc_lvdsc1  = 
-   #ifdef PMC_LVDSC1_LVDV
-      PMC_LVDSC1_LVDV(0)   | // Low-Voltage Detect Voltage Select
-   #endif
-      PMC_LVDSC1_LVDIE(0) | // Low-Voltage Detect Interrupt Enable
-      PMC_LVDSC1_LVDRE(0);  // Low-Voltage Detect Reset Enable
-
-   //! Frequency of Low Power Oscillator (LPO) Clock [~1kHz]
-   static constexpr uint32_t system_low_power_clock = 1000UL;
-
-   //! Default value for Low Voltage Detect Status And Control 2 register
-   static constexpr uint32_t pmc_lvdsc2  = 
-   #ifdef PMC_LVDSC2_LVWV
-      PMC_LVDSC2_LVWV(0)   | // Low-Voltage Warning Voltage Select
-   #endif
-      PMC_LVDSC2_LVWIE(0);  // Low-Voltage Warning Interrupt Enable
-
-   /**
-    * Get LPO clock
-    *
-    * @return frequency in Hz as uint32_t
-    */
-   static constexpr uint32_t getLpoClock() {
-      return system_low_power_clock;
-   }
-
-   #ifdef PMC_REGSC_BGEN
-   //! Default value for Regulator Status And Control register
-   static constexpr uint32_t pmc_regsc  = 
-      PMC_REGSC_BGEN(0) | // Bandgap Enable In VLPx Operation
-      PMC_REGSC_BGBE(0);  // Bandgap Buffer Enable  
-   #endif
-
-   /* Template_irqOption.xml */
-
-   //! IRQ numbers for hardware
-   static constexpr IRQn_Type irqNums[]  = PMC_IRQS;
-
-   //! Number of IRQs for hardware
-   static constexpr uint32_t irqCount  = sizeofArray(irqNums);
-
-   //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
-
-   //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
-
-};
-
-/** 
- * End group PMC_Group
- * @}
- */
-/**
  * @addtogroup ADC_Group ADC, Analogue Input
  * @brief Abstraction for Analogue Input
  * @{
  */
-#define USBDM_ADC0_IS_DEFINED
 /**
  * Peripheral information for ADC, Analogue Input.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
-#ifndef USBDM_ADC_CLOCK_SOURCES_DEFINED
-#define USBDM_ADC_CLOCK_SOURCES_DEFINED
    /**
-    * ADC input clock source.
+    * ADC Clock Source
+    *
+    * Clock source for the ADC module
     */
    enum AdcClockSource {
-      AdcClockSource_Bus      = ADC_CFG1_ADICLK(0), //!< Bus Clock
-   #if defined(USB_CLK_RECOVER_IRC_EN_REG_EN_MASK)
-      AdcClockSource_Irc48m   = ADC_CFG1_ADICLK(1), //!< IRC 48MHz clock
-   #else
-      AdcClockSource_Busdiv2  = ADC_CFG1_ADICLK(1), //!< Bus Clock / 2
-   #endif
-      AdcClockSource_Alt      = ADC_CFG1_ADICLK(2), //!< Alternate clock (ALTCLK)
-      AdcClockSource_Asynch   = ADC_CFG1_ADICLK(3), //!< Asynchronous clock (ADACK Internal ADC clock source)
-      AdcClockSource_Default  = AdcClockSource_Asynch
+      AdcClockSource_Bus      = ADC_CFG1_ADICLK(0), ///< Bus clock
+      AdcClockSource_Busdiv2  = ADC_CFG1_ADICLK(1), ///< Bus clock/2
+      AdcClockSource_OscerClk = ADC_CFG1_ADICLK(2), ///< Alternate clock (OSCERCLK)
+      AdcClockSource_Asynch   = ADC_CFG1_ADICLK(3), ///< Asynchronous clock (ADACK)
+
    };
+
+   /**
+    * Clock Divide Select
+    *
+    * Selects the divide ratio used by the ADC to generate the internal clock ADCK
+    */
+   enum AdcClockDivider {
+      AdcClockDivider_1 = ADC_CFG1_ADIV(0), ///< Divide by 1
+      AdcClockDivider_2 = ADC_CFG1_ADIV(1), ///< Divide by 2
+      AdcClockDivider_4 = ADC_CFG1_ADIV(2), ///< Divide by 4
+      AdcClockDivider_8 = ADC_CFG1_ADIV(3), ///< Divide by 8
+
+   };
+
+   /**
+    * ADC Resolution
+    *
+    * The resolutions available vary with single-ended/differential modes
+    * Note the equivalence between modes e.g. 8-bit-se = 9-bit-diff
+    */
+   enum AdcResolution {
+      AdcResolution_8bit_se    = ADC_CFG1_MODE(0), ///< 8-bit unsigned (single-ended mode)
+      AdcResolution_10bit_se   = ADC_CFG1_MODE(2), ///< 10-bit unsigned (single-ended mode)
+      AdcResolution_12bit_se   = ADC_CFG1_MODE(1), ///< 12-bit unsigned (single-ended mode)
+      AdcResolution_16bit_se   = ADC_CFG1_MODE(3), ///< 16-bit unsigned (single-ended mode)
+      AdcResolution_9bit_diff  = ADC_CFG1_MODE(0), ///< 9-bit signed (differential mode)
+      AdcResolution_11bit_diff = ADC_CFG1_MODE(2), ///< 11-bit signed (differential mode)
+      AdcResolution_13bit_diff = ADC_CFG1_MODE(1), ///< 13-bit signed (differential mode)
+      AdcResolution_16bit_diff = ADC_CFG1_MODE(3), ///< 16-bit signed (differential mode)
+
+   };
+
+   /**
+    * Low-Power Configuration
+    *
+    * Adjust power consumption
+    */
+   enum AdcPower {
+      AdcPower_Normal = ADC_CFG1_ADLPC(0), ///< Normal power configuration
+      AdcPower_Low    = ADC_CFG1_ADLPC(1), ///< Low-power configuration (reduced speed)
+
+   };
+
+   /**
+    * Long Sample Time Select
+    *
+    * Selects sample times 
+    * Longer times allow higher impedance inputs to be accurately sampled or
+    * shorter times maximize conversion speed for lower impedance inputs
+    * It also affects the conversion rate and power consumption for continuous mode
+    */
+   enum AdcSample {
+      AdcSample_4  = (ADC_CFG1_ADLSMP(0)),                    ///< 4 ADCK total
+      AdcSample_6  = (ADC_CFG1_ADLSMP(1)|ADC_CFG2_ADLSTS(3)), ///< +2 ADCK cycles; 6 ADCK total
+      AdcSample_10 = (ADC_CFG1_ADLSMP(1)|ADC_CFG2_ADLSTS(2)), ///< +6 ADCK cycles; 10 ADCK total
+      AdcSample_16 = (ADC_CFG1_ADLSMP(1)|ADC_CFG2_ADLSTS(1)), ///< +12 ADCK cycles; 16 ADCK total
+      AdcSample_24 = (ADC_CFG1_ADLSMP(1)|ADC_CFG2_ADLSTS(0)), ///< +20 ADCK cycles; 24 ADCK total
+
+   };
+
+   /**
+    * Hardware Average Select
+    *
+    * Determines how many ADC conversions will be averaged
+    * by the hardware to create the ADC result
+    */
+   enum AdcAveraging {
+      AdcAveraging_off = ADC_SC3_CAL(0)|ADC_SC3_CALF(0)|ADC_SC3_AVGE(0)|ADC_SC3_AVGS(0), ///< 1 sample
+      AdcAveraging_4   = ADC_SC3_CAL(0)|ADC_SC3_CALF(0)|ADC_SC3_AVGE(1)|ADC_SC3_AVGS(0), ///< 4 samples
+      AdcAveraging_8   = ADC_SC3_CAL(0)|ADC_SC3_CALF(0)|ADC_SC3_AVGE(1)|ADC_SC3_AVGS(1), ///< 8 samples
+      AdcAveraging_16  = ADC_SC3_CAL(0)|ADC_SC3_CALF(0)|ADC_SC3_AVGE(1)|ADC_SC3_AVGS(2), ///< 16 samples
+      AdcAveraging_32  = ADC_SC3_CAL(0)|ADC_SC3_CALF(0)|ADC_SC3_AVGE(1)|ADC_SC3_AVGS(3), ///< 32 samples
+      AdcAveraging_Cal = ADC_SC3_CAL(1)|ADC_SC3_CALF(1)|ADC_SC3_AVGE(1)|ADC_SC3_AVGS(3), ///< 32 samples + clear flag + start calibration
+
+   };
+
+   /**
+    * High-Speed Configuration
+    *
+    * Configures the ADC for high-speed clock operation
+    * This actually extends the number of conversion clock cycles
+    * but is offset by allowing a faster input clock
+    */
+   enum AdcClockRange {
+      AdcClockRange_Normal = ADC_CFG2_ADHSC(0), ///< Normal conversion sequence selected
+      AdcClockRange_High   = ADC_CFG2_ADHSC(1), ///< High-speed conversion sequence selected
+
+   };
+
+   /**
+    * Asynchronous Clock Output Enable
+    *
+    * Enables the ADC internal asynchronous clock source irrespective of ADC need.
+    * This reduces the initial delay at the start of a sequence of conversions.
+    * It also allows use of the ADC internal clock as a clock source for other peripherals
+    */
+   enum AdcAsyncClock {
+      AdcAsyncClock_Disabled = ADC_CFG2_ADACKEN(0), ///< Asynchronous clock output disabled
+      AdcAsyncClock_Enabled  = ADC_CFG2_ADACKEN(1), ///< Asynchronous clock output enabled
+
+   };
+
+   /**
+    * Voltage Reference Selection
+    *
+    * Selects the voltage reference source used for conversions
+    */
+   enum AdcRefSel {
+      AdcRefSel_VrefHL  = ADC_SC2_REFSEL(0), ///< VRefH and VRefl
+      AdcRefSel_VrefOut = ADC_SC2_REFSEL(1), ///< Gnd and VrefOut(1.2V)
+      AdcRefSel_Default = ADC_SC2_REFSEL(0), ///< Default
+
+   };
+
+   /**
+    * DMA Enable
+    *
+    * Enables use of DMA with ADC
+    */
+   enum AdcDma {
+      AdcDma_Disabled = ADC_SC2_DMAEN(0), ///< Disabled
+      AdcDma_Enabled  = ADC_SC2_DMAEN(1), ///< Enabled
+
+   };
+
+   /**
+    * Enables conversion interrupts
+    *
+    * An interrupt is triggered at the end of each conversion
+    */
+   enum AdcInterrupt {
+      AdcInterrupt_Disabled = ADC_SC1_AIEN(0), ///< Disabled
+      AdcInterrupt_Enabled  = ADC_SC1_AIEN(1), ///< Enabled
+
+   };
+
+   /**
+    * Selects the pretrigger
+    *
+    * Selects which SC1[x]/R[x] register pair to use
+    */
+   enum AdcPretrigger {
+      AdcPretrigger_0 = (0), ///< Use pretrigger 0 = SC1[0]/R[0]
+      AdcPretrigger_1 = (1), ///< Use pretrigger 1 = SC1[1]/R[1]
+
+   };
+
+   /**
+    * Selects between A/B multiplexor inputs on some ADC channels
+    *
+    * Some ADC inputs may be multiplexed to two pins e.g. adcCh4a and adcCh4b
+    */
+   enum AdcMuxsel {
+      AdcMuxsel_A = ADC_CFG2_MUXSEL(0), ///< The multiplexor selects A channels
+      AdcMuxsel_B = ADC_CFG2_MUXSEL(1), ///< The multiplexor selects B channels
+
+   };
+
+   /**
+    * Selects between single and continuous conversion
+    *
+    * When enabled, continuous conversion are triggered when the first conversion is initiated
+    */
+   enum AdcContinuous {
+      AdcContinuous_Disabled = ADC_SC3_ADCO(0), ///< Single conversion on each trigger
+      AdcContinuous_Enabled  = ADC_SC3_ADCO(1), ///< Continuous conversions after 1st trigger
+
+   };
+
+   /**
+    * Compare function
+    *
+    * Enables comparison of ADC result with CV1 and CV2
+    */
+   enum AdcCompare {
+      AdcCompare_Disabled              = ADC_SC2_ACFE(0)|ADC_SC2_ACREN(0)|ADC_SC2_ACFGT(0)|(0),      ///< No comparison done
+      AdcCompare_LessThan              = ADC_SC2_ACFE(1)|ADC_SC2_ACREN(0)|ADC_SC2_ACFGT(0)|(0),      ///< ADC value < low
+      AdcCompare_GreaterThanOrEqual    = ADC_SC2_ACFE(1)|ADC_SC2_ACREN(0)|ADC_SC2_ACFGT(1)|(0),      ///< ADC value >= low
+      AdcCompare_OutsideRangeExclusive = ADC_SC2_ACFE(1)|ADC_SC2_ACREN(1)|ADC_SC2_ACFGT(0)|((0<<8)), ///< (ADC value < low) or (ADC value > high)
+      AdcCompare_OutsideRangeInclusive = ADC_SC2_ACFE(1)|ADC_SC2_ACREN(1)|ADC_SC2_ACFGT(1)|((1<<8)), ///< (ADC value <= low) or (ADC value >= high)
+      AdcCompare_InsideRangeExclusive  = ADC_SC2_ACFE(1)|ADC_SC2_ACREN(1)|ADC_SC2_ACFGT(0)|((1<<8)), ///< (low < ADC value < high)
+      AdcCompare_InsideRangeInclusive  = ADC_SC2_ACFE(1)|ADC_SC2_ACREN(1)|ADC_SC2_ACFGT(1)|((0<<8)), ///< (low <= ADC value <= high)
+
+   };
+
+   /**
+    * Conversion Trigger Select
+    *
+    * Selects the type of trigger used for initiating a conversion
+    */
+   enum AdcTrigger {
+      AdcTrigger_Software = ADC_SC2_ADTRG(0), ///< Software trigger (write to SC1A)
+      AdcTrigger_Hardware = ADC_SC2_ADTRG(1), ///< Hardware trigger (ADHWT source)
+
+   };
+
+class Adc0BasicInfo {
+   
+public:
+   /**
+    * Type definition for Adc0 interrupt call back.
+    *
+    * @param[in] result  Conversion result from channel
+    * @param[in] channel Channel providing the result
+    */
+   typedef void (*CallbackFunction)(uint32_t result, int channel);
+
+   /**
+    * Class used to do initialisation of Adc0
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * // Initialisation values for Adc0
+    * // Options available vary with device - See Adc0::DefaultInitValue for example
+    * static const Adc0::Init adcInit {
+    *
+    *    // Omitted parameters are take to be zero unless an base value is given
+    *    AdcClockSource_Asynch ,  // ADC Clock Source
+    *    AdcClockDivider_1 ,      // Clock Divide Select
+    *    AdcResolution_8bit_se ,  // ADC Resolution
+    *    AdcPower_Normal ,        // Low-Power Configuration
+    *    AdcClockRange_Normal ,   // High-Speed Configuration
+    *    AdcAsyncClock_Disabled , // Asynchronous Clock Output Enable
+    *    AdcRefSel_VrefHL ,       // Voltage Reference Selection
+    *    AdcDma_Disabled ,        // DMA Enable
+    *    AdcMuxsel_B ,            // Selects between A/B multiplexor inputs on some ADC channels
+    *    AdcInterrupt_Disabled ,  // Enables conversion interrupts
+    *    AdcDma_Disabled ,        // DMA Enable
+    *    AdcTrigger_Software ,    // Conversion Trigger Select
+    *    AdcAveraging_off ,       // Hardware Average Select
+    *    AdcContinuous_Disabled , // Selects between single and continuous conversion
+    *    NvicPriority_Normal ,    // IRQ level for this peripheral
+    *    adcCallback,             // Call-back to execute on completion
+    *
+    *    // These 2/3 parameters must appear in this order
+    *    AdcCompare_LessThan ,    // Compare function
+    *    5000 ,                   // ADC CV low value
+    *    6000 ,                   // ADC CV high value (May be omitted)
+   
+    *    // Optional base value to start with (must be last parameter)
+    *    Adc0::DefaultValue
+    * };
+    *
+    * // Initialise ADC from values specified above
+    * Adc0::configure(adcInit);
+    * Adc0::calibrate();
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      /// Peripheral interrupt handling
+      CallbackFunction callbackFunction = nullptr;
+
+      ///  ADC CV low value
+      uint16_t cv1 = 0;
+
+      ///  ADC CV high value
+      uint16_t cv2 = 0;
+
+      ///  ADC Configuration Register 1
+      uint8_t cfg1 = 0;
+
+      ///  ADC Configuration Register 2
+      uint8_t cfg2 = 0;
+
+      ///  ADC Status and Control Registers 2
+      uint8_t sc2 = 0;
+
+      ///  ADC Status and Control Registers 3
+      uint8_t sc3 = 0;
+
+      /// IRQ priority levels
+      NvicPriority irqlevel = NvicPriority_Normal;
+
+      /**
+       * Constructor for Peripheral interrupt handling
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param callbackFunction If enabled, the handler may be set using the setCallback() function or
+       *        by overriding the interrupt handler method in the peripheral class
+       *        If not enabled, then interrupt handlers may be installed by naming them 
+       *        (see weak names used in vector table).
+       */
+      template <typename... Types>
+      constexpr Init(CallbackFunction callbackFunction, Types... rest) : Init(rest...) {
+   
+         this->callbackFunction = callbackFunction;
+      }
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr Init(NvicPriority nvicPriority, Types... rest) : Init(rest...) {
+   
+#if true
+         irqlevel = nvicPriority;
+#else
+         (void)nvicPriority;
 #endif
+      }
+
+      /**
+       * Constructor for ADC Clock Source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcClockSource Clock source for the ADC module
+       */
+      template <typename... Types>
+      constexpr Init(AdcClockSource adcClockSource, Types... rest) : Init(rest...) {
+   
+         cfg1 = (cfg1&~ADC_CFG1_ADICLK_MASK) | adcClockSource;
+      }
+   
+      /**
+       * Constructor for Clock Divide Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcClockDivider Selects the divide ratio used by the ADC to generate the internal clock ADCK
+       */
+      template <typename... Types>
+      constexpr Init(AdcClockDivider adcClockDivider, Types... rest) : Init(rest...) {
+   
+         cfg1 = (cfg1&~ADC_CFG1_ADIV_MASK) | adcClockDivider;
+      }
+   
+      /**
+       * Constructor for ADC Resolution
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcResolution The resolutions available vary with single-ended/differential modes
+       *        Note the equivalence between modes e.g. 8-bit-se = 9-bit-diff
+       */
+      template <typename... Types>
+      constexpr Init(AdcResolution adcResolution, Types... rest) : Init(rest...) {
+   
+         cfg1 = (cfg1&~ADC_CFG1_MODE_MASK) | adcResolution;
+      }
+   
+      /**
+       * Constructor for Low-Power Configuration
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcPower Adjust power consumption
+       */
+      template <typename... Types>
+      constexpr Init(AdcPower adcPower, Types... rest) : Init(rest...) {
+   
+         cfg1 = (cfg1&~ADC_CFG1_ADLPC_MASK) | adcPower;
+      }
+   
+      /**
+       * Constructor for High-Speed Configuration
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcClockRange Configures the ADC for high-speed clock operation
+       *        This actually extends the number of conversion clock cycles
+       *        but is offset by allowing a faster input clock
+       */
+      template <typename... Types>
+      constexpr Init(AdcClockRange adcClockRange, Types... rest) : Init(rest...) {
+   
+         cfg2 = (cfg2&~ADC_CFG2_ADHSC_MASK) | adcClockRange;
+      }
+   
+      /**
+       * Constructor for Asynchronous Clock Output Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcAsyncClock Enables the ADC internal asynchronous clock source irrespective of ADC need.
+       *        This reduces the initial delay at the start of a sequence of conversions.
+       *        It also allows use of the ADC internal clock as a clock source for other peripherals
+       */
+      template <typename... Types>
+      constexpr Init(AdcAsyncClock adcAsyncClock, Types... rest) : Init(rest...) {
+   
+         cfg2 = (cfg2&~ADC_CFG2_ADACKEN_MASK) | adcAsyncClock;
+      }
+   
+      /**
+       * Constructor for Selects between A/B multiplexor inputs on some ADC channels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcMuxsel Some ADC inputs may be multiplexed to two pins e.g. adcCh4a and adcCh4b
+       */
+      template <typename... Types>
+      constexpr Init(AdcMuxsel adcMuxsel, Types... rest) : Init(rest...) {
+   
+         cfg2 = (cfg2&~ADC_CFG2_MUXSEL_MASK) | adcMuxsel;
+      }
+   
+      /**
+       * Constructor for Voltage Reference Selection
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcRefSel Selects the voltage reference source used for conversions
+       */
+      template <typename... Types>
+      constexpr Init(AdcRefSel adcRefSel, Types... rest) : Init(rest...) {
+   
+         sc2 = (sc2&~ADC_SC2_REFSEL_MASK) | adcRefSel;
+      }
+   
+      /**
+       * Constructor for DMA Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcDma Enables use of DMA with ADC
+       */
+      template <typename... Types>
+      constexpr Init(AdcDma adcDma, Types... rest) : Init(rest...) {
+   
+         sc2 = (sc2&~ADC_SC2_DMAEN_MASK) | adcDma;
+      }
+   
+      /**
+       * Constructor for Conversion Trigger Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcTrigger Selects the type of trigger used for initiating a conversion
+       */
+      template <typename... Types>
+      constexpr Init(AdcTrigger adcTrigger, Types... rest) : Init(rest...) {
+   
+         sc2 = (sc2&~ADC_SC2_ADTRG_MASK) | adcTrigger;
+      }
+   
+      /**
+       * Constructor for Hardware Average Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcAveraging Determines how many ADC conversions will be averaged
+       *        by the hardware to create the ADC result
+       */
+      template <typename... Types>
+      constexpr Init(AdcAveraging adcAveraging, Types... rest) : Init(rest...) {
+   
+         sc3 = (sc3&~(ADC_SC3_CAL_MASK|ADC_SC3_CALF_MASK|ADC_SC3_AVGE_MASK|ADC_SC3_AVGS_MASK)) | adcAveraging;
+      }
+   
+      /**
+       * Constructor for Selects between single and continuous conversion
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param adcContinuous When enabled, continuous conversion are triggered when the first conversion is initiated
+       */
+      template <typename... Types>
+      constexpr Init(AdcContinuous adcContinuous, Types... rest) : Init(rest...) {
+   
+         sc3 = (sc3&~ADC_SC3_ADCO_MASK) | adcContinuous;
+      }
+   
+      /**
+       * Configure Compare function, ADC CV low value and ADC CV high value
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param[in] adcCompare   Comparison operation to enable
+       * @param[in] low          Lower threshold
+       * @param[in] high         Higher threshold (if needed)
+       */
+      template <typename... Types>
+      constexpr Init(AdcCompare adcCompare, int low, int high=0, Types... rest) : Init(rest...) {
+   
+         // Juggle CV1, CV2 values to satisfy comparison rules
+         switch (adcCompare) {
+            case AdcCompare_Disabled:
+               break;
+            case AdcCompare_LessThan:
+            case AdcCompare_GreaterThanOrEqual:
+               cv1 = low;
+               break;
+            case AdcCompare_OutsideRangeExclusive:
+            case AdcCompare_InsideRangeInclusive:
+               cv1 = low;
+               cv2 = high;
+               break;
+            case AdcCompare_InsideRangeExclusive:
+            case AdcCompare_OutsideRangeInclusive:
+               cv1 = high;
+               cv2 = low;
+               break;
+         }
+         sc2 = (sc2&~((ADC_SC2_ACFE_MASK|ADC_SC2_ACREN_MASK|ADC_SC2_ACFGT_MASK))) | adcCompare;
+      }
+   
+   };
+};
 
 class Adc0Info {
 public:
-   // Template:adc0_diff_a
-
+   /*
+    * Template:adc0_diff_a
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = ADC0_BasePtr;
 
@@ -2681,79 +3540,104 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 1;
+   static constexpr bool irqHandlerInstalled = true;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /**
-    *  Get input clock frequency for ADC
-    *  
-    *  @param adcClockSource Clock source chosen for ADC
+    * Get ADC Clock Source
     *
-    *  @return Frequency in Hz
+    * @param adcClockSource Clock source for the ADC module
+    *
+    * @return Clock frequency in Hz
     */
-   static unsigned getInputClockFrequency(AdcClockSource adcClockSource) {
-      switch (adcClockSource) {
-         case AdcClockSource_Bus:
-            return SystemBusClock;
-   #if defined(USB_CLK_RECOVER_IRC_EN_REG_EN_MASK)
-         case AdcClockSource_Irc48m:
-            return McgInfo::irc48m_clock;
-   #else
-         case AdcClockSource_Busdiv2:
-            return SystemBusClock/2;
-   #endif
-         case AdcClockSource_Alt:
-            return  Osc0Info::getOscerClock();;
-         case AdcClockSource_Asynch:
-            return 2000000; // Actually varies with ADLPC/ADHSC
-         default:
-            return 0;
+   static uint32_t getAdcClock(AdcClockSource adcClockSource) {
+   
+      switch(adcClockSource) {
+         default: return 0;
+         case AdcClockSource_Bus      : return SystemBusClock;            ///< Bus clock
+         case AdcClockSource_Busdiv2  : return SystemBusClock/2;          ///< Bus clock/2
+         case AdcClockSource_OscerClk : return Osc0Info::getOscerClock(); ///< Alternate clock (OSCERCLK)
+         case AdcClockSource_Asynch   : return 5200000;       ///< Asynchronous clock (ADACK)
+
       }
    }
 
    /**
-    *  Get input clock frequency for ADC
+    * Class used to do initialisation of Adc0
     *
-    *  @return Frequency in Hz
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * // Initialisation values for Adc0
+    * // Options available vary with device - See Adc0::DefaultInitValue for example
+    * static const Adc0::Init adcInit {
+    *
+    *    // Omitted parameters are take to be zero unless an base value is given
+    *    AdcClockSource_Asynch ,  // ADC Clock Source
+    *    AdcClockDivider_1 ,      // Clock Divide Select
+    *    AdcResolution_8bit_se ,  // ADC Resolution
+    *    AdcPower_Normal ,        // Low-Power Configuration
+    *    AdcClockRange_Normal ,   // High-Speed Configuration
+    *    AdcAsyncClock_Disabled , // Asynchronous Clock Output Enable
+    *    AdcRefSel_VrefHL ,       // Voltage Reference Selection
+    *    AdcDma_Disabled ,        // DMA Enable
+    *    AdcMuxsel_B ,            // Selects between A/B multiplexor inputs on some ADC channels
+    *    AdcInterrupt_Disabled ,  // Enables conversion interrupts
+    *    AdcDma_Disabled ,        // DMA Enable
+    *    AdcTrigger_Software ,    // Conversion Trigger Select
+    *    AdcAveraging_off ,       // Hardware Average Select
+    *    AdcContinuous_Disabled , // Selects between single and continuous conversion
+    *    NvicPriority_Normal ,    // IRQ level for this peripheral
+    *    adcCallback,             // Call-back to execute on completion
+    *
+    *    // These 2/3 parameters must appear in this order
+    *    AdcCompare_LessThan ,    // Compare function
+    *    5000 ,                   // ADC CV low value
+    *    6000 ,                   // ADC CV high value (May be omitted)
+   
+    *    // Optional base value to start with (must be last parameter)
+    *    Adc0::DefaultValue
+    * };
+    *
+    * // Initialise ADC from values specified above
+    * Adc0::configure(adcInit);
+    * Adc0::calibrate();
+    * @endcode
     */
-   static unsigned getInputClockFrequency() {
-      return getInputClockFrequency(static_cast<AdcClockSource>(adc->CFG1 & ADC_CFG1_ADICLK_MASK));
-   }
-
-   //! Default resolution
-   static constexpr uint32_t defaultAdcResolution = ADC_CFG1_MODE(2);
-
-   //! Default value for ADCx_CFG1 register
-   static constexpr uint32_t cfg1  = 
-       ADC_CFG1_ADICLK(3)|
-       ADC_CFG1_MODE(2)|
-       ADC_CFG1_ADLSMP(0)|
-       ADC_CFG1_ADIV(0)|
-       ADC_CFG1_ADLPC(0);
-
-   //! Default value for ADCx_CFG2 register
-    static constexpr uint32_t cfg2  = 
-       ADC_CFG2_MUXSEL_MASK | // Choose 'b' channels
-       ADC_CFG2_ADLSTS(0)|
-       ADC_CFG2_ADHSC(0)|
-       ADC_CFG2_ADACKEN(0);
-
-   //! Default value for ADCx_SC2 register
-   static constexpr uint32_t sc2  =
-       ADC_SC2_ACFE(0)|
-       ADC_SC2_ACFGT(0)|
-       ADC_SC2_ACREN(0)|
-       ADC_SC2_REFSEL(0)|
-       ADC_SC2_DMAEN(0)|
-       ADC_SC2_ADTRG(0);
-
-   //! Default value for ADCx_CV1 register
-   static constexpr uint32_t cv1  = 0;
-
-   //! Default value for ADCx_CV2 register
-   static constexpr uint32_t cv2  = 0;
+   typedef Adc0BasicInfo::Init Init;
+   
+   /**
+    * Adc0 interrupt call back
+    */
+   typedef Adc0BasicInfo::CallbackFunction CallbackFunction;
+   
+   /**
+    * Default initialisation value for Adc0
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultInitValue = {
+      AdcClockSource_Asynch , // ADC Clock Source - Asynchronous clock (ADACK)
+      AdcClockDivider_1 , // Clock Divide Select - Divide by 1
+      AdcResolution_8bit_se , // ADC Resolution - 8-bit unsigned (single-ended mode)
+      AdcPower_Normal , // Low-Power Configuration - Normal power configuration
+      AdcClockRange_Normal , // High-Speed Configuration - Normal conversion sequence selected
+      AdcAsyncClock_Disabled , // Asynchronous Clock Output Enable - Asynchronous clock output disabled
+      AdcRefSel_VrefHL , // Voltage Reference Selection - VRefH and VRefl
+      AdcDma_Disabled , // DMA Enable - Disabled
+      AdcMuxsel_B , // Selects between A/B multiplexor inputs on some ADC channels - The multiplexor selects B channels
+      AdcTrigger_Software , // Conversion Trigger Select - Software trigger (write to SC1A)
+      AdcAveraging_off , // Hardware Average Select - 1 sample
+      AdcContinuous_Disabled , // Selects between single and continuous conversion - Single conversion on each trigger
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      AdcCompare_Disabled , // Compare function - No comparison done
+      0 , // ADC CV low value
+      0,  // ADC CV high value
+   };
 
    /** 
     *  Enable clock to Adc0
@@ -2822,12 +3706,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTD_CLOCK_MASK);
+   enablePortClocks(PORTD_CLOCK_MASK);
 #endif
 
-PORTD->GPCLR = 0x0000UL|PORT_GPCLR_GPWE(0x0040UL);
+   PORTD->GPCLR = 0x0000UL|PORT_GPCLR_GPWE(0x0040UL);
    }
 
    /**
@@ -2838,15 +3722,14 @@ PORTD->GPCLR = 0x0000UL|PORT_GPCLR_GPWE(0x0040UL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTD_CLOCK_MASK);
+   enablePortClocks(PORTD_CLOCK_MASK);
 #endif
 
-PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0040UL);
    }
 
-#define USBDM_ADC0_INFODP_IS_DEFINED
    class InfoDP {
    public:
       //! Number of signals available in info table
@@ -2880,7 +3763,6 @@ PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
 
    }; 
 
-#define USBDM_ADC0_INFODM_IS_DEFINED
    class InfoDM {
    public:
       //! Number of signals available in info table
@@ -2925,16 +3807,586 @@ PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
  * @brief Abstraction for Analogue Comparator
  * @{
  */
-#define USBDM_CMP0_IS_DEFINED
 /**
  * Peripheral information for CMP, Analogue Comparator.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Plus Input Mux Control
+    *
+    * Determines which input is selected for the plus input of the comparator
+    */
+   enum Cmp0InputPlus {
+      Cmp0InputPlus_0 = CMP_MUXCR_PSEL(0), ///< CMP_IN0
+      Cmp0InputPlus_1 = CMP_MUXCR_PSEL(1), ///< CMP_IN1
+      Cmp0InputPlus_2 = CMP_MUXCR_PSEL(2), ///< CMP_IN2
+      Cmp0InputPlus_3 = CMP_MUXCR_PSEL(3), ///< CMP_IN3
+      Cmp0InputPlus_4 = CMP_MUXCR_PSEL(4), ///< CMP_IN4
+      Cmp0InputPlus_5 = CMP_MUXCR_PSEL(5), ///< CMP_IN5/VREF_OUT
+      Cmp0InputPlus_6 = CMP_MUXCR_PSEL(6), ///< Bandgap
+      Cmp0InputPlus_7 = CMP_MUXCR_PSEL(7), ///< 6-bit DAC reference
+
+   };
+
+   /**
+    * Minus Input Mux Control
+    *
+    * Determines which input is selected for the minus input of the comparator
+    */
+   enum Cmp0InputMinus {
+      Cmp0InputMinus_0 = CMP_MUXCR_MSEL(0), ///< CMP_IN0
+      Cmp0InputMinus_1 = CMP_MUXCR_MSEL(1), ///< CMP_IN1
+      Cmp0InputMinus_2 = CMP_MUXCR_MSEL(2), ///< CMP_IN2
+      Cmp0InputMinus_3 = CMP_MUXCR_MSEL(3), ///< CMP_IN3
+      Cmp0InputMinus_4 = CMP_MUXCR_MSEL(4), ///< CMP_IN4
+      Cmp0InputMinus_5 = CMP_MUXCR_MSEL(5), ///< CMP_IN5/VREF_OUT
+      Cmp0InputMinus_6 = CMP_MUXCR_MSEL(6), ///< Bandgap
+      Cmp0InputMinus_7 = CMP_MUXCR_MSEL(7), ///< 6-bit DAC reference
+
+   };
+
+   /**
+    * Action on transition
+    *
+    * Enables interrupt request on comparator transition
+    */
+   enum CmpEvent {
+      CmpEvent_Disabled  = CMP_SCR_IER(0)|CMP_SCR_IEF(0), ///< Disabled
+      CmpEvent_OnRising  = CMP_SCR_IER(1)|CMP_SCR_IEF(1), ///< Rising edge
+      CmpEvent_OnFalling = CMP_SCR_IER(1)|CMP_SCR_IEF(0), ///< Falling edge
+      CmpEvent_OnEither  = CMP_SCR_IER(1)|CMP_SCR_IEF(0), ///< Either edge
+
+   };
+
+   /**
+    * DMA Enable Control
+    *
+    * Enables the DMA transfer triggered from the CMP module (If DMA supported by device)
+    * When this field is set, a DMA request is asserted when CFR or CFF is set
+    */
+   enum CmpDma {
+      CmpDma_Disabled = CMP_SCR_DMAEN(0), ///< Disabled
+      CmpDma_Enabled  = CMP_SCR_DMAEN(1), ///< Enabled
+
+   };
+
+   /**
+    * Comparator hard block hysteresis control
+    *
+    * Defines the programmable hysteresis level.
+    * The hysteresis values associated with each level are device specific
+    */
+   enum CmpHysteresis {
+      CmpHysteresis_Level_0 = CMP_CR0_HYSTCTR(0), ///< Level 0
+      CmpHysteresis_Level_1 = CMP_CR0_HYSTCTR(1), ///< Level 1
+      CmpHysteresis_Level_2 = CMP_CR0_HYSTCTR(2), ///< Level 2
+      CmpHysteresis_Level_3 = CMP_CR0_HYSTCTR(3), ///< Level 3
+
+   };
+
+   /**
+    * Power Mode Select
+    *
+    * Selects trade-off between speed and power consumption
+    */
+   enum CmpPower {
+      CmpPower_LowSpeed  = CMP_CR1_PMODE(0), ///< Low-Speed Comparison mode
+      CmpPower_HighSpeed = CMP_CR1_PMODE(1), ///< High-Speed Comparison mode
+
+   };
+
+   /**
+    * Comparator Invert
+    *
+    * Allows selection of the polarity of the analog comparator function
+    */
+   enum CmpPolarity {
+      CmpPolarity_Normal   = CMP_CR1_INV(0), ///< Not inverted
+      CmpPolarity_Inverted = CMP_CR1_INV(1), ///< Inverted
+
+   };
+
+   /**
+    * Comparator output pin source
+    *
+    * Selects whether the output pin is driven by the filtered or unfiltered comparator output
+    */
+   enum CmpOutput {
+      CmpOutput_Disabled = CMP_CR1_OPE(0)|CMP_CR1_COS(0), ///< Disabled
+      CmpOutput_Direct   = CMP_CR1_OPE(1)|CMP_CR1_COS(1), ///< Direct (unfiltered)
+      CmpOutput_Filtered = CMP_CR1_OPE(1)|CMP_CR1_COS(0), ///< Filtered
+
+   };
+
+   /**
+    * DAC Enable
+    *
+    * Enables the internal DAC
+    */
+   enum CmpDacEnable {
+      CmpDacEnable_Disabled = CMP_DACCR_DACEN(0), ///< Disabled
+      CmpDacEnable_Enabled  = CMP_DACCR_DACEN(1), ///< Enabled
+
+   };
+
+   /**
+    * DAC Reference Voltage Select
+    *
+    * Supply Voltage Reference Source Select
+    */
+   enum CmpDacrefSel {
+      CmpDacrefSel_VrefOut = CMP_DACCR_VRSEL(0), ///< Vin1 (Vref_OUT)
+      CmpDacrefSel_Vdd     = CMP_DACCR_VRSEL(1), ///< Vin2 (Vdd)
+
+   };
+
+   /**
+    * Comparator Filtering Mode
+    *
+    * Disabled
+    * Comparator is non-functional and consumes no power.
+    * CMPO is 0 in this mode.
+    * 
+    * Mode 2a/b - Continuous mode
+    * CMPO is not subject to sampling or filtering. 
+    * Both window control and filter blocks are completely bypassed.  
+    * SCR[COUT] is updated continuously.  
+    * The path from comparator input pins is operating in combinational unclocked mode. 
+    * 
+    * Mode 3a/b - Sampled, Non-Filtered mode
+    * CMPO is not subject to sampling or filtering.  
+    * Window control is bypassed. The filter block operates as a simple Sample & Hold 
+    * 3a/b selects between clock sources for the Sample & Hold 
+    * In 3a the external window/sample input is used to clock the Sample & Hold clock 
+    * In 3b FILT_PER acts as a prescaler for bus clock driving the Sample & Hold clock 
+    * 
+    * Mode 4a/b - Sampled, Filtered mode
+    * As for 3a/b but the filter is enabled (FILTER_CNT>1) rather than acting as a simple S&H
+    * 
+    * Mode 5a/b - Windowed mode
+    * The comparator output is qualified by an external window signal. 
+    * When enabled, the comparator output is clocked by the bus clock and held when not enabled. 
+    * This introduces up to 1 clock delay.
+    * 
+    * Mode 6 - Windowed/Resampled mode
+    * The comparator output is qualified by an external window signal. 
+    * When enabled, the comparator output is clocked by the bus clock and then resampled at a 
+    * rate determined by the FILT_PER to generate COUT. 
+    * 
+    * Mode 7 - Windowed/Filtered mode
+    * The comparator output is qualified by an external window signal. 
+    * When enabled, the comparator output is clocked by the bus clock and then filtered at a 
+    * sample rate determined by the FILT_PER to generate COUT.
+    * FILTER_CNT determines the filter sample count (width)
+    */
+   enum CmpFilterMode {
+      CmpFilterMode_Disabled             = 0, ///< 1    Disabled
+      CmpFilterMode_Continuous           = 1, ///< 2a/b Continuous
+      CmpFilterMode_External_NonFiltered = 2, ///< 3a   Externally sampled, Non-Filtered
+      CmpFilterMode_Internal_NonFiltered = 3, ///< 3b   Internally sampled, Non-Filtered
+      CmpFilterMode_External_Filtered    = 4, ///< 4a   Externally sampled, Filtered
+      CmpFilterMode_Internal_Filtered    = 5, ///< 4b   Internally sampled, Filtered
+      CmpFilterMode_Windowed             = 6, ///< 5a/b Windowed
+      CmpFilterMode_Windowed_Resampled   = 7, ///< 6    Windowed, Re-sampled
+      CmpFilterMode_Windowed_Filtered    = 8, ///< 7    Windowed, Filtered
+
+   };
+
+   /**
+    * Comparator Enable
+    *
+    * Enable comparator
+    */
+   enum CmpEnable {
+      CmpEnable_Disabled = CMP_CR1_EN(0), ///< Comparator is disabled
+      CmpEnable_Enabled  = CMP_CR1_EN(1), ///< Comparator is enabled
+
+   };
+
+   /**
+    * Windowing Enable
+    *
+    * Enable the use of an external signal to qualify the comparator output (before filtering).
+    * The comparator output is held when the external signal is inactive and
+    * clocked directly by the bus clock when enabled.
+    * Usually a PDB output is available for this purpose.
+    */
+   enum CmpWindowEnable {
+      CmpWindowEnable_Disabled = CMP_CR1_WE(0), ///< Disabled
+      CmpWindowEnable_Enabled  = CMP_CR1_WE(1), ///< Enabled
+
+   };
+
+   /**
+    * Sample Enable
+    *
+    * Select between the divided bus clock and an external clock for the filter block
+    */
+   enum CmpSampleEnable {
+      CmpSampleEnable_Internal = CMP_CR1_SE(0), ///< Internal clock
+      CmpSampleEnable_External = CMP_CR1_SE(1), ///< External clock
+
+   };
+
+   /**
+    * Filter Sample Count
+    *
+    * Represents the number of consecutive samples that must agree prior 
+    * to the comparator output filter accepting a new output state
+    */
+   enum CmpFilterSamples {
+      CmpFilterSamples_Bypassed       = CMP_CR0_FILTER_CNT(0), ///< Disabled
+      CmpFilterSamples_SimpleSampling = CMP_CR0_FILTER_CNT(1), ///< Simple sampling
+      CmpFilterSamples_2              = CMP_CR0_FILTER_CNT(2), ///< 2 samples must agree
+      CmpFilterSamples_3              = CMP_CR0_FILTER_CNT(3), ///< 3 samples must agree
+      CmpFilterSamples_4              = CMP_CR0_FILTER_CNT(4), ///< 4 samples must agree
+      CmpFilterSamples_5              = CMP_CR0_FILTER_CNT(5), ///< 5 samples must agree
+      CmpFilterSamples_6              = CMP_CR0_FILTER_CNT(6), ///< 6 samples must agree
+      CmpFilterSamples_7              = CMP_CR0_FILTER_CNT(7), ///< 7 samples must agree
+
+   };
+
+   /**
+    * Operating mode
+    *
+    * Selects operation in sampling or windowed mode
+    */
+   enum CmpMode {
+      CmpMode_Direct   = CMP_CR1_SE(0)|CMP_CR1_WE(0), ///< Direct
+      CmpMode_Sampling = CMP_CR1_SE(1)|CMP_CR1_WE(0), ///< Sampling mode
+      CmpMode_Windowed = CMP_CR1_SE(0)|CMP_CR1_WE(1), ///< Windowing mode
+
+   };
+
+   /**
+    * Comparator event identification
+    */
+   enum CmpEventId : uint8_t {
+      CmpEventId_None    = CMP_SCR_CFR(0)|CMP_SCR_CFF(0),  //!< Neither edge
+      CmpEventId_Rising  = CMP_SCR_CFR(1)|CMP_SCR_CFF(0),  //!< Rising edge
+      CmpEventId_Falling = CMP_SCR_CFR(0)|CMP_SCR_CFF(1),  //!< Falling edge
+      CmpEventId_Both    = CMP_SCR_CFR(1)|CMP_SCR_CFF(1),  //!< Rising or falling edge
+   };
+   
+   /**
+    * Used to represent the comparator status for interrupt handler
+    */
+   struct CmpStatus {
+      CmpEventId event:8;   //!< Event triggering handler
+      bool       state:8;   //!< State of CMPO at event
+   
+      constexpr CmpStatus(CmpEventId event, uint8_t  state) : event(event), state(state) {}
+   };
+   
+class Cmp0BasicInfo {
+   
+public:
+   
+   
+   /**
+    * Type definition for Cmp0 interrupt call back.
+    */
+   typedef void (*CallbackFunction)(const CmpStatus &);
+   
+   /**
+    * Class used to do initialisation of the Cmp0
+    *
+    * This class has a templated constructor that accepts various values.
+    *
+    * @note This constructor may be used to create a const instance in Flash
+    *
+    * Example:
+    * @code
+    * static const Cmp0::Init init {
+    *
+    *   // General setup
+    *   CmpEnable_Enabled ,          // Comparator Enable - Comparator is enabled
+    *   CmpMode_Direct ,             // Operating mode - Direct
+    *   CmpTrigger_Enabled ,         // Trigger Mode Enable - Trigger mode is enabled
+    *   CmpPower_HighSpeed ,         // Power Mode Select - High-Speed Comparison mode
+    *   CmpPolarity_Inverted ,       // Comparator Invert - Inverted
+    *   CmpOutput_Direct ,           // Comparator output pin source - Direct (unfiltered)
+    *   CmpHysteresis_Level_2 ,      // Comparator hard block hysteresis control - Level 2
+    *   CmpDma_Disabled ,            // DMA Enable Control - Disabled
+    *
+    *   // Interrupt handling - must be in this order
+    *   CmpEvent_OnFalling ,         // Action on transition - Falling edge
+    *   cmpCallback,                 // Call-back to execute on event (if interrupts are enabled)
+    *
+    *   // Filter settings - must be in this order
+    *   CmpFilterSamples_4 ,         // Filter Sample Count - 4 sample must agree
+    *   100_ticks ,                  // Filter Sample Period in ticks or seconds (if support is enabled)
+    *
+    *   // DAC Settings - must be in this order
+    *   CmpDacEnable_Enabled ,       // DAC Enable - Enabled
+    *   CmpDacrefSel_Vdd ,           // DAC Reference Voltage Select - Vin2 (Vdd)
+    *   31 ,                         // DAC level
+    *
+    *   // Inputs
+    *   cmp0Input_D7.plusPin ,       // Plus Input Mux Control - D7
+    *   Cmp0Input_D21::minusPin,     // Minus Input Mux Control - D21
+    * };
+    *
+    * // Initialise Cmp0 from values specified above
+    * Cmp0::configure(init)
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      /// IRQ priority levels
+      NvicPriority irqlevel = NvicPriority_Normal;
+
+      ///  DAC Control Register
+      uint8_t daccr = 0;
+
+      ///  CMP Control Register 0
+      uint8_t cr0 = 0;
+
+      ///  CMP Control Register 1
+      uint8_t cr1 = 0;
+
+      ///  CMP Status and Control Register
+      uint8_t scr = 0;
+
+      ///  CMP Filter Period Register
+      uint8_t fpr = 0;
+
+      ///  CMP MUX Control Register
+      uint8_t muxcr = 0;
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr Init(NvicPriority nvicPriority, Types... rest) : Init(rest...) {
+   
+         irqlevel = nvicPriority;
+      }
+
+      /**
+       * Constructor for Comparator Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpEnable Enable comparator
+       */
+      template <typename... Types>
+      constexpr Init(CmpEnable cmpEnable, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~CMP_CR1_EN_MASK) | cmpEnable;
+      }
+   
+      /**
+       * Constructor for Operating mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpMode Selects operation in sampling or windowed mode
+       */
+      template <typename... Types>
+      constexpr Init(CmpMode cmpMode, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~(CMP_CR1_SE_MASK|CMP_CR1_WE_MASK)) | cmpMode;
+      }
+   
+      /**
+       * Constructor for Power Mode Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpPower Selects trade-off between speed and power consumption
+       */
+      template <typename... Types>
+      constexpr Init(CmpPower cmpPower, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~CMP_CR1_PMODE_MASK) | cmpPower;
+      }
+   
+      /**
+       * Constructor for Comparator Invert
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpPolarity Allows selection of the polarity of the analog comparator function
+       */
+      template <typename... Types>
+      constexpr Init(CmpPolarity cmpPolarity, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~CMP_CR1_INV_MASK) | cmpPolarity;
+      }
+   
+      /**
+       * Constructor for Comparator output pin source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpOutput Selects whether the output pin is driven by the filtered or unfiltered comparator output
+       */
+      template <typename... Types>
+      constexpr Init(CmpOutput cmpOutput, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~(CMP_CR1_OPE_MASK|CMP_CR1_COS_MASK)) | cmpOutput;
+      }
+   
+      /**
+       * Constructor for Comparator hard block hysteresis control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpHysteresis Defines the programmable hysteresis level.
+       *        The hysteresis values associated with each level are device specific
+       */
+      template <typename... Types>
+      constexpr Init(CmpHysteresis cmpHysteresis, Types... rest) : Init(rest...) {
+   
+         cr0 = (cr0&~CMP_CR0_HYSTCTR_MASK) | cmpHysteresis;
+      }
+   
+      /**
+       * Constructor for DMA Enable Control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpDma Enables the DMA transfer triggered from the CMP module (If DMA supported by device)
+       *        When this field is set, a DMA request is asserted when CFR or CFF is set
+       */
+      template <typename... Types>
+      constexpr Init(CmpDma cmpDma, Types... rest) : Init(rest...) {
+   
+         scr = (scr&~CMP_SCR_DMAEN_MASK) | cmpDma;
+      }
+   
+      /**
+       * Constructor for Action on transition
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpEvent Enables interrupt request on comparator transition
+       */
+      template <typename... Types>
+      constexpr Init(CmpEvent cmpEvent, Types... rest) : Init(rest...) {
+   
+         scr = (scr&~(CMP_SCR_IER_MASK|CMP_SCR_IEF_MASK)) | cmpEvent;
+      }
+   
+      /**
+       * Constructor for Plus Input Mux Control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmp0InputPlus Determines which input is selected for the plus input of the comparator
+       */
+      template <typename... Types>
+      constexpr Init(Cmp0InputPlus cmp0InputPlus, Types... rest) : Init(rest...) {
+   
+         muxcr = (muxcr&~CMP_MUXCR_PSEL_MASK) | cmp0InputPlus;
+      }
+   
+      /**
+       * Constructor for Minus Input Mux Control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmp0InputMinus Determines which input is selected for the minus input of the comparator
+       */
+      template <typename... Types>
+      constexpr Init(Cmp0InputMinus cmp0InputMinus, Types... rest) : Init(rest...) {
+   
+         muxcr = (muxcr&~CMP_MUXCR_MSEL_MASK) | cmp0InputMinus;
+      }
+   
+      /**
+       * Constructor for Filter Sample Count
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpFilterSamples Represents the number of consecutive samples that must agree prior 
+       *        to the comparator output filter accepting a new output state
+       * @param ticks            Specifies the sampling period, in clock cycles, of the comparator output filter 
+       *        This has no effect if SE=1. In that case, the external SAMPLE signal is used to 
+       *        determine the sampling period.
+       */
+      template <typename... Types>
+      constexpr Init(
+            CmpFilterSamples cmpFilterSamples,
+            Ticks            ticks, Types... rest) : Init(rest...) {
+   
+         cr0 = (cr0&~CMP_CR0_FILTER_CNT_MASK) | cmpFilterSamples;
+         fpr = ticks;
+      }
+   
+      /**
+       * Constructor for DAC Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpDacEnable Enables the internal DAC
+       * @param cmpDacrefSel Supply Voltage Reference Source Select
+       * @param value        Specifies the output level of the internal DAC
+       */
+      template <typename... Types>
+      constexpr Init(
+            CmpDacEnable cmpDacEnable,
+            CmpDacrefSel cmpDacrefSel,
+            uint8_t      value, Types... rest) : Init(rest...) {
+   
+         daccr = (daccr&~(CMP_DACCR_DACEN_MASK|CMP_DACCR_VRSEL_MASK)) | cmpDacEnable | cmpDacrefSel;
+         daccr = (daccr&~CMP_DACCR_VOSEL_MASK) | CMP_DACCR_VOSEL(value);
+      }
+   
+   };
+
+};
+
 class Cmp0Info {
 public:
-   // Template:cmp0
+   /*
+    * Template:cmp0
+    */
+   /* Template_irqOption.xml */
+
+   //! IRQ numbers for hardware
+   static constexpr IRQn_Type irqNums[]  = CMP0_IRQS;
+
+   //! Number of IRQs for hardware
+   static constexpr uint32_t irqCount  = sizeofArray(irqNums);
+
+   //! Class based callback handler has been installed in vector table
+   static constexpr bool irqHandlerInstalled = false;
+
+   //! Default IRQ level
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = CMP0_BasePtr;
@@ -2948,46 +4400,124 @@ public:
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
 
-   //! CMP Control Register 0
-   static constexpr uint32_t cr0 =
-      CMP_CR0_FILTER_CNT(0)     | // Filter Sample Count
-      CMP_CR0_HYSTCTR(0);         // Comparator hard block hysteresis control
+   /**
+    * Class used to do initialisation of the Cmp0
+    *
+    * This class has a templated constructor that accepts various values.
+    *
+    * @note This constructor may be used to create a const instance in Flash
+    *
+    * Example:
+    * @code
+    * static const Cmp0::Init init {
+    *
+    *   // General setup
+    *   CmpEnable_Enabled ,          // Comparator Enable - Comparator is enabled
+    *   CmpMode_Direct ,             // Operating mode - Direct
+    *   CmpTrigger_Enabled ,         // Trigger Mode Enable - Trigger mode is enabled
+    *   CmpPower_HighSpeed ,         // Power Mode Select - High-Speed Comparison mode
+    *   CmpPolarity_Inverted ,       // Comparator Invert - Inverted
+    *   CmpOutput_Direct ,           // Comparator output pin source - Direct (unfiltered)
+    *   CmpHysteresis_Level_2 ,      // Comparator hard block hysteresis control - Level 2
+    *   CmpDma_Disabled ,            // DMA Enable Control - Disabled
+    *
+    *   // Interrupt handling - must be in this order
+    *   CmpEvent_OnFalling ,         // Action on transition - Falling edge
+    *   cmpCallback,                 // Call-back to execute on event (if interrupts are enabled)
+    *
+    *   // Filter settings - must be in this order
+    *   CmpFilterSamples_4 ,         // Filter Sample Count - 4 sample must agree
+    *   100_ticks ,                  // Filter Sample Period in ticks or seconds (if support is enabled)
+    *
+    *   // DAC Settings - must be in this order
+    *   CmpDacEnable_Enabled ,       // DAC Enable - Enabled
+    *   CmpDacrefSel_Vdd ,           // DAC Reference Voltage Select - Vin2 (Vdd)
+    *   31 ,                         // DAC level
+    *
+    *   // Inputs
+    *   cmp0Input_D7.plusPin ,       // Plus Input Mux Control - D7
+    *   Cmp0Input_D21::minusPin,     // Minus Input Mux Control - D21
+    * };
+    *
+    * // Initialise Cmp0 from values specified above
+    * Cmp0::configure(init)
+    * @endcode
+    */
+   typedef Cmp0BasicInfo::Init Init;
+   
+   /**
+    * Cmp0 interrupt call back
+    */
+   typedef Cmp0BasicInfo::CallbackFunction CallbackFunction;
+   
+   /**
+    * Default initialisation value for Dac0
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultInitValue = {
+      CmpEnable_Disabled , // Comparator Enable - Comparator is disabled
+      CmpMode_Direct , // Operating mode - Direct
+      CmpPower_LowSpeed , // Power Mode Select - Low-Speed Comparison mode
+      CmpPolarity_Normal , // Comparator Invert - Not inverted
+      CmpOutput_Disabled , // Comparator output pin source - Disabled
+      CmpHysteresis_Level_0 , // Comparator hard block hysteresis control - Level 0
+      CmpDma_Disabled , // DMA Enable Control - Disabled
+      CmpEvent_Disabled , // Action on transition - Disabled
+      CmpFilterSamples_Bypassed , // Filter Sample Count - Disabled
+      0_ticks , // Filter Sample Period in ticks
+      CmpDacEnable_Disabled , // DAC Enable - Disabled
+      CmpDacrefSel_VrefOut , // DAC Reference Voltage Select - Vin1 (Vref_OUT)
+      31 , // DAC level
+      Cmp0InputPlus_0 , // Plus Input Mux Control - CMP_IN0
+      Cmp0InputMinus_0,  // Minus Input Mux Control - CMP_IN0
+   };
 
-   #ifndef CMP_CR1_TRIGM
-   #define CMP_CR1_TRIGM(x) 0
-   #endif
+   /**
+    * Get clock frequency
+    *
+    * @return Input clock frequency as a uint32_t in Hz
+    */
+   static __attribute__((always_inline)) uint32_t getClockFrequency() {
+      return SystemBusClock;
+   }
 
-   //! CMP Control Register 1
-   static constexpr uint32_t cr1 =
-      CMP_CR1_SE(0)    | // Sample Enable
-      CMP_CR1_WE(0)    | // Windowing Enable
-      CMP_CR1_TRIGM(0) | // Trigger Mode Enable
-      CMP_CR1_PMODE(0) | // Power mode Select
-      CMP_CR1_INV(0)   | // Comparator Invert
-      CMP_CR1_COS(0)   | // Comparator Output Select
-      CMP_CR1_OPE(0);    // Comparator Output Pin Enable
-
-   //! CMP Filter Period Register
-   static constexpr uint32_t fpr =
-      CMP_FPR_FILT_PER(0); // Filter Sample Period
-
-   //! CMP Status and Control Register
-   static constexpr uint32_t scr =
-   #ifdef CMP_SCR_DMAEN
-      CMP_SCR_DMAEN(0) | // DMA Enable Control
-   #endif
-      CMP_SCR_IER(0) | // Comparator Interrupt Enable Rising
-      CMP_SCR_IEF(0);  // Comparator Interrupt Enable Falling
-
-   //! DAC Control Register
-   static constexpr uint32_t daccr =
-      CMP_DACCR_VRSEL(0); // Supply Voltage Reference Source Select
-
-   //! MUX Control Register
-   static constexpr uint32_t muxcr =
-      CMP_MUXCR_PSEL(0)| // Plus Input Mux Control
-      CMP_MUXCR_MSEL(0); // Minus Input Mux Control
-
+   /**
+    * Configure Comparator input sources
+    *
+    * @param cmp0InputPlus  Determines which input is selected for the plus input of the comparator
+    * @param cmp0InputMinus Determines which input is selected for the minus input of the comparator
+    */
+   static void selectInputs(
+         Cmp0InputPlus  cmp0InputPlus,
+         Cmp0InputMinus cmp0InputMinus) {
+   
+      //! MUX Control Register
+      cmp->MUXCR = cmp0InputPlus|cmp0InputMinus;
+   }
+   
+      /**
+       * Class representing a Comparator pin
+       *
+       * @tparam cmpInput Number of comparator input (0-7) for associated pin.
+       */
+      template<Cmp0InputMinus cmpInput>
+      class Pin {
+         using Pcr = PcrTable_T<Cmp0Info,cmpInput>;
+   
+      public:
+         static constexpr Cmp0InputPlus  plusPin  = (Cmp0InputPlus)CMP_MUXCR_PSEL(cmpInput);
+         static constexpr Cmp0InputMinus minusPin = cmpInput;
+   
+         constexpr operator Cmp0InputPlus()  const { return plusPin;  }
+         constexpr operator Cmp0InputMinus() const { return minusPin; }
+   
+         constexpr Pin() {}
+   
+         static void setInput() {
+            Pcr::setPCR();
+         }
+      };
+   
    /** 
     *  Enable clock to Cmp0
     */
@@ -3009,20 +4539,6 @@ public:
       SIM->SCGC4 = SIM->SCGC4 & ~SIM_SCGC4_CMP_MASK;
 #endif
    }
-
-   /* Template_irqOption.xml */
-
-   //! IRQ numbers for hardware
-   static constexpr IRQn_Type irqNums[]  = CMP0_IRQS;
-
-   //! Number of IRQs for hardware
-   static constexpr uint32_t irqCount  = sizeofArray(irqNums);
-
-   //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
-
-   //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
 
    //! Number of signals available in info table
    static constexpr int numSignals  = 9;
@@ -3060,16 +4576,353 @@ public:
 
 };
 
-#define USBDM_CMP1_IS_DEFINED
 /**
  * Peripheral information for CMP, Analogue Comparator.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Plus Input Mux Control
+    *
+    * Determines which input is selected for the plus input of the comparator
+    */
+   enum Cmp1InputPlus {
+      Cmp1InputPlus_0 = CMP_MUXCR_PSEL(0), ///< CMP_IN0
+      Cmp1InputPlus_1 = CMP_MUXCR_PSEL(1), ///< CMP_IN1
+      Cmp1InputPlus_2 = CMP_MUXCR_PSEL(2), ///< CMP_IN2
+      Cmp1InputPlus_3 = CMP_MUXCR_PSEL(3), ///< CMP_IN3
+      Cmp1InputPlus_4 = CMP_MUXCR_PSEL(4), ///< CMP_IN4
+      Cmp1InputPlus_5 = CMP_MUXCR_PSEL(5), ///< CMP_IN5/VREF_OUT
+      Cmp1InputPlus_6 = CMP_MUXCR_PSEL(6), ///< Bandgap
+      Cmp1InputPlus_7 = CMP_MUXCR_PSEL(7), ///< 6-bit DAC reference
+
+   };
+
+   /**
+    * Minus Input Mux Control
+    *
+    * Determines which input is selected for the minus input of the comparator
+    */
+   enum Cmp1InputMinus {
+      Cmp1InputMinus_0 = CMP_MUXCR_MSEL(0), ///< CMP_IN0
+      Cmp1InputMinus_1 = CMP_MUXCR_MSEL(1), ///< CMP_IN1
+      Cmp1InputMinus_2 = CMP_MUXCR_MSEL(2), ///< CMP_IN2
+      Cmp1InputMinus_3 = CMP_MUXCR_MSEL(3), ///< CMP_IN3
+      Cmp1InputMinus_4 = CMP_MUXCR_MSEL(4), ///< CMP_IN4
+      Cmp1InputMinus_5 = CMP_MUXCR_MSEL(5), ///< CMP_IN5/VREF_OUT
+      Cmp1InputMinus_6 = CMP_MUXCR_MSEL(6), ///< Bandgap
+      Cmp1InputMinus_7 = CMP_MUXCR_MSEL(7), ///< 6-bit DAC reference
+
+   };
+
+class Cmp1BasicInfo {
+   
+public:
+   
+   
+   /**
+    * Type definition for Cmp1 interrupt call back.
+    */
+   typedef void (*CallbackFunction)(const CmpStatus &);
+   
+   /**
+    * Class used to do initialisation of the Cmp1
+    *
+    * This class has a templated constructor that accepts various values.
+    *
+    * @note This constructor may be used to create a const instance in Flash
+    *
+    * Example:
+    * @code
+    * static const Cmp1::Init init {
+    *
+    *   // General setup
+    *   CmpEnable_Enabled ,          // Comparator Enable - Comparator is enabled
+    *   CmpMode_Direct ,             // Operating mode - Direct
+    *   CmpTrigger_Enabled ,         // Trigger Mode Enable - Trigger mode is enabled
+    *   CmpPower_HighSpeed ,         // Power Mode Select - High-Speed Comparison mode
+    *   CmpPolarity_Inverted ,       // Comparator Invert - Inverted
+    *   CmpOutput_Direct ,           // Comparator output pin source - Direct (unfiltered)
+    *   CmpHysteresis_Level_2 ,      // Comparator hard block hysteresis control - Level 2
+    *   CmpDma_Disabled ,            // DMA Enable Control - Disabled
+    *
+    *   // Interrupt handling - must be in this order
+    *   CmpEvent_OnFalling ,         // Action on transition - Falling edge
+    *   cmpCallback,                 // Call-back to execute on event (if interrupts are enabled)
+    *
+    *   // Filter settings - must be in this order
+    *   CmpFilterSamples_4 ,         // Filter Sample Count - 4 sample must agree
+    *   100_ticks ,                  // Filter Sample Period in ticks or seconds (if support is enabled)
+    *
+    *   // DAC Settings - must be in this order
+    *   CmpDacEnable_Enabled ,       // DAC Enable - Enabled
+    *   CmpDacrefSel_Vdd ,           // DAC Reference Voltage Select - Vin2 (Vdd)
+    *   31 ,                         // DAC level
+    *
+    *   // Inputs
+    *   cmp0Input_D7.plusPin ,       // Plus Input Mux Control - D7
+    *   Cmp0Input_D21::minusPin,     // Minus Input Mux Control - D21
+    * };
+    *
+    * // Initialise Cmp1 from values specified above
+    * Cmp1::configure(init)
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      /// IRQ priority levels
+      NvicPriority irqlevel = NvicPriority_Normal;
+
+      ///  DAC Control Register
+      uint8_t daccr = 0;
+
+      ///  CMP Control Register 0
+      uint8_t cr0 = 0;
+
+      ///  CMP Control Register 1
+      uint8_t cr1 = 0;
+
+      ///  CMP Status and Control Register
+      uint8_t scr = 0;
+
+      ///  CMP Filter Period Register
+      uint8_t fpr = 0;
+
+      ///  CMP MUX Control Register
+      uint8_t muxcr = 0;
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr Init(NvicPriority nvicPriority, Types... rest) : Init(rest...) {
+   
+         irqlevel = nvicPriority;
+      }
+
+      /**
+       * Constructor for Comparator Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpEnable Enable comparator
+       */
+      template <typename... Types>
+      constexpr Init(CmpEnable cmpEnable, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~CMP_CR1_EN_MASK) | cmpEnable;
+      }
+   
+      /**
+       * Constructor for Operating mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpMode Selects operation in sampling or windowed mode
+       */
+      template <typename... Types>
+      constexpr Init(CmpMode cmpMode, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~(CMP_CR1_SE_MASK|CMP_CR1_WE_MASK)) | cmpMode;
+      }
+   
+      /**
+       * Constructor for Power Mode Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpPower Selects trade-off between speed and power consumption
+       */
+      template <typename... Types>
+      constexpr Init(CmpPower cmpPower, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~CMP_CR1_PMODE_MASK) | cmpPower;
+      }
+   
+      /**
+       * Constructor for Comparator Invert
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpPolarity Allows selection of the polarity of the analog comparator function
+       */
+      template <typename... Types>
+      constexpr Init(CmpPolarity cmpPolarity, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~CMP_CR1_INV_MASK) | cmpPolarity;
+      }
+   
+      /**
+       * Constructor for Comparator output pin source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpOutput Selects whether the output pin is driven by the filtered or unfiltered comparator output
+       */
+      template <typename... Types>
+      constexpr Init(CmpOutput cmpOutput, Types... rest) : Init(rest...) {
+   
+         cr1 = (cr1&~(CMP_CR1_OPE_MASK|CMP_CR1_COS_MASK)) | cmpOutput;
+      }
+   
+      /**
+       * Constructor for Comparator hard block hysteresis control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpHysteresis Defines the programmable hysteresis level.
+       *        The hysteresis values associated with each level are device specific
+       */
+      template <typename... Types>
+      constexpr Init(CmpHysteresis cmpHysteresis, Types... rest) : Init(rest...) {
+   
+         cr0 = (cr0&~CMP_CR0_HYSTCTR_MASK) | cmpHysteresis;
+      }
+   
+      /**
+       * Constructor for DMA Enable Control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpDma Enables the DMA transfer triggered from the CMP module (If DMA supported by device)
+       *        When this field is set, a DMA request is asserted when CFR or CFF is set
+       */
+      template <typename... Types>
+      constexpr Init(CmpDma cmpDma, Types... rest) : Init(rest...) {
+   
+         scr = (scr&~CMP_SCR_DMAEN_MASK) | cmpDma;
+      }
+   
+      /**
+       * Constructor for Action on transition
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpEvent Enables interrupt request on comparator transition
+       */
+      template <typename... Types>
+      constexpr Init(CmpEvent cmpEvent, Types... rest) : Init(rest...) {
+   
+         scr = (scr&~(CMP_SCR_IER_MASK|CMP_SCR_IEF_MASK)) | cmpEvent;
+      }
+   
+      /**
+       * Constructor for Plus Input Mux Control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmp1InputPlus Determines which input is selected for the plus input of the comparator
+       */
+      template <typename... Types>
+      constexpr Init(Cmp1InputPlus cmp1InputPlus, Types... rest) : Init(rest...) {
+   
+         muxcr = (muxcr&~CMP_MUXCR_PSEL_MASK) | cmp1InputPlus;
+      }
+   
+      /**
+       * Constructor for Minus Input Mux Control
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmp1InputMinus Determines which input is selected for the minus input of the comparator
+       */
+      template <typename... Types>
+      constexpr Init(Cmp1InputMinus cmp1InputMinus, Types... rest) : Init(rest...) {
+   
+         muxcr = (muxcr&~CMP_MUXCR_MSEL_MASK) | cmp1InputMinus;
+      }
+   
+      /**
+       * Constructor for Filter Sample Count
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpFilterSamples Represents the number of consecutive samples that must agree prior 
+       *        to the comparator output filter accepting a new output state
+       * @param ticks            Specifies the sampling period, in clock cycles, of the comparator output filter 
+       *        This has no effect if SE=1. In that case, the external SAMPLE signal is used to 
+       *        determine the sampling period.
+       */
+      template <typename... Types>
+      constexpr Init(
+            CmpFilterSamples cmpFilterSamples,
+            Ticks            ticks, Types... rest) : Init(rest...) {
+   
+         cr0 = (cr0&~CMP_CR0_FILTER_CNT_MASK) | cmpFilterSamples;
+         fpr = ticks;
+      }
+   
+      /**
+       * Constructor for DAC Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param cmpDacEnable Enables the internal DAC
+       * @param cmpDacrefSel Supply Voltage Reference Source Select
+       * @param value        Specifies the output level of the internal DAC
+       */
+      template <typename... Types>
+      constexpr Init(
+            CmpDacEnable cmpDacEnable,
+            CmpDacrefSel cmpDacrefSel,
+            uint8_t      value, Types... rest) : Init(rest...) {
+   
+         daccr = (daccr&~(CMP_DACCR_DACEN_MASK|CMP_DACCR_VRSEL_MASK)) | cmpDacEnable | cmpDacrefSel;
+         daccr = (daccr&~CMP_DACCR_VOSEL_MASK) | CMP_DACCR_VOSEL(value);
+      }
+   
+   };
+
+};
+
 class Cmp1Info {
 public:
-   // Template:cmp0
+   /*
+    * Template:cmp0
+    */
+   /* Template_irqOption.xml */
+
+   //! IRQ numbers for hardware
+   static constexpr IRQn_Type irqNums[]  = CMP1_IRQS;
+
+   //! Number of IRQs for hardware
+   static constexpr uint32_t irqCount  = sizeofArray(irqNums);
+
+   //! Class based callback handler has been installed in vector table
+   static constexpr bool irqHandlerInstalled = false;
+
+   //! Default IRQ level
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = CMP1_BasePtr;
@@ -3083,46 +4936,124 @@ public:
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
 
-   //! CMP Control Register 0
-   static constexpr uint32_t cr0 =
-      CMP_CR0_FILTER_CNT(0)     | // Filter Sample Count
-      CMP_CR0_HYSTCTR(0);         // Comparator hard block hysteresis control
+   /**
+    * Class used to do initialisation of the Cmp1
+    *
+    * This class has a templated constructor that accepts various values.
+    *
+    * @note This constructor may be used to create a const instance in Flash
+    *
+    * Example:
+    * @code
+    * static const Cmp1::Init init {
+    *
+    *   // General setup
+    *   CmpEnable_Enabled ,          // Comparator Enable - Comparator is enabled
+    *   CmpMode_Direct ,             // Operating mode - Direct
+    *   CmpTrigger_Enabled ,         // Trigger Mode Enable - Trigger mode is enabled
+    *   CmpPower_HighSpeed ,         // Power Mode Select - High-Speed Comparison mode
+    *   CmpPolarity_Inverted ,       // Comparator Invert - Inverted
+    *   CmpOutput_Direct ,           // Comparator output pin source - Direct (unfiltered)
+    *   CmpHysteresis_Level_2 ,      // Comparator hard block hysteresis control - Level 2
+    *   CmpDma_Disabled ,            // DMA Enable Control - Disabled
+    *
+    *   // Interrupt handling - must be in this order
+    *   CmpEvent_OnFalling ,         // Action on transition - Falling edge
+    *   cmpCallback,                 // Call-back to execute on event (if interrupts are enabled)
+    *
+    *   // Filter settings - must be in this order
+    *   CmpFilterSamples_4 ,         // Filter Sample Count - 4 sample must agree
+    *   100_ticks ,                  // Filter Sample Period in ticks or seconds (if support is enabled)
+    *
+    *   // DAC Settings - must be in this order
+    *   CmpDacEnable_Enabled ,       // DAC Enable - Enabled
+    *   CmpDacrefSel_Vdd ,           // DAC Reference Voltage Select - Vin2 (Vdd)
+    *   31 ,                         // DAC level
+    *
+    *   // Inputs
+    *   cmp0Input_D7.plusPin ,       // Plus Input Mux Control - D7
+    *   Cmp0Input_D21::minusPin,     // Minus Input Mux Control - D21
+    * };
+    *
+    * // Initialise Cmp1 from values specified above
+    * Cmp1::configure(init)
+    * @endcode
+    */
+   typedef Cmp1BasicInfo::Init Init;
+   
+   /**
+    * Cmp1 interrupt call back
+    */
+   typedef Cmp1BasicInfo::CallbackFunction CallbackFunction;
+   
+   /**
+    * Default initialisation value for Dac1
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultInitValue = {
+      CmpEnable_Disabled , // Comparator Enable - Comparator is disabled
+      CmpMode_Direct , // Operating mode - Direct
+      CmpPower_LowSpeed , // Power Mode Select - Low-Speed Comparison mode
+      CmpPolarity_Normal , // Comparator Invert - Not inverted
+      CmpOutput_Disabled , // Comparator output pin source - Disabled
+      CmpHysteresis_Level_0 , // Comparator hard block hysteresis control - Level 0
+      CmpDma_Disabled , // DMA Enable Control - Disabled
+      CmpEvent_Disabled , // Action on transition - Disabled
+      CmpFilterSamples_Bypassed , // Filter Sample Count - Disabled
+      0_ticks , // Filter Sample Period in ticks
+      CmpDacEnable_Disabled , // DAC Enable - Disabled
+      CmpDacrefSel_VrefOut , // DAC Reference Voltage Select - Vin1 (Vref_OUT)
+      31 , // DAC level
+      Cmp1InputPlus_0 , // Plus Input Mux Control - CMP_IN0
+      Cmp1InputMinus_0,  // Minus Input Mux Control - CMP_IN0
+   };
 
-   #ifndef CMP_CR1_TRIGM
-   #define CMP_CR1_TRIGM(x) 0
-   #endif
+   /**
+    * Get clock frequency
+    *
+    * @return Input clock frequency as a uint32_t in Hz
+    */
+   static __attribute__((always_inline)) uint32_t getClockFrequency() {
+      return SystemBusClock;
+   }
 
-   //! CMP Control Register 1
-   static constexpr uint32_t cr1 =
-      CMP_CR1_SE(0)    | // Sample Enable
-      CMP_CR1_WE(0)    | // Windowing Enable
-      CMP_CR1_TRIGM(0) | // Trigger Mode Enable
-      CMP_CR1_PMODE(0) | // Power mode Select
-      CMP_CR1_INV(0)   | // Comparator Invert
-      CMP_CR1_COS(0)   | // Comparator Output Select
-      CMP_CR1_OPE(0);    // Comparator Output Pin Enable
-
-   //! CMP Filter Period Register
-   static constexpr uint32_t fpr =
-      CMP_FPR_FILT_PER(0); // Filter Sample Period
-
-   //! CMP Status and Control Register
-   static constexpr uint32_t scr =
-   #ifdef CMP_SCR_DMAEN
-      CMP_SCR_DMAEN(0) | // DMA Enable Control
-   #endif
-      CMP_SCR_IER(0) | // Comparator Interrupt Enable Rising
-      CMP_SCR_IEF(0);  // Comparator Interrupt Enable Falling
-
-   //! DAC Control Register
-   static constexpr uint32_t daccr =
-      CMP_DACCR_VRSEL(0); // Supply Voltage Reference Source Select
-
-   //! MUX Control Register
-   static constexpr uint32_t muxcr =
-      CMP_MUXCR_PSEL(0)| // Plus Input Mux Control
-      CMP_MUXCR_MSEL(0); // Minus Input Mux Control
-
+   /**
+    * Configure Comparator input sources
+    *
+    * @param cmp1InputPlus  Determines which input is selected for the plus input of the comparator
+    * @param cmp1InputMinus Determines which input is selected for the minus input of the comparator
+    */
+   static void selectInputs(
+         Cmp1InputPlus  cmp1InputPlus,
+         Cmp1InputMinus cmp1InputMinus) {
+   
+      //! MUX Control Register
+      cmp->MUXCR = cmp1InputPlus|cmp1InputMinus;
+   }
+   
+      /**
+       * Class representing a Comparator pin
+       *
+       * @tparam cmpInput Number of comparator input (0-7) for associated pin.
+       */
+      template<Cmp1InputMinus cmpInput>
+      class Pin {
+         using Pcr = PcrTable_T<Cmp1Info,cmpInput>;
+   
+      public:
+         static constexpr Cmp1InputPlus  plusPin  = (Cmp1InputPlus)CMP_MUXCR_PSEL(cmpInput);
+         static constexpr Cmp1InputMinus minusPin = cmpInput;
+   
+         constexpr operator Cmp1InputPlus()  const { return plusPin;  }
+         constexpr operator Cmp1InputMinus() const { return minusPin; }
+   
+         constexpr Pin() {}
+   
+         static void setInput() {
+            Pcr::setPCR();
+         }
+      };
+   
    /** 
     *  Enable clock to Cmp1
     */
@@ -3144,20 +5075,6 @@ public:
       SIM->SCGC4 = SIM->SCGC4 & ~SIM_SCGC4_CMP_MASK;
 #endif
    }
-
-   /* Template_irqOption.xml */
-
-   //! IRQ numbers for hardware
-   static constexpr IRQn_Type irqNums[]  = CMP1_IRQS;
-
-   //! Number of IRQs for hardware
-   static constexpr uint32_t irqCount  = sizeofArray(irqNums);
-
-   //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
-
-   //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
 
    //! Number of signals available in info table
    static constexpr int numSignals  = 9;
@@ -3204,7 +5121,6 @@ public:
  * @brief Abstraction for Carrier Modulator Transmitter
  * @{
  */
-#define USBDM_CMT_IS_DEFINED
 /**
  * Peripheral information for CMT, Carrier Modulator Transmitter.
  * 
@@ -3213,8 +5129,9 @@ public:
  */
 class CmtInfo {
 public:
-   // Template:cmt_0
-
+   /*
+    * Template:cmt_0
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = CMT_BasePtr;
 
@@ -3233,10 +5150,10 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /** 
     *  Enable clock to Cmt
@@ -3297,7 +5214,6 @@ public:
  * @brief Abstraction for Control
  * @{
  */
-#define USBDM_CONTROL_IS_DEFINED
 /**
  * Peripheral information for CONTROL, Control.
  * 
@@ -3306,7 +5222,13 @@ public:
  */
 class ControlInfo {
 public:
-   // Template:control
+   /*
+    * Template:control
+    */
+using JTAG_TCLK_pin        = PcrTable_T<ControlInfo,1>;
+using SWD_CLK_pin          = PcrTable_T<ControlInfo,2>;
+using JTAG_TMS_pin         = PcrTable_T<ControlInfo,6>;
+using SWD_DIO_pin          = PcrTable_T<ControlInfo,7>;
 
    //! Number of signals available in info table
    static constexpr int numSignals  = 10;
@@ -3335,12 +5257,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK);
 #endif
 
-PORTA->GPCLR = 0x0700UL|PORT_GPCLR_GPWE(0x0009UL);
+   PORTA->GPCLR = 0x0700UL|PORT_GPCLR_GPWE(0x0009UL);
    }
 
    /**
@@ -3351,12 +5273,12 @@ PORTA->GPCLR = 0x0700UL|PORT_GPCLR_GPWE(0x0009UL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK);
 #endif
 
-PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0009UL);
    }
 
 };
@@ -3370,7 +5292,6 @@ PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
  * @brief Abstraction for Cyclic Redundancy Check
  * @{
  */
-#define USBDM_CRC0_IS_DEFINED
 /**
  * Peripheral information for CRC, Cyclic Redundancy Check.
  * 
@@ -3379,8 +5300,9 @@ PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
  */
 class Crc0Info {
 public:
-   // Template:crc0_0x40032000
-
+   /*
+    * Template:crc0_0x40032000
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = CRC0_BasePtr;
 
@@ -3431,7 +5353,6 @@ public:
  * @brief Abstraction for Direct Memory Access (DMA)
  * @{
  */
-#define USBDM_DMA0_IS_DEFINED
 /**
  * Peripheral information for DMA, Direct Memory Access (DMA).
  * 
@@ -3440,8 +5361,9 @@ public:
  */
 class Dma0Info {
 public:
-   // Template:dma0_4ch
-
+   /*
+    * Template:dma0_4ch
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = DMA0_BasePtr;
 
@@ -3479,7 +5401,7 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
@@ -3501,7 +5423,6 @@ public:
  * @brief Abstraction for Direct Memory Access (DMA)
  * @{
  */
-#define USBDM_DMAMUX0_IS_DEFINED
 /**
  * Peripheral information for DMAMUX, Direct Memory Access (DMA).
  * 
@@ -3510,8 +5431,9 @@ public:
  */
 class Dmamux0Info {
 public:
-   // Template:dmamux0_4ch_trig_mk20d5
-
+   /*
+    * Template:dmamux0_4ch_trig_mk20d5
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = DMAMUX0_BasePtr;
 
@@ -3558,7 +5480,6 @@ public:
  * @brief Abstraction for External Watchdog Monitor
  * @{
  */
-#define USBDM_EWM_IS_DEFINED
 /**
  * Peripheral information for EWM, External Watchdog Monitor.
  * 
@@ -3567,8 +5488,9 @@ public:
  */
 class EwmInfo {
 public:
-   // Template:ewm_int
-
+   /*
+    * Template:ewm_int
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = EWM_BasePtr;
 
@@ -3593,7 +5515,7 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
@@ -3654,11 +5576,165 @@ public:
  * @}
  */
 /**
+ * @addtogroup FMC_Group FMC, Flash Memory Controller
+ * @brief Abstraction for Flash Memory Controller
+ * @{
+ */
+/**
+ * Peripheral information for FMC, Flash Memory Controller.
+ * 
+ * This may include pin information, constants, register addresses, and default register values,
+ * along with simple accessor functions.
+ */
+   /**
+    * Bank 0 Flash Controller Speculation Buffer
+    *
+    * Controls the operation of the Speculation Buffer for each Flash Controller bank
+    */
+   enum FmcFlashSpeculation {
+      FmcFlashSpeculation_Disabled            = FMC_PFB0CR_B0DPE(0)|FMC_PFB0CR_B0IPE(0), ///< Disabled
+      FmcFlashSpeculation_DataOnly            = FMC_PFB0CR_B0DPE(1)|FMC_PFB0CR_B0IPE(0), ///< Data Only
+      FmcFlashSpeculation_InstructionsOnly    = FMC_PFB0CR_B0DPE(0)|FMC_PFB0CR_B0IPE(1), ///< Instructions Only
+      FmcFlashSpeculation_InstructionsAndData = FMC_PFB0CR_B0DPE(1)|FMC_PFB0CR_B0IPE(1), ///< Instructions and Data
+
+   };
+
+   /**
+    * Bank 0 Flash Controller Cache
+    *
+    * Controls the operation of the Cache for each Flash Controller bank
+    */
+   enum FmcFlashCache {
+      FmcFlashCache_Disabled            = FMC_PFB0CR_B0DCE(0)|FMC_PFB0CR_B0ICE(0), ///< Disabled
+      FmcFlashCache_DataOnly            = FMC_PFB0CR_B0DCE(1)|FMC_PFB0CR_B0ICE(0), ///< Data Only
+      FmcFlashCache_InstructionsOnly    = FMC_PFB0CR_B0DCE(0)|FMC_PFB0CR_B0ICE(1), ///< Instructions Only
+      FmcFlashCache_InstructionsAndData = FMC_PFB0CR_B0DCE(1)|FMC_PFB0CR_B0ICE(1), ///< Instructions and Data
+
+   };
+
+class FmcInfo {
+public:
+   /*
+    * Template:fmc_mk10d5
+    */
+   //! Hardware base address as uint32_t 
+   static constexpr uint32_t baseAddress = FMC_BasePtr;
+
+   //! Hardware base pointer
+   static constexpr HardwarePtr<FMC_Type> fmc = baseAddress;
+
+   /**
+    * Set Bank 0 Flash Controller Speculation Buffer
+    *
+    * @param fmcFlashSpeculation Controls the operation of the Speculation Buffer for each Flash Controller bank
+    */
+   static void setFlashBank0Speculation(FmcFlashSpeculation fmcFlashSpeculation) {
+
+      fmc->PFB0CR = (fmc->PFB0CR&~((FMC_PFB0CR_B0DPE_MASK|FMC_PFB0CR_B0IPE_MASK))) | fmcFlashSpeculation;
+   }
+
+   /**
+    * Set Bank 0 Flash Controller Cache
+    *
+    * @param fmcFlashCache Controls the operation of the Cache for each Flash Controller bank
+    */
+   static void setFlashBank0Cache(FmcFlashCache fmcFlashCache) {
+
+      fmc->PFB0CR = (fmc->PFB0CR&~((FMC_PFB0CR_B0DCE_MASK|FMC_PFB0CR_B0ICE_MASK))) | fmcFlashCache;
+   }
+
+   /**
+    **
+    * Class used to do initialisation of Flash bank 0 controller
+    * Options not explicitly mentioned are cleared to 0.
+    *
+    * This class has a templated constructor that accepts a range of options
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example1:
+    * @code
+    * const Fmc::FlashBank0Init flashInit {
+    *    // List of options
+    *    FmcFlashCache_Disabled, 
+    *    FmcFlashSpeculation_InstructionsAndData,
+    * };
+    *
+    * flashInit.configure();  // Configure selected options
+    * @endcode
+    */
+   class FlashBank0Init {
+   
+   private:
+      /// Value for pfb0cr register
+      uint32_t pfb0cr = 0;
+   
+   public:
+      /**
+       * Configure Flash options as specified in the constructor
+       */
+      inline void configure() const {
+         fmc->PFB0CR = (fmc->PFB0CR & ~(FMC_PFB0CR_B0DCE_MASK|FMC_PFB0CR_B0ICE_MASK|FMC_PFB0CR_B0DPE_MASK|FMC_PFB0CR_B0IPE_MASK))|
+                      pfb0cr;
+      }
+     
+      /**
+       * Read the current settings from hardware registers 
+       */
+      void readConfig() {
+         pfb0cr = fmc->PFB0CR & (FMC_PFB0CR_B0DCE_MASK|FMC_PFB0CR_B0ICE_MASK|FMC_PFB0CR_B0DPE_MASK|FMC_PFB0CR_B0IPE_MASK);
+      }
+     
+      /**                               
+       * Copy Constructor                  
+       */                             
+      constexpr FlashBank0Init(const FlashBank0Init &other) = default;
+      
+      /**
+       * Constructor
+       */
+      constexpr FlashBank0Init()  {
+      }
+   
+      /**
+       * Constructor
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param fmcFlashCache Bank 0 Flash Controller Cache
+       */
+      template <typename... Types>
+      constexpr FlashBank0Init(FmcFlashCache fmcFlashCache, Types... rest) : FlashBank0Init(rest...)  {
+      
+         pfb0cr = (pfb0cr&~(FMC_PFB0CR_B0DCE_MASK|FMC_PFB0CR_B0ICE_MASK)) | fmcFlashCache;
+      }
+
+      /**
+       * Constructor
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param fmcFlashSpeculation Bank 0 Flash Controller Speculation Buffer
+       */
+      template <typename... Types>
+      constexpr FlashBank0Init(FmcFlashSpeculation fmcFlashSpeculation, Types... rest) : FlashBank0Init(rest...)  {
+      
+         pfb0cr = (pfb0cr&~(FMC_PFB0CR_B0DPE_MASK|FMC_PFB0CR_B0IPE_MASK)) | fmcFlashSpeculation;
+      }
+
+   };
+
+};
+
+/** 
+ * End group FMC_Group
+ * @}
+ */
+/**
  * @addtogroup FTFL_Group FTFL, Flash Memory Module
  * @brief Abstraction for Flash Memory Module
  * @{
  */
-#define USBDM_FTFL_IS_DEFINED
 /**
  * Peripheral information for FTFL, Flash Memory Module.
  * 
@@ -3667,8 +5743,9 @@ public:
  */
 class FtflInfo {
 public:
-   // Template:ftfl_32k_flexrom
-
+   /*
+    * Template:ftfl_32k_flexrom
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = FTFL_BasePtr;
 
@@ -3758,10 +5835,10 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /** 
     *  Enable clock to Ftfl
@@ -3796,7 +5873,6 @@ public:
  * @brief Abstraction for PWM, Input capture and Output compare
  * @{
  */
-#define USBDM_FTM_IS_DEFINED
 /**
  * Peripheral information for FTM, PWM, Input capture and Output compare.
  * 
@@ -3805,7 +5881,9 @@ public:
  */
 class FtmInfo {
 public:
-   // Template:ftm
+   /*
+    * Template:ftm
+    */
 
    //! Number of signals available in info table
    static constexpr int numSignals  = 2;
@@ -3836,17 +5914,442 @@ public:
 
 };
 
-#define USBDM_FTM0_IS_DEFINED
 /**
  * Peripheral information for FTM, PWM, Input capture and Output compare.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Clock Source
+    *
+    * Selects the clock source for the module
+    */
+   enum FtmClockSource {
+      FtmClockSource_Disabled            = FTM_SC_CLKS(0), ///< Disabled
+      FtmClockSource_SystemClock         = FTM_SC_CLKS(1), ///< System clock
+      FtmClockSource_FixedFrequencyClock = FTM_SC_CLKS(2), ///< Fixed frequency clock
+      FtmClockSource_ExternalClock       = FTM_SC_CLKS(3), ///< External clock
+
+   };
+
+   /**
+    * Clock prescaler
+    *
+    * Selects the prescaler for the module
+    */
+   enum FtmPrescale {
+      FtmPrescale_DivBy1   = FTM_SC_PS(0), ///< Divide by 1
+      FtmPrescale_DivBy2   = FTM_SC_PS(1), ///< Divide by 2
+      FtmPrescale_DivBy4   = FTM_SC_PS(2), ///< Divide by 4
+      FtmPrescale_DivBy8   = FTM_SC_PS(3), ///< Divide by 8
+      FtmPrescale_DivBy16  = FTM_SC_PS(4), ///< Divide by 16
+      FtmPrescale_DivBy32  = FTM_SC_PS(5), ///< Divide by 32
+      FtmPrescale_DivBy64  = FTM_SC_PS(6), ///< Divide by 64
+      FtmPrescale_DivBy128 = FTM_SC_PS(7), ///< Divide by 128
+
+   };
+
+   /**
+    * Alignment and whether interval or free-running mode
+    *
+    * Left-aligned   (cntin...mod) or
+    * Centre-aligned (cntin...mod...cntin) or
+    * Free-running   (0...maximum_value)
+    */
+   enum FtmMode {
+      FtmMode_LeftAligned   = FTM_SC_TOF(0)|FTM_SC_CPWMS(0), ///< Left-aligned (count up)
+      FtmMode_CentreAligned = FTM_SC_TOF(0)|FTM_SC_CPWMS(1), ///< Centre-aligned (count up-down)
+      FtmMode_FreeRunning   = FTM_SC_TOF(1)|FTM_SC_CPWMS(0), ///< Free-running (count up)
+
+   };
+
+   /**
+    * Action on Counter overflow
+    *
+    * Enable interrupt on counter overflow
+    */
+   enum FtmOverflowAction {
+      FtmOverflowAction_None      = FTM_SC_TOIE(0), ///< No action
+      FtmOverflowAction_Interrupt = FTM_SC_TOIE(1), ///< Overflow Interrupt
+
+   };
+
+   /**
+    * Channel Number
+    *
+    * Select a channel
+    */
+   enum FtmChannelNum : uint8_t {
+      FtmChannelNum_0    = 0,             ///< Channel 0
+      FtmChannelNum_1    = 1,             ///< Channel 1
+      FtmChannelNum_2    = 2,             ///< Channel 2
+      FtmChannelNum_3    = 3,             ///< Channel 3
+      FtmChannelNum_4    = 4,             ///< Channel 4
+      FtmChannelNum_5    = 5,             ///< Channel 5
+      FtmChannelNum_6    = 6,             ///< Channel 6
+      FtmChannelNum_7    = 7,             ///< Channel 7
+      FtmChannelNum_None = (uint8_t(-1)), ///< No Channel
+
+   };
+
+   /**
+    * Channel Mode
+    *
+    * Determines channel operation (PWM/Input capture/Output compare)
+    */
+   enum FtmChannelMode : uint16_t {
+      FtmChannelMode_Disabled                             = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(0)|FTM_CnSC_ELS(0), ///< Disabled
+      FtmChannelMode_InputCaptureRisingEdge               = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(0)|FTM_CnSC_ELS(1), ///< Input Capture Rising-edge
+      FtmChannelMode_InputCaptureFallingEdge              = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(0)|FTM_CnSC_ELS(2), ///< Input Capture Falling-edge
+      FtmChannelMode_InputCaptureEitherEdge               = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(0)|FTM_CnSC_ELS(3), ///< Input Capture Either-edge
+      FtmChannelMode_OutputCompare                        = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(1)|FTM_CnSC_ELS(0), ///< Output Compare No action
+      FtmChannelMode_OutputCompareToggle                  = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(1)|FTM_CnSC_ELS(1), ///< Output Compare Toggle
+      FtmChannelMode_OutputCompareClear                   = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(1)|FTM_CnSC_ELS(2), ///< Output Compare Clear
+      FtmChannelMode_OutputCompareSet                     = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(1)|FTM_CnSC_ELS(3), ///< Output Compare Set
+      FtmChannelMode_PwmHighTruePulses                    = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(2)|FTM_CnSC_ELS(2), ///< Pwm High-true Pulses
+      FtmChannelMode_PwmLowTruePulses                     = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(2)|FTM_CnSC_ELS(1), ///< Pwm Low-true Pulses
+      FtmChannelMode_DualEdgeCaptureOneShotRisingEdge     = (FTM_COMBINE_DECAPEN0(1)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(0)|FTM_CnSC_ELS(1), ///< Dual-edge Capture One-Shot Rising-edge
+      FtmChannelMode_DualEdgeCaptureContinuousRisingEdge  = (FTM_COMBINE_DECAPEN0(1)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(1)|FTM_CnSC_ELS(1), ///< Dual-edge Capture Continuous Rising-edge
+      FtmChannelMode_DualEdgeCaptureOneShotFallingEdge    = (FTM_COMBINE_DECAPEN0(1)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(0)|FTM_CnSC_ELS(2), ///< Dual-edge Capture One-Shot Falling-edge
+      FtmChannelMode_DualEdgeCaptureContinuousFallingEdge = (FTM_COMBINE_DECAPEN0(1)<<8)|(FTM_COMBINE_COMBINE0(0)<<8)|FTM_CnSC_MS(1)|FTM_CnSC_ELS(2), ///< Dual-edge Capture Continuous Falling-edge
+      FtmChannelMode_CombinePositivePulse                 = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(1)<<8)|FTM_CnSC_MS(0)|FTM_CnSC_ELS(2), ///< Combined Positive-pulse
+      FtmChannelMode_CombineNegativePulse                 = (FTM_COMBINE_DECAPEN0(0)<<8)|(FTM_COMBINE_COMBINE0(1)<<8)|FTM_CnSC_MS(0)|FTM_CnSC_ELS(1), ///< Combine Negative-pulse
+
+   };
+
+   /**
+    * Action on Channel Event
+    *
+    * Enable interrupt or DMA on channel event
+    */
+   enum FtmChannelAction : uint8_t {
+      FtmChannelAction_None      = FTM_CnSC_CHIE(0)|FTM_CnSC_DMA(0), ///< No action
+      FtmChannelAction_Interrupt = FTM_CnSC_CHIE(1)|FTM_CnSC_DMA(0), ///< Interrupt Request
+      FtmChannelAction_Dma       = FTM_CnSC_CHIE(1)|FTM_CnSC_DMA(1), ///< DMA request
+
+   };
+
+class Ftm0BasicInfo {
+   
+public:
+
+   /**
+    * Type definition for Ftm0 Peripheral interrupt handling call back.
+    */
+   typedef void (*CallbackFunction)();
+
+   /**
+    * Class used to do initialisation of Ftm0
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Ftm0::Init ftmInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmMode_Freerunning,           // Alignment and whether interval or free-running mode
+    *    FtmOverflowInterrupt_Disabled, // Overflow Interrupt
+    *    NvicPriority_Normal,           // IRQ level for this peripheral
+    *    FtmClockSource_SystemClock,    // Clock Source
+    *
+    *    // Either
+    *    FtmPrescale_DivBy16,           // Clock prescaler
+    *    10_ticks, 3000_ticks,          // Counter start (cntin) and end (mod) values
+    *    // OR
+    *    100_ms,                        // Timer period or minimum interval in seconds
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm0::DefaultValue
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * Ftm0::configure(ftmInit)
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      /// Peripheral interrupt handling
+      CallbackFunction callbackFunction = nullptr;
+
+      /// Status And Control Register
+      uint8_t sc = 0;
+
+      /// IRQ priority levels
+      NvicPriority irqlevel = NvicPriority_Normal;
+
+      /// Start value for counter
+      uint16_t cntin = 0_ticks;
+
+      /// End value for counter
+      uint16_t mod = 0_ticks;
+
+      /// Period or minimum interval of timer
+      Seconds modperiod = 0_s;
+
+      /**
+       * Constructor for Peripheral interrupt handling
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param callbackFunction If enabled, the handler may be set using the setCallback() function or
+       *        by overriding the interrupt handler method in the peripheral class
+       *        If not enabled, then interrupt handlers may be installed by naming them 
+       *        (see weak names used in vector table).
+       */
+      template <typename... Types>
+      constexpr Init(CallbackFunction callbackFunction, Types... rest) : Init(rest...) {
+   
+         this->callbackFunction = callbackFunction;
+      }
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr Init(NvicPriority nvicPriority, Types... rest) : Init(rest...) {
+   
+#if true
+         irqlevel = nvicPriority;
+#else
+         (void)nvicPriority;
+#endif
+      }
+
+      /**
+       * Constructor for Action on Counter overflow
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmOverflowAction Enable interrupt on counter overflow
+       */
+      template <typename... Types>
+      constexpr Init(FtmOverflowAction ftmOverflowAction, Types... rest) : Init(rest...) {
+   
+         sc = (sc&~FTM_SC_TOIE_MASK) | ftmOverflowAction;
+      }
+   
+      /**
+       * Constructor for Alignment and whether interval or free-running mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmMode Left-aligned   (cntin...mod) or
+       *        Centre-aligned (cntin...mod...cntin) or
+       *        Free-running   (0...maximum_value)
+       */
+      template <typename... Types>
+      constexpr Init(FtmMode ftmMode, Types... rest) : Init(rest...) {
+   
+         sc = (sc&~(FTM_SC_TOF_MASK|FTM_SC_CPWMS_MASK)) | ftmMode;
+      }
+   
+      /**
+       * Constructor for Clock Source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmClockSource Selects the clock source for the module
+       */
+      template <typename... Types>
+      constexpr Init(FtmClockSource ftmClockSource, Types... rest) : Init(rest...) {
+   
+         sc = (sc&~FTM_SC_CLKS_MASK) | ftmClockSource;
+      }
+   
+      /**
+       * Constructor for Clock prescaler, Start value for counter and End value for counter
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmPrescale Selects the prescaler for the module
+       * @param cntin_ticks The timer counts from this value to ftm_mod
+       * @param mod_ticks   The timer counts from ftm_cntin to this value
+       */
+      template <typename... Types>
+      constexpr Init(
+            FtmPrescale ftmPrescale,
+            Ticks&      cntin_ticks,
+            Ticks&      mod_ticks, Types... rest) : Init(rest...) {
+   
+         sc    = (sc&~FTM_SC_PS_MASK) | ftmPrescale;
+         cntin = cntin_ticks;
+         mod   = mod_ticks;
+      }
+   
+      /**
+       * Constructor for Clock prescaler and End value for counter
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmPrescale Selects the prescaler for the module
+       * @param mod_ticks   The timer counts from ftm_cntin to this value
+       */
+      template <typename... Types>
+      constexpr Init(
+            FtmPrescale ftmPrescale,
+            Ticks&      mod_ticks, Types... rest) : Init(rest...) {
+   
+         sc    = (sc&~FTM_SC_PS_MASK) | ftmPrescale;
+         mod   = mod_ticks;
+      }
+   
+      /**
+       * Constructor for Period or minimum interval of timer
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param seconds   In left-aligned or centre-aligned this is the period of the timer
+       *        In free-running mode it is the minimum interval
+       */
+      template <typename... Types>
+      constexpr Init(Seconds&  seconds, Types... rest) : Init(rest...) {
+   
+         cntin = 0;
+         mod   = 0;
+         modperiod = seconds;
+      }
+   
+   };
+
+   /**
+    * Class used to do initialisation of Ftm0Channel
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Ftm0::ChannelInit channelInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmChannelNum_3,            // Channel to initialise
+    *    FtmChannelMode_Disabled ,   // Channel Mode - Disabled
+    *    FtmChannelAction_None ,     // Action on Channel Event - No action
+    *    FtmChannelReset_Disabled ,  // Reset counter on channel IC event - Disabled
+    *    0_ticks,                    // Output Compare Event time
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm0::DefaultChannelInitValues[FtmChannelNum_3]
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * Ftm0::configureChannel(channelInit)
+    * @endcode
+    */
+   class ChannelInit {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr ChannelInit(const ChannelInit &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr ChannelInit() = default;
+   
+      /// Output Compare Event time in ticks
+      uint16_t cnv = 0_ticks;
+
+      /// Channel Status And Control Register
+      uint16_t cnsc = 0;
+
+      /// Channel Number
+      FtmChannelNum channel = FtmChannelNum_None;
+
+      /**
+       * Constructor for Channel Mode
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmChannelMode Determines channel operation (PWM/Input capture/Output compare)
+       */
+      template <typename... Types>
+      constexpr ChannelInit(FtmChannelMode ftmChannelMode, Types... rest) : ChannelInit(rest...) {
+   
+         cnsc = (cnsc&~((FTM_COMBINE_DECAPEN0_MASK<<8)|(FTM_COMBINE_COMBINE0_MASK<<8)|FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK)) | ftmChannelMode;
+      }
+   
+      /**
+       * Constructor for Action on Channel Event
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmChannelAction Enable interrupt or DMA on channel event
+       */
+      template <typename... Types>
+      constexpr ChannelInit(FtmChannelAction ftmChannelAction, Types... rest) : ChannelInit(rest...) {
+   
+         cnsc = (cnsc&~(FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK)) | ftmChannelAction;
+      }
+   
+      /**
+       * Constructor for Channel Number
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmChannelNum Select a channel
+       */
+      template <typename... Types>
+      constexpr ChannelInit(FtmChannelNum ftmChannelNum, Types... rest) : ChannelInit(rest...) {
+   
+         channel = ftmChannelNum;
+      }
+   
+      /**
+       * Constructor for Output Compare Event time in ticks
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ticks   This value is compared against the main counter in output compare modes
+       */
+      template <typename... Types>
+      constexpr ChannelInit(Ticks&  ticks, Types... rest) : ChannelInit(rest...) {
+   
+         cnv = ticks;
+      }
+   
+   };
+
+};
+
+extern void timerUnhandledChannelCallback(uint8_t);
+
 class Ftm0Info {
 public:
-   // Template:ftm0_8ch
-
+   /*
+    * Template:ftm0_8ch
+    */
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
 
@@ -3862,24 +6365,6 @@ public:
    //! Hardware base pointer
    static constexpr HardwarePtr<FTM_Type> ftm = baseAddress;
 
-   //! Timer external input frequency
-   static constexpr uint32_t ftmExternalClock =  0;
-
-   //! Default Timer Modulo
-   static constexpr uint32_t modulo = FTM_MOD_MOD(10000);
-
-   //! Default value for SC register
-   static constexpr uint32_t sc  = 
-       FTM_SC_CPWMS(0)| // Centre-Aligned PWM Select
-       FTM_SC_CLKS(1)|  // Clock Mode Selection
-       FTM_SC_TOIE(0)|  // Timer Overflow Interrupt Enable
-       FTM_SC_PS(0);    // Prescale Factor Selection 
-
-   //! Default value for EXTTRIG) register
-   static constexpr uint32_t exttrig  = 
-       0x0|                              // External Trigger Enable
-       FTM_EXTTRIG_INITTRIGEN(0);    // Initialisation Trigger Enable 
-
    /* Template_irqOption.xml */
 
    //! IRQ numbers for hardware
@@ -3889,31 +6374,229 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 1;
+   static constexpr bool irqHandlerInstalled = true;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
-   /** Minimum resolution for PWM interval */
-   static constexpr uint32_t minimumResolution=0;
+   /// Minimum resolution for PWM interval
+   static constexpr uint32_t minimumResolution  = 0;
 
-   /** Minimum usable interval in ticks */      
-   static constexpr uint32_t minimumInterval=0;
+   /// Minimum usable interval in ticks
+   static constexpr uint32_t minimumInterval  = 0;
+
+   /// FTM External clock
+   static constexpr uint32_t ftmExternalClock  = 0;
+
+   /// Default value for EXTTRIG) register
+   static constexpr uint32_t exttrig  =
+       0x0|                              // External Trigger Enable
+       FTM_EXTTRIG_INITTRIGEN(0);    // Initialisation Trigger Enable 
 
    /**
-    * Get input clock frequency
+    * Get Clock Source
     *
-    * @return Input clock frequency as a uint32_t in Hz
+    * @param ftmClockSource Selects the clock source for the module
+    *
+    * @return Clock frequency in Hz
     */
-   static uint32_t getInputClockFrequency() {
+   static uint32_t getInputClockFrequency(FtmClockSource ftmClockSource) {
    
-      switch(ftm->SC&FTM_SC_CLKS_MASK) {
-      default:
-      case FTM_SC_CLKS(0): return 0;
-      case FTM_SC_CLKS(1): return SystemBusClock;
-      case FTM_SC_CLKS(2): return SystemMcgffClock;
-      case FTM_SC_CLKS(3): return ftmExternalClock;
+      switch(ftmClockSource) {
+         default: return 0;
+         case FtmClockSource_Disabled            : return 0;                ///< Disabled
+         case FtmClockSource_SystemClock         : return SystemBusClock;   ///< System clock
+         case FtmClockSource_FixedFrequencyClock : return SystemMcgffClock; ///< Fixed frequency clock
+         case FtmClockSource_ExternalClock       : return ftmExternalClock; ///< External clock
+
       }
+   }
+
+   /**
+    * Class used to do initialisation of Ftm0
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Ftm0::Init ftmInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmMode_Freerunning,           // Alignment and whether interval or free-running mode
+    *    FtmOverflowInterrupt_Disabled, // Overflow Interrupt
+    *    NvicPriority_Normal,           // IRQ level for this peripheral
+    *    FtmClockSource_SystemClock,    // Clock Source
+    *
+    *    // Either
+    *    FtmPrescale_DivBy16,           // Clock prescaler
+    *    10_ticks, 3000_ticks,          // Counter start (cntin) and end (mod) values
+    *    // OR
+    *    100_ms,                        // Timer period or minimum interval in seconds
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm0::DefaultValue
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * Ftm0::configure(ftmInit)
+    * @endcode
+    */
+   typedef Ftm0BasicInfo::Init Init;
+   
+   /**
+    * Ftm0 interrupt call back
+    */
+   typedef Ftm0BasicInfo::CallbackFunction CallbackFunction;
+   
+   /**
+    * Default initialisation value for Ftm0
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultInitValue = {
+      FtmMode_FreeRunning , // Alignment and whether interval or free-running mode - Free-running (count up)
+      FtmOverflowAction_None , // Action on Counter overflow - No action
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      FtmClockSource_SystemClock , // Clock Source - System clock
+      FtmPrescale_DivBy1 , // Clock prescaler - Divide by 1
+      0_ticks , // Start value for counter
+      65535_ticks,  // End value for counter
+   };
+
+   /**
+    * Class used to do initialisation of Ftm0Channel
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Ftm0::ChannelInit channelInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmChannelNum_3,            // Channel to initialise
+    *    FtmChannelMode_Disabled ,   // Channel Mode - Disabled
+    *    FtmChannelAction_None ,     // Action on Channel Event - No action
+    *    FtmChannelReset_Disabled ,  // Reset counter on channel IC event - Disabled
+    *    0_ticks,                    // Output Compare Event time
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm0::DefaultChannelInitValues[FtmChannelNum_3]
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * Ftm0::configureChannel(channelInit)
+    * @endcode
+    */
+   typedef Ftm0BasicInfo::ChannelInit ChannelInit;
+   
+   /**
+    * Default initialisation value for Ftm0ChannelInit
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr ChannelInit DefaultChannelInitValues[] = {
+   {
+      FtmChannelNum_0,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+   {
+      FtmChannelNum_1,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+   {
+      FtmChannelNum_2,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+   {
+      FtmChannelNum_3,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+   {
+      FtmChannelNum_4,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+   {
+      FtmChannelNum_5,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+   {
+      FtmChannelNum_6,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+   {
+      FtmChannelNum_7,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+
+   };
+
+   /**
+    * Type definition for channel interrupt call back
+    *
+    * @param[in] status Flags indicating interrupt source channel(s)
+    */
+   typedef void (*ChannelCallbackFunction)(uint8_t status);
+   
+   /**
+    * Callback table for programmatically set handlers
+    */
+   static ChannelCallbackFunction channelCallbacks[1];
+
+   /**
+    * Set channel Callback function
+
+    * Note that one callback is shared by all channels of the timer
+    *
+    * @param[in] callback Callback function to execute on channel interrupt.
+
+    *                     Use nullptr to remove callback.
+    *
+    * @return E_NO_ERROR            No error
+    * @return E_HANDLER_ALREADY_SET Handler already set
+    *
+    * @note Channel callbacks may be shared by multiple channels of the timer.
+    *       It is necessary to identify the originating channel in the callback
+    */
+   static ErrorCode setChannelCallback(ChannelCallbackFunction callback) {
+      if (callback == nullptr) {
+         channelCallbacks[0] = timerUnhandledChannelCallback;
+         return E_NO_ERROR;
+      }
+#ifdef DEBUG_BUILD
+      // Callback is shared across multiple channels. Check if callback already assigned
+      if ((channelCallbacks[0] != timerUnhandledChannelCallback) &&
+          (channelCallbacks[0] != callback)) {
+         return setErrorCode(ErrorCode::E_HANDLER_ALREADY_SET);
+      }
+#endif
+      channelCallbacks[0] = callback;
+      return E_NO_ERROR;
    }
 
    /** 
@@ -3965,12 +6648,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTD_CLOCK_MASK);
+   enablePortClocks(PORTD_CLOCK_MASK);
 #endif
 
-PORTD->GPCLR = 0x0400UL|PORT_GPCLR_GPWE(0x0020UL);
+   PORTD->GPCLR = 0x0400UL|PORT_GPCLR_GPWE(0x0020UL);
    }
 
    /**
@@ -3981,15 +6664,14 @@ PORTD->GPCLR = 0x0400UL|PORT_GPCLR_GPWE(0x0020UL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTD_CLOCK_MASK);
+   enablePortClocks(PORTD_CLOCK_MASK);
 #endif
 
-PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0020UL);
    }
 
-#define USBDM_FTM0_INFOFAULT_IS_DEFINED
    class InfoFAULT {
    public:
       //! Number of signals available in info table
@@ -4025,17 +6707,555 @@ PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
 
 };
 
-#define USBDM_FTM1_IS_DEFINED
 /**
  * Peripheral information for FTM, PWM, Input capture and Output compare.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Quadrature decoding mode
+    *
+    * Determines how the inputs control the counting sequence
+    */
+   enum FtmQuadratureMode {
+      FtmQuadratureMode_Phase_AB_Mode        = FTM_QDCTRL_QUADMODE(0), ///< Phase-AB Mode
+      FtmQuadratureMode_Count_Direction_Mode = FTM_QDCTRL_QUADMODE(1), ///< Count-Direction Mode
+
+   };
+
+   /**
+    * Polarity of Phase A input
+    *
+    * Polarity of Phase A input
+    */
+   enum FtmPhaseAPolarity {
+      FtmPhaseAPolarity_ActiveHigh = FTM_QDCTRL_PHAPOL(0), ///< Active High
+      FtmPhaseAPolarity_ActiveLow  = FTM_QDCTRL_PHAPOL(1), ///< Active Low
+
+   };
+
+   /**
+    * Polarity of Phase B input
+    *
+    * Polarity of Phase B input
+    */
+   enum FtmPhaseBPolarity {
+      FtmPhaseBPolarity_ActiveHigh = FTM_QDCTRL_PHBPOL(0), ///< Active High
+      FtmPhaseBPolarity_ActiveLow  = FTM_QDCTRL_PHBPOL(1), ///< Active Low
+
+   };
+
+   /**
+    * Filtering on Phase A input
+    *
+    * Filtering on Phase A input
+    */
+   enum FtmPhaseAFilter : uint16_t {
+      FtmPhaseAFilter_Disabled = (FTM_QDCTRL_PHAFLTREN(0)<<8)|FTM_FILTER_CH0FVAL(0),  ///< No Filter
+      FtmPhaseAFilter_1_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(1),  ///< 1 clock cycle
+      FtmPhaseAFilter_2_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(2),  ///< 2 clock cycle
+      FtmPhaseAFilter_3_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(3),  ///< 3 clock cycle
+      FtmPhaseAFilter_4_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(4),  ///< 4 clock cycle
+      FtmPhaseAFilter_5_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(5),  ///< 5 clock cycle
+      FtmPhaseAFilter_6_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(6),  ///< 6 clock cycle
+      FtmPhaseAFilter_7_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(7),  ///< 7 clock cycle
+      FtmPhaseAFilter_8_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(8),  ///< 8 clock cycle
+      FtmPhaseAFilter_9_Clock  = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(9),  ///< 9 clock cycle
+      FtmPhaseAFilter_10_Clock = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(10), ///< 10 clock cycle
+      FtmPhaseAFilter_11_Clock = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(11), ///< 11 clock cycle
+      FtmPhaseAFilter_12_Clock = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(12), ///< 12 clock cycle
+      FtmPhaseAFilter_13_Clock = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(13), ///< 13 clock cycle
+      FtmPhaseAFilter_14_Clock = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(14), ///< 14 clock cycle
+      FtmPhaseAFilter_15_Clock = (FTM_QDCTRL_PHAFLTREN(1)<<8)|FTM_FILTER_CH0FVAL(15), ///< 15 clock cycle
+
+   };
+
+   /**
+    * Filtering on Phase B input
+    *
+    * Filtering on Phase B input
+    */
+   enum FtmPhaseBFilter : uint16_t {
+      FtmPhaseBFilter_Disabled = (FTM_QDCTRL_PHBFLTREN(0)<<8)|FTM_FILTER_CH1FVAL(0),  ///< No Filter
+      FtmPhaseBFilter_1_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(1),  ///< 1 clock cycle
+      FtmPhaseBFilter_2_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(2),  ///< 2 clock cycle
+      FtmPhaseBFilter_3_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(3),  ///< 3 clock cycle
+      FtmPhaseBFilter_4_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(4),  ///< 4 clock cycle
+      FtmPhaseBFilter_5_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(5),  ///< 5 clock cycle
+      FtmPhaseBFilter_6_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(6),  ///< 6 clock cycle
+      FtmPhaseBFilter_7_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(7),  ///< 7 clock cycle
+      FtmPhaseBFilter_8_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(8),  ///< 8 clock cycle
+      FtmPhaseBFilter_9_Clock  = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(9),  ///< 9 clock cycle
+      FtmPhaseBFilter_10_Clock = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(10), ///< 10 clock cycle
+      FtmPhaseBFilter_11_Clock = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(11), ///< 11 clock cycle
+      FtmPhaseBFilter_12_Clock = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(12), ///< 12 clock cycle
+      FtmPhaseBFilter_13_Clock = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(13), ///< 13 clock cycle
+      FtmPhaseBFilter_14_Clock = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(14), ///< 14 clock cycle
+      FtmPhaseBFilter_15_Clock = (FTM_QDCTRL_PHBFLTREN(1)<<8)|FTM_FILTER_CH1FVAL(15), ///< 15 clock cycle
+
+   };
+
+class Ftm1BasicInfo {
+   
+public:
+
+   /**
+    * Type definition for Ftm1 Peripheral interrupt handling call back.
+    */
+   typedef void (*CallbackFunction)();
+
+   /**
+    * Class used to do initialisation of Ftm1
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Ftm1::Init ftmInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmMode_Freerunning,           // Alignment and whether interval or free-running mode
+    *    FtmOverflowInterrupt_Disabled, // Overflow Interrupt
+    *    NvicPriority_Normal,           // IRQ level for this peripheral
+    *    FtmClockSource_SystemClock,    // Clock Source
+    *
+    *    // Either
+    *    FtmPrescale_DivBy16,           // Clock prescaler
+    *    10_ticks, 3000_ticks,          // Counter start (cntin) and end (mod) values
+    *    // OR
+    *    100_ms,                        // Timer period or minimum interval in seconds
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm1::DefaultValue
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * Ftm1::configure(ftmInit)
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      /// Status And Control Register
+      uint8_t sc = 0;
+
+      /// Start value for counter
+      uint16_t cntin = 0_ticks;
+
+      /// End value for counter
+      uint16_t mod = 0_ticks;
+
+      /// Period or minimum interval of timer
+      Seconds modperiod = 0_s;
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr Init(NvicPriority nvicPriority, Types... rest) : Init(rest...) {
+   
+#if false
+         irqlevel = nvicPriority;
+#else
+         (void)nvicPriority;
+#endif
+      }
+
+      /**
+       * Constructor for Action on Counter overflow
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmOverflowAction Enable interrupt on counter overflow
+       */
+      template <typename... Types>
+      constexpr Init(FtmOverflowAction ftmOverflowAction, Types... rest) : Init(rest...) {
+   
+         sc = (sc&~FTM_SC_TOIE_MASK) | ftmOverflowAction;
+      }
+   
+      /**
+       * Constructor for Alignment and whether interval or free-running mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmMode Left-aligned   (cntin...mod) or
+       *        Centre-aligned (cntin...mod...cntin) or
+       *        Free-running   (0...maximum_value)
+       */
+      template <typename... Types>
+      constexpr Init(FtmMode ftmMode, Types... rest) : Init(rest...) {
+   
+         sc = (sc&~(FTM_SC_TOF_MASK|FTM_SC_CPWMS_MASK)) | ftmMode;
+      }
+   
+      /**
+       * Constructor for Clock Source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmClockSource Selects the clock source for the module
+       */
+      template <typename... Types>
+      constexpr Init(FtmClockSource ftmClockSource, Types... rest) : Init(rest...) {
+   
+         sc = (sc&~FTM_SC_CLKS_MASK) | ftmClockSource;
+      }
+   
+      /**
+       * Constructor for Clock prescaler, Start value for counter and End value for counter
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmPrescale Selects the prescaler for the module
+       * @param cntin_ticks The timer counts from this value to ftm_mod
+       * @param mod_ticks   The timer counts from ftm_cntin to this value
+       */
+      template <typename... Types>
+      constexpr Init(
+            FtmPrescale ftmPrescale,
+            Ticks&      cntin_ticks,
+            Ticks&      mod_ticks, Types... rest) : Init(rest...) {
+   
+         sc    = (sc&~FTM_SC_PS_MASK) | ftmPrescale;
+         cntin = cntin_ticks;
+         mod   = mod_ticks;
+      }
+   
+      /**
+       * Constructor for Clock prescaler and End value for counter
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ftmPrescale Selects the prescaler for the module
+       * @param mod_ticks   The timer counts from ftm_cntin to this value
+       */
+      template <typename... Types>
+      constexpr Init(
+            FtmPrescale ftmPrescale,
+            Ticks&      mod_ticks, Types... rest) : Init(rest...) {
+   
+         sc    = (sc&~FTM_SC_PS_MASK) | ftmPrescale;
+         mod   = mod_ticks;
+      }
+   
+      /**
+       * Constructor for Period or minimum interval of timer
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param seconds   In left-aligned or centre-aligned this is the period of the timer
+       *        In free-running mode it is the minimum interval
+       */
+      template <typename... Types>
+      constexpr Init(Seconds&  seconds, Types... rest) : Init(rest...) {
+   
+         cntin = 0;
+         mod   = 0;
+         modperiod = seconds;
+      }
+   
+   };
+
+   /**
+    * Class used to do initialisation of Ftm1Channel
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Ftm1::ChannelInit channelInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmChannelNum_3,            // Channel to initialise
+    *    FtmChannelMode_Disabled ,   // Channel Mode - Disabled
+    *    FtmChannelAction_None ,     // Action on Channel Event - No action
+    *    FtmChannelReset_Disabled ,  // Reset counter on channel IC event - Disabled
+    *    0_ticks,                    // Output Compare Event time
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm1::DefaultChannelInitValues[FtmChannelNum_3]
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * Ftm1::configureChannel(channelInit)
+    * @endcode
+    */
+   class ChannelInit {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr ChannelInit(const ChannelInit &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr ChannelInit() = default;
+   
+      /// Output Compare Event time in ticks
+      uint16_t cnv = 0_ticks;
+
+      /// Channel Status And Control Register
+      uint16_t cnsc = 0;
+
+      /// Channel Number
+      FtmChannelNum channel = FtmChannelNum_None;
+
+      /**
+       * Constructor for Channel Mode
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmChannelMode Determines channel operation (PWM/Input capture/Output compare)
+       */
+      template <typename... Types>
+      constexpr ChannelInit(FtmChannelMode ftmChannelMode, Types... rest) : ChannelInit(rest...) {
+   
+         cnsc = (cnsc&~((FTM_COMBINE_DECAPEN0_MASK<<8)|(FTM_COMBINE_COMBINE0_MASK<<8)|FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK)) | ftmChannelMode;
+      }
+   
+      /**
+       * Constructor for Action on Channel Event
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmChannelAction Enable interrupt or DMA on channel event
+       */
+      template <typename... Types>
+      constexpr ChannelInit(FtmChannelAction ftmChannelAction, Types... rest) : ChannelInit(rest...) {
+   
+         cnsc = (cnsc&~(FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK)) | ftmChannelAction;
+      }
+   
+      /**
+       * Constructor for Channel Number
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmChannelNum Select a channel
+       */
+      template <typename... Types>
+      constexpr ChannelInit(FtmChannelNum ftmChannelNum, Types... rest) : ChannelInit(rest...) {
+   
+         channel = ftmChannelNum;
+      }
+   
+      /**
+       * Constructor for Output Compare Event time in ticks
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ticks   This value is compared against the main counter in output compare modes
+       */
+      template <typename... Types>
+      constexpr ChannelInit(Ticks&  ticks, Types... rest) : ChannelInit(rest...) {
+   
+         cnv = ticks;
+      }
+   
+   };
+
+   /**
+    * Class used to do initialisation of FtmQuadDecoder1
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const FtmQuadDecoder1::QuadInit quadInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmQuadratureMode_Phase_AB_Mode , // Quadrature decoding mode
+    *    FtmPhaseAPolarity_ActiveHigh ,    // Polarity of Phase A input
+    *    FtmPhaseBPolarity_ActiveHigh ,    // Polarity of Phase B input
+    *    FtmPhaseAFilter_Disabled ,        // Filtering on Phase A input
+    *    FtmPhaseBFilter_Disabled ,        // Filtering on Phase B input
+    *    FtmOverflowInterrupt_Enabled ,    // Overflow Interrupt
+    *    NvicPriority_Normal ,             // IRQ level for this peripheral
+    *    FtmPrescale_DivBy32,              // Clock prescaler
+    *    ftmCallbak,                       // Timer overflow call-back
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm1::DefaultQuadInitValue
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * FtmQuadDecoder1::configure(ftmInit)
+    * @endcode
+    */
+   class QuadInit {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr QuadInit(const QuadInit &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr QuadInit() = default;
+   
+      /// Quad input filter control
+      uint8_t qdfilter = 0;
+
+      /// Quadrature Decoder Control And Status Register
+      uint8_t qdctrl = FTM_QDCTRL_QUADEN_MASK;
+
+      /// Status And Control Register
+      uint8_t sc = 0;
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr QuadInit(NvicPriority nvicPriority, Types... rest) : QuadInit(rest...) {
+   
+#if false
+         irqlevel = nvicPriority;
+#else
+         (void)nvicPriority;
+#endif
+      }
+
+      /**
+       * Constructor for Action on Counter overflow
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmOverflowAction Enable interrupt on counter overflow
+       */
+      template <typename... Types>
+      constexpr QuadInit(FtmOverflowAction ftmOverflowAction, Types... rest) : QuadInit(rest...) {
+   
+         sc = (sc&~FTM_SC_TOIE_MASK) | ftmOverflowAction;
+      }
+   
+      /**
+       * Constructor for Clock prescaler
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmPrescale Selects the prescaler for the module
+       */
+      template <typename... Types>
+      constexpr QuadInit(FtmPrescale ftmPrescale, Types... rest) : QuadInit(rest...) {
+   
+         sc = (sc&~FTM_SC_PS_MASK) | ftmPrescale;
+      }
+   
+      /**
+       * Constructor for Quadrature decoding mode
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmQuadratureMode Determines how the inputs control the counting sequence
+       */
+      template <typename... Types>
+      constexpr QuadInit(FtmQuadratureMode ftmQuadratureMode, Types... rest) : QuadInit(rest...) {
+   
+         qdctrl = (qdctrl&~FTM_QDCTRL_QUADMODE_MASK) | ftmQuadratureMode;
+      }
+   
+      /**
+       * Constructor for Polarity of Phase A input
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmPhaseAPolarity Polarity of Phase A input
+       */
+      template <typename... Types>
+      constexpr QuadInit(FtmPhaseAPolarity ftmPhaseAPolarity, Types... rest) : QuadInit(rest...) {
+   
+         qdctrl = (qdctrl&~FTM_QDCTRL_PHAPOL_MASK) | ftmPhaseAPolarity;
+      }
+   
+      /**
+       * Constructor for Polarity of Phase B input
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmPhaseBPolarity Polarity of Phase B input
+       */
+      template <typename... Types>
+      constexpr QuadInit(FtmPhaseBPolarity ftmPhaseBPolarity, Types... rest) : QuadInit(rest...) {
+   
+         qdctrl = (qdctrl&~FTM_QDCTRL_PHBPOL_MASK) | ftmPhaseBPolarity;
+      }
+   
+      /**
+       * Constructor for Filtering on Phase A input
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmPhaseAFilter Filtering on Phase A input
+       */
+      template <typename... Types>
+      constexpr QuadInit(FtmPhaseAFilter ftmPhaseAFilter, Types... rest) : QuadInit(rest...) {
+   
+         qdctrl   = (qdctrl&~FTM_QDCTRL_PHAFLTREN_MASK) | ((ftmPhaseAFilter>>8) & FTM_QDCTRL_PHAFLTREN_MASK);
+         qdfilter = (qdfilter&~FTM_FILTER_CH0FVAL_MASK) | (ftmPhaseAFilter&FTM_FILTER_CH0FVAL_MASK);
+      }
+   
+      /**
+       * Constructor for Filtering on Phase B input
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param ftmPhaseBFilter Filtering on Phase B input
+       */
+      template <typename... Types>
+      constexpr QuadInit(FtmPhaseBFilter ftmPhaseBFilter, Types... rest) : QuadInit(rest...) {
+   
+         qdctrl   = (qdctrl&~FTM_QDCTRL_PHBFLTREN_MASK) | ((ftmPhaseBFilter>>8) & FTM_QDCTRL_PHBFLTREN_MASK);
+         qdfilter = (qdfilter&~FTM_FILTER_CH1FVAL_MASK) | (ftmPhaseBFilter&FTM_FILTER_CH1FVAL_MASK);
+      }
+   
+   };
+
+};
+
 class Ftm1Info {
 public:
-   // Template:ftm1_2ch
-
+   /*
+    * Template:ftm1_2ch_quad
+    */
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
 
@@ -4051,24 +7271,6 @@ public:
    //! Hardware base pointer
    static constexpr HardwarePtr<FTM_Type> ftm = baseAddress;
 
-   //! Timer external input frequency
-   static constexpr uint32_t ftmExternalClock =  0;
-
-   //! Default Timer Modulo
-   static constexpr uint32_t modulo = FTM_MOD_MOD(10000);
-
-   //! Default value for SC register
-   static constexpr uint32_t sc  = 
-       FTM_SC_CPWMS(0)| // Centre-Aligned PWM Select
-       FTM_SC_CLKS(1)|  // Clock Mode Selection
-       FTM_SC_TOIE(0)|  // Timer Overflow Interrupt Enable
-       FTM_SC_PS(0);    // Prescale Factor Selection 
-
-   //! Default value for EXTTRIG) register
-   static constexpr uint32_t exttrig  = 
-       0x0|                              // External Trigger Enable
-       FTM_EXTTRIG_INITTRIGEN(0);    // Initialisation Trigger Enable 
-
    /* Template_irqOption.xml */
 
    //! IRQ numbers for hardware
@@ -4078,32 +7280,204 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
-   /** Minimum resolution for PWM interval */
-   static constexpr uint32_t minimumResolution=100;
+   /// Minimum resolution for PWM interval
+   static constexpr uint32_t minimumResolution  = 100;
 
-   /** Minimum usable interval in ticks */      
-   static constexpr uint32_t minimumInterval=20;
+   /// Minimum usable interval in ticks
+   static constexpr uint32_t minimumInterval  = 20;
+
+   /// FTM External clock
+   static constexpr uint32_t ftmExternalClock  = 0;
+
+   /// Default value for EXTTRIG) register
+   static constexpr uint32_t exttrig  =
+       0x0|                              // External Trigger Enable
+       FTM_EXTTRIG_INITTRIGEN(0);    // Initialisation Trigger Enable 
 
    /**
-    * Get input clock frequency
+    * Get Clock Source
     *
-    * @return Input clock frequency as a uint32_t in Hz
+    * @param ftmClockSource Selects the clock source for the module
+    *
+    * @return Clock frequency in Hz
     */
-   static uint32_t getInputClockFrequency() {
+   static uint32_t getInputClockFrequency(FtmClockSource ftmClockSource) {
    
-      switch(ftm->SC&FTM_SC_CLKS_MASK) {
-      default:
-      case FTM_SC_CLKS(0): return 0;
-      case FTM_SC_CLKS(1): return SystemBusClock;
-      case FTM_SC_CLKS(2): return SystemMcgffClock;
-      case FTM_SC_CLKS(3): return ftmExternalClock;
+      switch(ftmClockSource) {
+         default: return 0;
+         case FtmClockSource_Disabled            : return 0;                ///< Disabled
+         case FtmClockSource_SystemClock         : return SystemBusClock;   ///< System clock
+         case FtmClockSource_FixedFrequencyClock : return SystemMcgffClock; ///< Fixed frequency clock
+         case FtmClockSource_ExternalClock       : return ftmExternalClock; ///< External clock
+
       }
    }
+
+   /**
+    * Class used to do initialisation of Ftm1
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Ftm1::Init ftmInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmMode_Freerunning,           // Alignment and whether interval or free-running mode
+    *    FtmOverflowInterrupt_Disabled, // Overflow Interrupt
+    *    NvicPriority_Normal,           // IRQ level for this peripheral
+    *    FtmClockSource_SystemClock,    // Clock Source
+    *
+    *    // Either
+    *    FtmPrescale_DivBy16,           // Clock prescaler
+    *    10_ticks, 3000_ticks,          // Counter start (cntin) and end (mod) values
+    *    // OR
+    *    100_ms,                        // Timer period or minimum interval in seconds
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm1::DefaultValue
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * Ftm1::configure(ftmInit)
+    * @endcode
+    */
+   typedef Ftm1BasicInfo::Init Init;
+   
+   /**
+    * Ftm1 interrupt call back
+    */
+   typedef Ftm1BasicInfo::CallbackFunction CallbackFunction;
+   
+   /**
+    * Default initialisation value for Ftm1
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultInitValue = {
+      FtmMode_FreeRunning , // Alignment and whether interval or free-running mode - Free-running (count up)
+      FtmOverflowAction_None , // Action on Counter overflow - No action
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      FtmClockSource_SystemClock , // Clock Source - System clock
+      FtmPrescale_DivBy1 , // Clock prescaler - Divide by 1
+      0_ticks , // Start value for counter
+      65535_ticks,  // End value for counter
+   };
+
+   /**
+    * Class used to do initialisation of Ftm1Channel
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Ftm1::ChannelInit channelInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmChannelNum_3,            // Channel to initialise
+    *    FtmChannelMode_Disabled ,   // Channel Mode - Disabled
+    *    FtmChannelAction_None ,     // Action on Channel Event - No action
+    *    FtmChannelReset_Disabled ,  // Reset counter on channel IC event - Disabled
+    *    0_ticks,                    // Output Compare Event time
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm1::DefaultChannelInitValues[FtmChannelNum_3]
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * Ftm1::configureChannel(channelInit)
+    * @endcode
+    */
+   typedef Ftm1BasicInfo::ChannelInit ChannelInit;
+   
+   /**
+    * Default initialisation value for Ftm1ChannelInit
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr ChannelInit DefaultChannelInitValues[] = {
+   {
+      FtmChannelNum_0,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+   {
+      FtmChannelNum_1,
+
+      FtmChannelMode_Disabled , // Channel Mode - Disabled
+      FtmChannelAction_None , // Action on Channel Event - No action
+      0_ticks,  // Output Compare Event time in ticks
+   },
+
+   };
+
+   /**
+    * Class used to do initialisation of FtmQuadDecoder1
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const FtmQuadDecoder1::QuadInit quadInit {
+    *
+    *    // Omitted parameters are taken to be zero unless a base value is given
+    *    FtmQuadratureMode_Phase_AB_Mode , // Quadrature decoding mode
+    *    FtmPhaseAPolarity_ActiveHigh ,    // Polarity of Phase A input
+    *    FtmPhaseBPolarity_ActiveHigh ,    // Polarity of Phase B input
+    *    FtmPhaseAFilter_Disabled ,        // Filtering on Phase A input
+    *    FtmPhaseBFilter_Disabled ,        // Filtering on Phase B input
+    *    FtmOverflowInterrupt_Enabled ,    // Overflow Interrupt
+    *    NvicPriority_Normal ,             // IRQ level for this peripheral
+    *    FtmPrescale_DivBy32,              // Clock prescaler
+    *    ftmCallbak,                       // Timer overflow call-back
+    *
+    *    // Optional base value to start with (must be last parameter)
+    *    Ftm1::DefaultQuadInitValue
+    * };
+    *
+    * // Initialise FTM from values specified above
+    * FtmQuadDecoder1::configure(ftmInit)
+    * @endcode
+    */
+   typedef Ftm1BasicInfo::QuadInit QuadInit;
+   
+   /**
+    * Default initialisation value for Ftm1QuadDecoder
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr QuadInit DefaultQuadInitValue = {
+      FtmQuadratureMode_Phase_AB_Mode , // Quadrature decoding mode - Phase-AB Mode
+      FtmPhaseAPolarity_ActiveHigh , // Polarity of Phase A input - Active High
+      FtmPhaseBPolarity_ActiveHigh , // Polarity of Phase B input - Active High
+      FtmPhaseAFilter_Disabled , // Filtering on Phase A input - No Filter
+      FtmPhaseBFilter_Disabled , // Filtering on Phase B input - No Filter
+      FtmOverflowAction_None , // Action on Counter overflow - No action
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      FtmPrescale_DivBy1,  // Clock prescaler - Divide by 1
+   };
+
+   /**
+    * Type definition for channel interrupt call back
+    *
+    * @param[in] status Flags indicating interrupt source channel(s)
+    */
+   typedef void (*ChannelCallbackFunction)(uint8_t status);
+   
+   /**
+    * Callback table for programmatically set handlers
+    */
+   static ChannelCallbackFunction channelCallbacks[1];
 
    /** 
     *  Enable clock to Ftm1
@@ -4162,7 +7536,6 @@ public:
    static void clearPCRs() {
    }
 
-#define USBDM_FTM1_INFOFAULT_IS_DEFINED
    class InfoFAULT {
    public:
       //! Number of signals available in info table
@@ -4193,7 +7566,6 @@ public:
 
    }; 
 
-#define USBDM_FTM1_INFOQUAD_IS_DEFINED
    class InfoQUAD {
    public:
       //! Number of signals available in info table
@@ -4236,7 +7608,6 @@ public:
  * @brief Abstraction for Inter-Integrated-Circuit Interface
  * @{
  */
-#define USBDM_I2C0_IS_DEFINED
 /**
  * Peripheral information for I2C, Inter-Integrated-Circuit Interface.
  * 
@@ -4245,8 +7616,9 @@ public:
  */
 class I2c0Info {
 public:
-   // Template:i2c0_mk10d5
-
+   /*
+    * Template:i2c0_mk10d5
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = I2C0_BasePtr;
 
@@ -4271,10 +7643,10 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /**
     * Get input clock frequency
@@ -4326,12 +7698,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTB_CLOCK_MASK);
+   enablePortClocks(PORTB_CLOCK_MASK);
 #endif
 
-PORTB->GPCLR = 0x0220UL|PORT_GPCLR_GPWE(0x0003UL);
+   PORTB->GPCLR = 0x0220UL|PORT_GPCLR_GPWE(0x0003UL);
    }
 
    /**
@@ -4342,12 +7714,12 @@ PORTB->GPCLR = 0x0220UL|PORT_GPCLR_GPWE(0x0003UL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTB_CLOCK_MASK);
+   enablePortClocks(PORTB_CLOCK_MASK);
 #endif
 
-PORTB->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTB->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0003UL);
    }
 
 };
@@ -4361,7 +7733,6 @@ PORTB->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
  * @brief Abstraction for Synchronous Audio Interface
  * @{
  */
-#define USBDM_I2S0_IS_DEFINED
 /**
  * Peripheral information for I2S, Synchronous Audio Interface.
  * 
@@ -4370,8 +7741,9 @@ PORTB->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
  */
 class I2s0Info {
 public:
-   // Template:i2s0_2ch
-
+   /*
+    * Template:i2s0_2ch
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = I2S0_BasePtr;
 
@@ -4390,7 +7762,7 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
@@ -4461,76 +7833,299 @@ public:
  * @brief Abstraction for Low-leakage Wake-up Unit
  * @{
  */
-#define USBDM_LLWU_IS_DEFINED
 /**
  * Peripheral information for LLWU, Low-leakage Wake-up Unit.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * LLWU peripheral wake-up source
+    *
+    * Peripheral used as wake-up source
+    */
+   enum LlwuPeripheral {
+      LlwuPeripheral_None = 0,    ///< No wake-up peripheral
+      LlwuPeripheral_0    = 1<<0, ///< Wake-up peripheral 0
+      LlwuPeripheral_1    = 1<<1, ///< Wake-up peripheral 1
+      LlwuPeripheral_2    = 1<<2, ///< Wake-up peripheral 2
+      LlwuPeripheral_3    = 1<<3, ///< Wake-up peripheral 3
+      LlwuPeripheral_4    = 1<<4, ///< Wake-up peripheral 4
+      LlwuPeripheral_5    = 1<<5, ///< Wake-up peripheral 5
+      LlwuPeripheral_6    = 1<<6, ///< Wake-up peripheral 6
+      LlwuPeripheral_7    = 1<<7, ///< Wake-up peripheral 7
+      LlwuPeripheral_Lptmr0        = LlwuPeripheral_0, 
+      LlwuPeripheral_Cmp0          = LlwuPeripheral_1, 
+      LlwuPeripheral_Cmp1          = LlwuPeripheral_2, 
+      LlwuPeripheral_Tsi0          = LlwuPeripheral_4, 
+      LlwuPeripheral_RtcAlarm      = LlwuPeripheral_5, 
+      LlwuPeripheral_RtcSeconds    = LlwuPeripheral_7, 
+
+   };
+
+   /**
+    * LLWU peripheral wake-up control
+    *
+    * Whether this peripheral can wake-up the processor
+    */
+   enum LlwuPeripheralWakeup {
+      LlwuPeripheralWakeup_Disabled = false, ///< Wake-up disabled
+      LlwuPeripheralWakeup_Enabled  = true,  ///< Wake-up enabled
+
+   };
+
+   /**
+    * Low-Leakage Mode RESET Enable
+    *
+    * This bit must be set to allow the device to be reset while in a low-leakage power mode.
+    * On devices where Reset is not a dedicated pin, the RESET pin must also be enabled
+    * in the explicit port mux control
+    */
+   enum LlwuResetWakeup {
+      LlwuResetWakeup_Disabled = LLWU_RST_LLRSTE(0), ///< RESET pin not enabled as a LLWU mode exit source
+      LlwuResetWakeup_Enabled  = LLWU_RST_LLRSTE(1), ///< RESET pin enabled as a LLWU mode exit source
+
+   };
+
+   /**
+    * Digital Filter On RESET Pin
+    *
+    * Enables the digital filter for the RESET pin during LLS, VLLS3, VLLS2, or VLLS1 modes
+    */
+   enum LlwuResetFilter {
+      LlwuResetFilter_Disabled = LLWU_RST_RSTFILT(0), ///< Filter not enabled
+      LlwuResetFilter_Enabled  = LLWU_RST_RSTFILT(1), ///< Filter enabled
+
+   };
+
+   /**
+    * Wake-up pin control
+    *
+    * Enables and configures the edge detection for a wake-up pin
+    */
+   enum LlwuPinMode {
+      LlwuPinMode_Disabled    = LLWU_PE1_WUPE0(0)|LLWU_PE1_WUPE1(0)|LLWU_PE1_WUPE2(0)|LLWU_PE1_WUPE3(0), ///< Wake-up pin disabled
+      LlwuPinMode_RisingEdge  = LLWU_PE1_WUPE0(1)|LLWU_PE1_WUPE1(1)|LLWU_PE1_WUPE2(1)|LLWU_PE1_WUPE3(1), ///< Wake-up on pin rising edge
+      LlwuPinMode_FallingEdge = LLWU_PE1_WUPE0(2)|LLWU_PE1_WUPE1(2)|LLWU_PE1_WUPE2(2)|LLWU_PE1_WUPE3(2), ///< Wake-up on pin falling edge
+      LlwuPinMode_EitherEdge  = LLWU_PE1_WUPE0(3)|LLWU_PE1_WUPE1(3)|LLWU_PE1_WUPE2(3)|LLWU_PE1_WUPE3(3), ///< Wake-up on pin either edge
+
+   };
+
+   /**
+    * Wake-up On External Pin with Digital Filter
+    *
+    * Controls the digital filter options for the external pin detect
+    */
+   enum LlwuFilterPinMode {
+      LlwuFilterPinMode_Disabled    = LLWU_FILT_FILTE(0), ///< Wake-up disabled
+      LlwuFilterPinMode_RisingEdge  = LLWU_FILT_FILTE(1), ///< Wake-up on filtered rising edge
+      LlwuFilterPinMode_FallingEdge = LLWU_FILT_FILTE(2), ///< Wake-up on filtered falling edge
+      LlwuFilterPinMode_EitherEdge  = LLWU_FILT_FILTE(3), ///< Wake-up on either filtered edge
+
+   };
+
+   /**
+    * Pin filter numbers
+    *
+    * @note These are used as an index into the FILT table so numbers do NOT correspond to filter names FILT[0] <=> FILT1 etc
+    */
+   enum LlwuFilterNum {
+      LlwuFilterNum_1 = 0,  //!<  Wake-up pin LLWU_P1
+      LlwuFilterNum_2 = 1,  //!<  Wake-up pin LLWU_P2
+   };
+
+   enum LlwuPin : uint32_t {
+      LlwuPin_0 = 0,  //!<  Wake-up pin LLWU_P0
+      LlwuPin_1 = 1,  //!<  Wake-up pin LLWU_P1
+      LlwuPin_2 = 2,  //!<  Wake-up pin LLWU_P2
+      LlwuPin_3 = 3,  //!<  Wake-up pin LLWU_P3
+      LlwuPin_4 = 4,  //!<  Wake-up pin LLWU_P4
+      LlwuPin_5 = 5,  //!<  Wake-up pin LLWU_P5
+      LlwuPin_6 = 6,  //!<  Wake-up pin LLWU_P6
+      LlwuPin_7 = 7,  //!<  Wake-up pin LLWU_P7
+      LlwuPin_8 = 8,  //!<  Wake-up pin LLWU_P8
+      LlwuPin_9 = 9,  //!<  Wake-up pin LLWU_P9
+      LlwuPin_10 = 10,  //!<  Wake-up pin LLWU_P10
+      LlwuPin_11 = 11,  //!<  Wake-up pin LLWU_P11
+      LlwuPin_12 = 12,  //!<  Wake-up pin LLWU_P12
+      LlwuPin_13 = 13,  //!<  Wake-up pin LLWU_P13
+      LlwuPin_14 = 14,  //!<  Wake-up pin LLWU_P14
+      LlwuPin_15 = 15,  //!<  Wake-up pin LLWU_P15
+      LlwuPin_Pta4         = LlwuPin_3,    ///< Mapped pin PTA4(p21)
+      LlwuPin_Ptc1         = LlwuPin_6,    ///< Mapped pin PTC1(p34)
+      LlwuPin_Ptc3         = LlwuPin_7,    ///< Mapped pin PTC3(p36)
+      LlwuPin_Ptc4         = LlwuPin_8,    ///< Mapped pin PTC4(p37)
+      LlwuPin_Ptc5         = LlwuPin_9,    ///< Mapped pin PTC5(p38)
+      LlwuPin_Ptc6         = LlwuPin_10,   ///< Mapped pin PTC6(p39)
+      LlwuPin_Ptd0         = LlwuPin_12,   ///< Mapped pin PTD0(p41)
+      LlwuPin_Ptd2         = LlwuPin_13,   ///< Mapped pin PTD2(p43)
+      LlwuPin_Ptd4         = LlwuPin_14,   ///< Mapped pin PTD4(p45)
+      LlwuPin_Ptd6         = LlwuPin_15,   ///< Mapped pin PTD6(p47)
+
+   };
+
 class LlwuInfo {
 public:
-   // Template:llwu_pe4_filt2_rst_mk20d5
-
-   // Module wake ups
-   static constexpr uint8_t me =  
-      LLWU_ME_WUME0(0) |  // LPTMR
-      LLWU_ME_WUME1(0) |  // CMP0
-      LLWU_ME_WUME2(0) |  // CMP1
-      LLWU_ME_WUME3(0) |  // CMP2/3 (if present)
-      LLWU_ME_WUME4(0) |  // TSI0 (if present)
-      LLWU_ME_WUME5(0) |  // RTC Alarm
-      LLWU_ME_WUME6(0) |  //
-      LLWU_ME_WUME7(0);   // RTC Seconds
-
+   /*
+    * Template:llwu_me_pe4_filt2_rst_mk20d5
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = LLWU_BasePtr;
 
    //! Hardware base pointer
    static constexpr HardwarePtr<LLWU_Type> llwu = baseAddress;
 
+   /**
+    * Class used to do initialisation of LLWU
+    *
+    * This class has a templated constructor that accepts various values:
+    * - llwuPeripheral,                            - Peripheral to enable as wake-up source
+    * - llwuPin, llwuPinMode,                      - Pin to enable as direct wake-up source
+    * - llwuFilterNum, llwuPin, llwuFilterPinMode, - Pin to enable as filtered wake-up source
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * const Llwu::Init llwuInit {
+    *    // Pins
+    *    LlwuPin_Pta4,  LlwuPinMode_FallingEdge,
+    *    LlwuPin_Pta13, LlwuPinMode_EitherEdge,
+    *    LlwuPin_Ptd4,  LlwuPinMode_RisingEdge,
+    *
+    *    // Filtered Pins
+    *    LlwuFilterNum_1, LlwuPin_Pta4, LlwuFilterPinMode_EitherEdge,
+    *    LlwuFilterNum_2, LlwuPin_Ptc3, LlwuFilterPinMode_RisingEdge,
+    *
+    *    // Peripherals
+    *    LlwuPeripheral_RtcAlarm,
+    *    LlwuPeripheral_Lptmr0,
+    *
+    *    // Reset
+    *    LlwuResetWakeup_Enabled, LlwuResetFilter_Enabled
+    * };
+    *
+    * // Initialise LLWU from values specified above
+    * llwuInit.configure()
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**
+       * Constructor
+       */
+      constexpr Init() {
+      }
+              
+   private:
+      static constexpr uint8_t masks[] =
+         {LLWU_PE1_WUPE0_MASK, LLWU_PE1_WUPE1_MASK, LLWU_PE1_WUPE2_MASK, LLWU_PE1_WUPE3_MASK, };
+   
+      uint8_t pe[4]   = {0};
+      uint8_t filt[2] = {0};
+      uint8_t me      = 0;
+      uint8_t rst     = 0;
+   
+   public:
+      /**
+       * Constructor for LLWU peripheral wake-up source
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param llwuPeripheral Peripheral used as wake-up source
+       */
+      template <typename... Types>
+      constexpr Init(LlwuPeripheral llwuPeripheral, Types... rest) : Init(rest...) {
+      
+         me |= llwuPeripheral;
+      }
+   
+      /**
+       * Constructor for filtered pin source
+       *
+       * @tparam Types
+       * @param rest
+       *
+       * @param llwuFilterNum       Filter to use
+       * @param llwuPin             Peripheral to enable as wake-up source
+       * @param llwuFilterPinMode   Sensitivity of pin
+       */
+      template <typename... Types>
+      constexpr Init(
+            LlwuFilterNum     llwuFilterNum,
+            LlwuPin           llwuPin,
+            LlwuFilterPinMode llwuFilterPinMode,
+            Types... rest) : Init(rest...) {
+      
+         // LLWU_FILT_FILTF_MASK clears flag on write to register   
+         filt[llwuFilterNum] = LLWU_FILT_FILTF_MASK|llwuFilterPinMode|llwuPin;
+      }
+   
+      /**
+       * Constructor for unfiltered pin source
+       *
+       * @tparam Types
+       * @param rest
+       *
+       * @param llwuPin       Peripheral to enable as wake-up source
+       * @param llwuPinMode   Sensitivity of pin
+       */
+      template <typename... Types>
+      constexpr Init(LlwuPin llwuPin, LlwuPinMode llwuPinMode, Types... rest) : Init(rest...) {
+      
+         const int      index = llwuPin>>2;
+         const uint8_t  value = llwuPinMode & masks[llwuPin&3];
+      
+         pe[index] |= value;
+      }
+   
+      /**
+       * Constructor for Reset as wake-up source
+       *
+       * @tparam Types
+       * @param rest
+       *
+       * @param llwuResetWakeup  Enable/Disable Reset source
+       * @param llwuResetFilter  Enable/Disable Reset pin filter
+       */
+      template <typename... Types>
+      constexpr Init(LlwuResetWakeup llwuResetWakeup, LlwuResetFilter llwuResetFilter, Types... rest) : Init(rest...) {
+      
+         rst = llwuResetWakeup|llwuResetFilter;
+      }
+   
+      /**
+       * Configure LLWU from values specified in constructor.
+       * LLWU flags from pin events are cleared.
+       * Requests from peripheral devices must be cleared at source
+       */
+      void configure() const {
+         // Clear pin flags
+         llwu->PF1  = 0xFF;
+         // Clear pin flags
+         llwu->PF2  = 0xFF;
+         // Configure pin source
+         llwu->PE1  = pe[0];
+         // Configure pin source
+         llwu->PE2  = pe[1];
+         // Configure pin source
+         llwu->PE3  = pe[2];
+         // Configure pin source
+         llwu->PE4  = pe[3];
+         // Configure and clear filtered pin source
+         llwu->FILT1 = filt[0];
+         // Configure and clear filtered pin source
+         llwu->FILT2 = filt[1];
+         // Configure peripheral sources
+         llwu->ME    = me;
+         // Configure filtered reset pin source
+         llwu->RST   = rst;
+      }
+   };
+
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
-
-   // LLWU Pin Enable registers
-   static constexpr uint8_t pe1 = 
-      LLWU_PE1_WUPE0(0)|   // LLWUP 0
-      LLWU_PE1_WUPE1(0)|   // LLWUP 1
-      LLWU_PE1_WUPE2(0)|   // LLWUP 2
-      LLWU_PE1_WUPE3(0);   // LLWUP 3 
-
-   static constexpr uint8_t pe2 = 
-      LLWU_PE2_WUPE4(0)|   // LLWUP 4
-      LLWU_PE2_WUPE5(0)|   // LLWUP 5
-      LLWU_PE2_WUPE6(0)|   // LLWUP 6
-      LLWU_PE2_WUPE7(0);   // LLWUP 7 
-
-   static constexpr uint8_t pe3 = 
-      LLWU_PE3_WUPE8(0)|   // LLWUP 8
-      LLWU_PE3_WUPE9(0)|   // LLWUP 9
-      LLWU_PE3_WUPE10(0)|  // LLWUP 10
-      LLWU_PE3_WUPE11(0);  // LLWUP 11 
-
-   static constexpr uint8_t pe4 = 
-      LLWU_PE4_WUPE12(0)|  // LLWUP 12
-      LLWU_PE4_WUPE13(0)|  // LLWUP 13
-      LLWU_PE4_WUPE14(0)|  // LLWUP 14
-      LLWU_PE4_WUPE15(0);  // LLWUP 15 
-
-   // Pin Filter 1 register
-   static constexpr uint8_t filt1 = 
-      LLWU_FILT_FILTE(0) |   // Digital Filter On External Pin
-      LLWU_FILT_FILTSEL(0);  // Filter Pin Select
-
-   // Pin Filter 2 register
-   static constexpr uint8_t filt2 =
-      LLWU_FILT_FILTE(0) |   // Digital Filter On External Pin
-      LLWU_FILT_FILTSEL(0);  // Filter Pin Select
-
-   // LLWU Reset Enable register
-   static constexpr uint8_t rst =
-      LLWU_RST_LLRSTE(1) |  // Low-Leakage Mode RESET Enable
-      LLWU_RST_RSTFILT(0);  // Digital Filter On RESET Pin
 
    /* Template_irqOption.xml */
 
@@ -4541,7 +8136,7 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 1;
+   static constexpr bool irqHandlerInstalled = true;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
@@ -4579,16 +8174,16 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
-PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
-PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK|PORTC_CLOCK_MASK|PORTD_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK|PORTC_CLOCK_MASK|PORTD_CLOCK_MASK);
 #endif
 
-PORTA->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
-PORTC->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x007AUL);
-PORTD->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0055UL);
+   PORTA->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
+   PORTC->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x007AUL);
+   PORTD->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0055UL);
    }
 
    /**
@@ -4599,16 +8194,16 @@ PORTD->GPCLR = 0x0100UL|PORT_GPCLR_GPWE(0x0055UL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
-PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
-PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK|PORTC_CLOCK_MASK|PORTD_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK|PORTC_CLOCK_MASK|PORTD_CLOCK_MASK);
 #endif
 
-PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
-PORTC->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
-PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0010UL);
+   PORTC->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x007AUL);
+   PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0055UL);
    }
 
 };
@@ -4622,17 +8217,137 @@ PORTD->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
  * @brief Abstraction for Low Power Timer
  * @{
  */
-#define USBDM_LPTMR0_IS_DEFINED
 /**
  * Peripheral information for LPTMR, Low Power Timer.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Timer interrupt enable
+    *
+    * Enables LPTMR interrupts
+    */
+   enum LptmrInterrupt {
+      LptmrInterrupt_Disabled = LPTMR_CSR_TIE(0), ///< Interrupt disabled
+      LptmrInterrupt_Enabled  = LPTMR_CSR_TIE(1), ///< Interrupt enabled
+
+   };
+
+   /**
+    * Counter Action on Compare Event
+    *
+    * Counter action when lptmr_csr_tcf is set
+    */
+   enum LptmrResetOnCompare {
+      LptmrResetOnCompare_Enabled  = LPTMR_CSR_TFC(0), ///< lptmr_cnr is reset whenever lptmr_csr_tcf is set
+      LptmrResetOnCompare_Disabled = LPTMR_CSR_TFC(1), ///< lptmr_cnr is reset on overflow only
+
+   };
+
+   /**
+    * Timer Mode Select
+    *
+    * Configures the mode of the LPTMR
+    */
+   enum LptmrMode {
+      LptmrMode_TimeInterval  = LPTMR_CSR_TMS(0), ///< Time Interval mode
+      LptmrMode_PulseCounting = LPTMR_CSR_TMS(1), ///< Pulse Counter mode
+
+   };
+
+   /**
+    * Clock Source
+    *
+    * Clock source for LPTMR
+    */
+   enum LptmrClockSel {
+      LptmrClockSel_Mcgirclk = LPTMR_PSR_PCS(0), ///< MCG Internal Reference Clock (MCGIRCLK)
+      LptmrClockSel_Lpoclk   = LPTMR_PSR_PCS(1), ///< Low power oscillator (LPO - 1kHz)
+      LptmrClockSel_Erclk32  = LPTMR_PSR_PCS(2), ///< 32kHz Clock Source (ERCLK32)
+      LptmrClockSel_Oscerclk = LPTMR_PSR_PCS(3), ///< Oscillator External Reference Clock (OSCERCLK)
+
+   };
+
+   /**
+    * Prescaler Value
+    *
+    * Configures the size of the Prescaler in Time Interval mode
+    */
+   enum LptmrPrescale {
+      LptmrPrescale_Direct      = LPTMR_PSR_PBYP(1)|LPTMR_PSR_PRESCALE(0),  ///< Prescaler = 1
+      LptmrPrescale_DivBy_2     = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(0),  ///< Prescaler = 2
+      LptmrPrescale_DivBy_4     = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(1),  ///< Prescaler = 4
+      LptmrPrescale_DivBy_8     = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(2),  ///< Prescaler = 8
+      LptmrPrescale_DivBy_16    = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(3),  ///< Prescaler = 16,
+      LptmrPrescale_DivBy_32    = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(4),  ///< Prescaler = 32,
+      LptmrPrescale_DivBy_64    = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(5),  ///< Prescaler = 64
+      LptmrPrescale_DivBy_128   = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(6),  ///< Prescaler = 128
+      LptmrPrescale_DivBy_256   = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(7),  ///< Prescaler = 256
+      LptmrPrescale_DivBy_512   = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(8),  ///< Prescaler = 512
+      LptmrPrescale_DivBy_1024  = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(9),  ///< Prescaler = 1024
+      LptmrPrescale_DivBy_2048  = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(10), ///< Prescaler = 2048
+      LptmrPrescale_DivBy_4096  = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(11), ///< Prescaler = 4096
+      LptmrPrescale_DivBy_8192  = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(12), ///< Prescaler = 8192
+      LptmrPrescale_DivBy_16384 = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(13), ///< Prescaler = 16384
+      LptmrPrescale_DivBy_32768 = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(14), ///< Prescaler = 32768
+      LptmrPrescale_DivBy_65536 = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(15), ///< Prescaler = 65536
+
+   };
+
+   /**
+    * Filter Value
+    *
+    * Configures the size of the glitch filter in Pulse Counting mode
+    */
+   enum LptmrGlitchFilter {
+      LptmrGlitchFilter_Direct       = LPTMR_PSR_PBYP(1)|LPTMR_PSR_PRESCALE(0),  ///< No glitch filter
+      LptmrGlitchFilter_2_clocks     = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(1),  ///< 2 clock cycle glitch filter
+      LptmrGlitchFilter_4_clocks     = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(2),  ///< 4 clock cycle glitch filter
+      LptmrGlitchFilter_8_clocks     = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(3),  ///< 8 clock cycle glitch filter
+      LptmrGlitchFilter_16_clocks    = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(4),  ///< 16 clock cycle glitch filter
+      LptmrGlitchFilter_32_clocks    = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(5),  ///< 32 clock cycle glitch filter
+      LptmrGlitchFilter_64_clocks    = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(6),  ///< 64 clock cycle glitch filter
+      LptmrGlitchFilter_128_clocks   = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(7),  ///< 128 clock cycle glitch filter
+      LptmrGlitchFilter_256_clocks   = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(8),  ///< 256 clock cycle glitch filter
+      LptmrGlitchFilter_512_clocks   = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(9),  ///< 512 clock cycle glitch filter
+      LptmrGlitchFilter_1024_clocks  = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(10), ///< 1024 clock cycle glitch filter
+      LptmrGlitchFilter_2048_clocks  = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(11), ///< 2048 clock cycle glitch filter
+      LptmrGlitchFilter_4096_clocks  = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(12), ///< 4096 clock cycle glitch filter
+      LptmrGlitchFilter_81924_clocks = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(13), ///< 8192 clock cycle glitch filter
+      LptmrGlitchFilter_16384_clocks = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(14), ///< 16384 clock cycle glitch filter
+      LptmrGlitchFilter_32768_clocks = LPTMR_PSR_PBYP(0)|LPTMR_PSR_PRESCALE(15), ///< 32768 clock cycle glitch filter
+
+   };
+
+   /**
+    * Input Pin
+    *
+    * Input source to be used in Pulse Counter mode
+    */
+   enum LptmrPinSel {
+      LptmrPinSel_Cmp0    = LPTMR_CSR_TPS(0), ///< CMP0 output
+      LptmrPinSel_AltPin1 = LPTMR_CSR_TPS(1), ///< LPTMR_ALT1 pin
+      LptmrPinSel_AltPin2 = LPTMR_CSR_TPS(2), ///< LPTMR_ALT2 pin
+
+   };
+
+   /**
+    * Pin Polarity
+    *
+    * Polarity of the input source in Pulse Counter mode
+    */
+   enum LptmrPulseEdge {
+      LptmrPulseEdge_Rising  = LPTMR_CSR_TPP(0), ///< Active-high source, rising-edge increments lptmr_cnr
+      LptmrPulseEdge_Falling = LPTMR_CSR_TPP(1), ///< Active-low source,  falling-edge increments lptmr_cnr
+
+   };
+
 class Lptmr0Info {
 public:
-   // Template:lptmr0
-
+   /*
+    * Template:lptmr0
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = LPTMR0_BasePtr;
 
@@ -4641,26 +8356,6 @@ public:
 
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
-
-   //! Minimum resolution for time interval setting
-   static constexpr uint32_t minimumResolution = 100;
-
-   //! Default Timer Compare value
-   static constexpr uint32_t cmr = 65535;
-
-   //! Default PSR value
-   static constexpr uint32_t psr = 
-      LPTMR_PSR_PRESCALE(0)|
-      LPTMR_PSR_PBYP(0)|
-      LPTMR_PSR_PCS(0);
-
-   //! Default CSR value
-   static constexpr uint32_t csr = 
-      LPTMR_CSR_TIE(0)|
-      LPTMR_CSR_TMS(0)|
-      LPTMR_CSR_TFC(0)|
-      LPTMR_CSR_TPP(0)|
-      LPTMR_CSR_TPS(0);
 
    /* Template_irqOptionSubstituted.xml */
 
@@ -4671,29 +8366,148 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
 
-   /**
-    * Get input clock frequency
-    *
-    * @return Input clock frequency as an uint32_t in Hz
-    */
-   static uint32_t getInputClockFrequency() {
    
-      switch(lptmr->PSR&LPTMR_PSR_PCS_MASK) {
-      default:
-      case LPTMR_PSR_PCS(0): return McgInfo::getMcgIrClock();
-      case LPTMR_PSR_PCS(1): return PmcInfo::getLpoClock();
-      case LPTMR_PSR_PCS(2): return SimInfo::getErc32kClock();
-      case LPTMR_PSR_PCS(3): return Osc0Info::getOscerClock();
-      }
+   /// Minimum resolution for time interval setting
+   static constexpr uint32_t minimumResolution = 100;
+
+   /**
+    * Set Timer Compare Register
+    *
+    * @param ticks   Comparison value
+    *        The timer comparison flag is set when the counter reaches this value and increments. 
+    *        The hardware trigger will assert until the next time the counter increments. 
+    *        This value determines the period in TimeInterval mode or the event time in Pulse Counting mode
+    */
+   static void setCompareThreshold(Ticks   ticks) {
+      lptmr->CMR = ticks;
    }
 
    /**
-    * Get clock frequency
+    * Set Counter Action on Compare Event
+    *
+    * @param lptmrResetOnCompare Counter action when lptmr_csr_tcf is set
+    */
+   static void setActionOnCompare(LptmrResetOnCompare lptmrResetOnCompare) {
+      lptmr->CSR = (lptmr->CSR&~LPTMR_CSR_TFC_MASK) | lptmrResetOnCompare;
+   }
+
+   /**
+    * Set Input Pin and Pin Polarity
+    *
+    * @param lptmrPinSel    Input source to be used in Pulse Counter mode
+    * @param lptmrPulseEdge Polarity of the input source in Pulse Counter mode
+    */
+   static void selectPulseInput(
+         LptmrPinSel    lptmrPinSel,
+         LptmrPulseEdge lptmrPulseEdge = LptmrPulseEdge_Rising) {
+      lptmr->CSR = (lptmr->CSR&~(LPTMR_CSR_TPS_MASK|LPTMR_CSR_TPP_MASK)) | lptmrPinSel|lptmrPulseEdge;
+   }
+
+   /**
+    * Set Timer interrupt enable
+    *
+    * @param lptmrInterrupt Enables LPTMR interrupts
+    */
+   static void enableInterrupts(LptmrInterrupt lptmrInterrupt) {
+   
+      if(lptmrInterrupt) {
+         lptmr->CSR = lptmr->CSR | LPTMR_CSR_TIE_MASK;
+      }
+      else {
+         lptmr->CSR = lptmr->CSR & ~LPTMR_CSR_TIE_MASK;
+      }
+   }
+   /**
+    * Clear interrupt flag
+    */
+   static void clearInterruptFlag() {
+   
+      lptmr->CSR = lptmr->CSR | LPTMR_CSR_TCF_MASK;
+   }
+
+   /**
+    * Set Clock Source and Prescaler Value
+    *
+    * These settings are used for the clock prescaler in timer mode.
+    *
+    * @param lptmrClockSel Clock source for LPTMR
+    * @param lptmrPrescale Configures the size of the Prescaler in Time Interval mode
+    */
+   static void setClock(
+         LptmrClockSel lptmrClockSel,
+         LptmrPrescale lptmrPrescale = LptmrPrescale_Direct) {
+      // Disable LPTMR before prescale change
+      uint32_t csr = lptmr->CSR;
+      lptmr->CSR   = 0;
+      (void)(lptmr->CSR);
+      lptmr->PSR   = lptmrClockSel|lptmrPrescale;
+      lptmr->CSR   = csr;
+   }
+
+   /**
+    * Set Clock Source and Filter Value
+    *
+    * These settings are used for the glitch filter in pulse-counting mode.
+    *
+    * @param lptmrClockSel     Clock source for LPTMR
+    * @param lptmrGlitchFilter Configures the size of the glitch filter in Pulse Counting mode
+    */
+   static void setClock(
+         LptmrClockSel     lptmrClockSel,
+         LptmrGlitchFilter lptmrGlitchFilter = LptmrGlitchFilter_Direct) {
+      // Disable LPTMR before prescale change
+      uint32_t csr = lptmr->CSR;
+      lptmr->CSR   = 0;
+      (void)(lptmr->CSR);
+      lptmr->PSR   = lptmrClockSel|lptmrGlitchFilter;
+      lptmr->CSR   = csr;
+   }
+
+   /**
+    * Set Clock Source
+    *
+    * @param lptmrClockSel Clock source for LPTMR
+    */
+   static void setInputClockSource(LptmrClockSel lptmrClockSel) {
+      lptmr->PSR = (lptmr->PSR&~LPTMR_PSR_PCS_MASK) | lptmrClockSel;
+   }
+   
+   /**
+    * Get Clock Source frequency
+    *
+    * @param lptmrClockSel Clock source for LPTMR
+   
+    * @return Clock frequency in Hz
+    */
+   static uint32_t getInputClockFrequency(LptmrClockSel lptmrClockSel) {
+   
+      switch(lptmrClockSel) {
+         default:
+         case LptmrClockSel_Mcgirclk : return McgInfo::getMcgIrClock();  ///< MCG Internal Reference Clock (MCGIRCLK)
+         case LptmrClockSel_Lpoclk   : return PmcInfo::getLpoClock();    ///< Low power oscillator (LPO - 1kHz)
+         case LptmrClockSel_Erclk32  : return SimInfo::getErc32kClock(); ///< 32kHz Clock Source (ERCLK32)
+         case LptmrClockSel_Oscerclk : return Osc0Info::getOscerClock(); ///< Oscillator External Reference Clock (OSCERCLK)
+
+      }
+   }
+   
+   /**
+    * Get Clock Source frequency
+    *
+    * @return Clock frequency in Hz
+    */
+   static uint32_t getInputClockFrequency() {
+   
+      return getInputClockFrequency((LptmrClockSel)(lptmr->PSR&LPTMR_PSR_PCS_MASK));
+   }
+   
+   /**
+    * Get clock frequency after prescaler
     *
     * @return Frequency as a float in Hz
     */
@@ -4705,7 +8519,7 @@ public:
       }
       return freq/(1<<(((lptmr->PSR&LPTMR_PSR_PRESCALE_MASK)>>LPTMR_PSR_PRESCALE_SHIFT)+1));
    }
-
+   
    /**
     * Get clock frequency
     *
@@ -4719,6 +8533,378 @@ public:
       }
       return freq/(1<<(((lptmr->PSR&LPTMR_PSR_PRESCALE_MASK)>>LPTMR_PSR_PRESCALE_SHIFT)+1));
    }
+
+   /// Type for Peripheral interrupt handling
+   typedef void (*CallbackFunction)();
+
+   /**
+    * Class used to do initialisation of LPTMR
+    */
+   class Init {
+   
+   protected:
+      /**
+       * No Copy Constructor
+       */
+      constexpr Init(const Init &other) = delete;
+   
+      /**
+       * No Default Constructor
+       */
+      constexpr Init() = delete;
+   
+      /**
+       * Usual Constructor
+       */
+      constexpr Init(LptmrMode lptmrMode) : csr(lptmrMode|LPTMR_CSR_TEN_MASK) {
+      }
+
+   
+   public:   
+#if false
+      /// Peripheral interrupt handling
+      CallbackFunction callbackFunction = nullptr;
+#endif
+
+      /// Timer Compare Interval
+      Seconds cmrperiod = 0_s;
+
+      /// Timer Compare Register
+      Ticks cmr = 0_ticks;
+
+      /// Prescale Register
+      uint8_t psr = 0;
+
+      /// IRQ priority levels
+      NvicPriority irqlevel = NvicPriority_Normal;
+
+      /// Control and Status Register
+      uint8_t csr;
+
+   };
+
+   /**
+    * Class used to do initialisation of LPTMR in Time Interval Mode
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Lptmr0::TimeIntervalModeInit lptmrInit {
+    *    LptmrResetOn_Compare,    // Timer Free-Running Counter enable
+    *    LptmrInterrupt_Disabled, // Timer interrupt enable
+    *    LptmrClockSel_Oscerclk,  // Clock Source
+    *    LptmrPrescale_Direct,    // Prescaler Value
+    *    100_ms,                  // Timer Compare Register
+    * };
+    *
+    * // Initialise LPTMR0 in Time Interval mode using values specified above
+    * Lptmr0.configure(lptmrInit)
+    * @endcode
+    */
+   class TimeIntervalModeInit : public Init {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr TimeIntervalModeInit(const TimeIntervalModeInit &other) = delete;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr TimeIntervalModeInit() : Init(LptmrMode_TimeInterval) {
+      };
+   
+#if false
+      /**
+       * Constructor for Peripheral interrupt handling
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param callbackFunction If enabled, the handler may be set using the setCallback() function or
+       *        by overriding the interrupt handler method in the peripheral class
+       *        If not enabled, then interrupt handlers may be installed by naming them 
+       *        (see weak names used in vector table).
+       */
+      template <typename... Types>
+      constexpr TimeIntervalModeInit(CallbackFunction callbackFunction, Types... rest) : TimeIntervalModeInit(rest...) {
+   
+         this->callbackFunction = callbackFunction;
+      }
+#endif
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr TimeIntervalModeInit(NvicPriority nvicPriority, Types... rest) : TimeIntervalModeInit(rest...) {
+   
+         irqlevel = nvicPriority;
+      }
+
+      /**
+       * Constructor for Timer interrupt enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrInterrupt Enables LPTMR interrupts
+       */
+      template <typename... Types>
+      constexpr TimeIntervalModeInit(LptmrInterrupt lptmrInterrupt, Types... rest) : TimeIntervalModeInit(rest...) {
+   
+         csr = (csr & ~LPTMR_CSR_TIE_MASK) | lptmrInterrupt;
+      }
+
+      /**
+       * Constructor for Counter Action on Compare Event
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrResetOnCompare Counter action when lptmr_csr_tcf is set
+       */
+      template <typename... Types>
+      constexpr TimeIntervalModeInit(LptmrResetOnCompare lptmrResetOnCompare, Types... rest) : TimeIntervalModeInit(rest...) {
+   
+         csr = (csr & ~LPTMR_CSR_TFC_MASK) | lptmrResetOnCompare;
+      }
+
+      /**
+       * Constructor for Prescaler Value
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrPrescale Configures the size of the Prescaler in Time Interval mode
+       */
+      template <typename... Types>
+      constexpr TimeIntervalModeInit(LptmrPrescale lptmrPrescale, Types... rest) : TimeIntervalModeInit(rest...) {
+   
+         psr = (psr & ~(LPTMR_PSR_PBYP_MASK|LPTMR_PSR_PRESCALE_MASK)) | lptmrPrescale;
+      }
+
+      /**
+       * Constructor for Clock Source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrClockSel Clock source for LPTMR
+       */
+      template <typename... Types>
+      constexpr TimeIntervalModeInit(LptmrClockSel lptmrClockSel, Types... rest) : TimeIntervalModeInit(rest...) {
+   
+         psr = (psr & ~LPTMR_PSR_PCS_MASK) | lptmrClockSel;
+      }
+
+      /**
+       * Constructor for Timer Compare Register
+       *
+       * @param ticks   Comparison value
+       *        The timer comparison flag is set when the counter reaches this value and increments. 
+       *        The hardware trigger will assert until the next time the counter increments. 
+       *        This value determines the period in TimeInterval mode or the event time in Pulse Counting mode
+       */
+      constexpr TimeIntervalModeInit(Ticks&  ticks) : Init(LptmrMode_TimeInterval) {
+   
+         cmr = ticks;
+      }
+
+      /**
+       * Constructor for Timer Compare Interval
+       *
+       * @param seconds   Comparison value
+       *        The timer comparison flag is set when the counter reaches this value and increments. 
+       *        The hardware trigger will assert until the next time the counter increments. 
+       *        This value determines the period in TimeInterval mode or the event time in Pulse Counting mode
+       */
+      constexpr TimeIntervalModeInit(Seconds&  seconds) : Init(LptmrMode_TimeInterval) {
+   
+         cmrperiod = seconds;
+      }
+
+   };
+
+   /**
+    * Class used to do initialisation of LPTMR in Pulse Counting Mode
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Lptmr0::PulseCountingModeInit lptmrInit {
+    *    LptmrPinSel_Cmp0,           // Timer Pin Select for Pulse Counter mode
+    *    LptmrPulseEdge_Rising,      // Timer Pin Polarity for Pulse Counter mode
+    *    LptmrClockSel_Oscerclk,     // Clock Source
+    *    LptmrGlitchFilter_Direct,   // Filter Value
+    *    LptmrInterrupt_Disabled,    // Timer interrupt enable
+    *    LptmrResetOn_Compare,       // Timer Free-Running Counter enable
+    *    916_ticks,                  // Timer Compare Register
+    * };
+    *
+    * // Initialise LPTMR0 in Pulse Counting mode using values specified above
+    * Lptmr0.configure(lptmrInit)
+    * @endcode
+    */
+   class PulseCountingModeInit : public Init {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr PulseCountingModeInit(const PulseCountingModeInit &other) = delete;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr PulseCountingModeInit() : Init(LptmrMode_PulseCounting) {
+      }
+   
+#if false
+      /**
+       * Constructor for Peripheral interrupt handling
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param callbackFunction If enabled, the handler may be set using the setCallback() function or
+       *        by overriding the interrupt handler method in the peripheral class
+       *        If not enabled, then interrupt handlers may be installed by naming them 
+       *        (see weak names used in vector table).
+       */
+      template <typename... Types>
+      constexpr PulseCountingModeInit(CallbackFunction callbackFunction, Types... rest) : PulseCountingModeInit(rest...) {
+   
+         this->callbackFunction = callbackFunction;
+      }
+#endif
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr PulseCountingModeInit(NvicPriority nvicPriority, Types... rest) : PulseCountingModeInit(rest...) {
+   
+         irqlevel = nvicPriority;
+      }
+
+      /**
+       * Constructor for Timer interrupt enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrInterrupt Enables LPTMR interrupts
+       */
+      template <typename... Types>
+      constexpr PulseCountingModeInit(LptmrInterrupt lptmrInterrupt, Types... rest) : PulseCountingModeInit(rest...) {
+   
+         csr = (csr & ~LPTMR_CSR_TIE_MASK) | lptmrInterrupt;
+      }
+
+      /**
+       * Constructor for Input Pin
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrPinSel Input source to be used in Pulse Counter mode
+       */
+      template <typename... Types>
+      constexpr PulseCountingModeInit(LptmrPinSel lptmrPinSel, Types... rest) : PulseCountingModeInit(rest...) {
+   
+         csr = (csr & ~LPTMR_CSR_TPS_MASK) | lptmrPinSel;
+      }
+
+      /**
+       * Constructor for Pin Polarity
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrPulseEdge Polarity of the input source in Pulse Counter mode
+       */
+      template <typename... Types>
+      constexpr PulseCountingModeInit(LptmrPulseEdge lptmrPulseEdge, Types... rest) : PulseCountingModeInit(rest...) {
+   
+         csr = (csr & ~LPTMR_CSR_TPP_MASK) | lptmrPulseEdge;
+      }
+
+      /**
+       * Constructor for Counter Action on Compare Event
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrResetOnCompare Counter action when lptmr_csr_tcf is set
+       */
+      template <typename... Types>
+      constexpr PulseCountingModeInit(LptmrResetOnCompare lptmrResetOnCompare, Types... rest) : PulseCountingModeInit(rest...) {
+   
+         csr = (csr & ~LPTMR_CSR_TFC_MASK) | lptmrResetOnCompare;
+      }
+
+      /**
+       * Constructor for Clock Source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrClockSel Clock source for LPTMR
+       */
+      template <typename... Types>
+      constexpr PulseCountingModeInit(LptmrClockSel lptmrClockSel, Types... rest) : PulseCountingModeInit(rest...) {
+   
+         psr = (psr & ~LPTMR_PSR_PCS_MASK) | lptmrClockSel;
+      }
+
+      /**
+       * Constructor for Filter Value
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param lptmrGlitchFilter Configures the size of the glitch filter in Pulse Counting mode
+       */
+      template <typename... Types>
+      constexpr PulseCountingModeInit(LptmrGlitchFilter lptmrGlitchFilter, Types... rest) : PulseCountingModeInit(rest...) {
+   
+         psr = (psr & ~(LPTMR_PSR_PBYP_MASK|LPTMR_PSR_PRESCALE_MASK)) | lptmrGlitchFilter;
+      }
+
+      /**
+       * Constructor for Timer Compare Register
+       *
+       * @param ticks   Comparison value
+       *        The timer comparison flag is set when the counter reaches this value and increments. 
+       *        The hardware trigger will assert until the next time the counter increments. 
+       *        This value determines the period in TimeInterval mode or the event time in Pulse Counting mode
+       */
+      constexpr PulseCountingModeInit(Ticks&  ticks) : Init(LptmrMode_PulseCounting) {
+   
+         cmr = ticks;
+      }
+
+   };
 
    /** 
     *  Enable clock to Lptmr0
@@ -4781,22 +8967,43 @@ public:
  * @brief Abstraction for Miscellaneous Control Module
  * @{
  */
-#define USBDM_MCM_IS_DEFINED
 /**
  * Peripheral information for MCM, Miscellaneous Control Module.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Arbitration select for the crossbar masters
+    *
+    * Arbitration select for the crossbar masters
+    */
+   enum McmArbitration {
+      McmArbitration_FixedPriority = MCM_PLACR_ARB(0), ///< Fixed-priority
+      McmArbitration_RoundRobin    = MCM_PLACR_ARB(1), ///< Round-robin
+
+   };
+
 class McmInfo {
 public:
-   // Template:mcm_mk11d5
-
+   /*
+    * Template:mcm_mk11d5
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = MCM_BasePtr;
 
    //! Hardware base pointer
    static constexpr HardwarePtr<MCM_Type> mcm = baseAddress;
+
+   /**
+    * Set Arbitration select for the crossbar masters
+    *
+    * @param mcmArbitration Arbitration select for the crossbar masters
+    */
+   static void setCrossbarArbitration(McmArbitration mcmArbitration) {
+   
+      mcm->PLACR = (mcm->PLACR&~MCM_PLACR_ARB_MASK) | mcmArbitration;
+   }
 
 };
 
@@ -4809,17 +9016,586 @@ public:
  * @brief Abstraction for Programmable Delay Block
  * @{
  */
-#define USBDM_PDB0_IS_DEFINED
 /**
  * Peripheral information for PDB, Programmable Delay Block.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Trigger Input Source Select
+    *
+    * Selects the trigger input source for the PDB.
+    * The trigger input source can be internal or external (EXTRG pin),
+    * or the software trigger
+    */
+   enum PdbTrigger {
+      PdbTrigger_PdbDisabled = PDB_SC_PDBEN(0)|PDB_SC_TRGSEL(0),  ///< PDB Disabled
+      PdbTrigger_External    = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(0),  ///< External Trigger (PDB0_EXTRG)
+      PdbTrigger_Cmp0        = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(1),  ///< CMP 0
+      PdbTrigger_Cmp1        = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(2),  ///< CMP 1
+      PdbTrigger_PitCh0      = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(4),  ///< PIT Ch 0 Output
+      PdbTrigger_PitCh1      = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(5),  ///< PIT Ch 1 Output
+      PdbTrigger_PitCh2      = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(6),  ///< PIT Ch 2 Output
+      PdbTrigger_PitCh3      = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(7),  ///< PIT Ch 3 Output
+      PdbTrigger_Ftm0        = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(8),  ///< FTM0 Init and Ext Trigger Outputs
+      PdbTrigger_Ftm1        = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(9),  ///< FTM1 Init and Ext Trigger Outputs
+      PdbTrigger_RtcAlarm    = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(12), ///< RTC Alarm
+      PdbTrigger_RtcSeconds  = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(13), ///< RTC Seconds
+      PdbTrigger_Lptmr       = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(14), ///< LPTMR
+      PdbTrigger_Software    = PDB_SC_PDBEN(1)|PDB_SC_TRGSEL(15), ///< Software trigger is selected
+
+   };
+
+   /**
+    * Sequence Error Interrupt Enable
+    *
+    * This bit enables the sequence error interrupt
+    * When this bit is set, any of the channel sequence error flags generates a sequence error interrupt
+    */
+   enum PdbErrorAction {
+      PdbErrorAction_None      = PDB_SC_PDBEIE(0), ///< No interrupt on error
+      PdbErrorAction_Interrupt = PDB_SC_PDBEIE(1), ///< Interrupt on error
+
+   };
+
+   /**
+    * PDB operation mode
+    *
+    * Select continuous or one-shot mode
+    */
+   enum PdbMode {
+      PdbMode_OneShot    = PDB_SC_CONT(0), ///< Sequence runs once only
+      PdbMode_Continuous = PDB_SC_CONT(1), ///< Sequence runs continuously once triggered
+
+   };
+
+   /**
+    * Register Load Select
+    *
+    * Selects when to load the MOD, IDLY, CHnDLYm, INTx, and POyDLY registers,
+    * after 1 is written to LDOK
+    */
+   enum PdbLoadMode {
+      PdbLoadMode_Immediate     = PDB_SC_LDMOD(0), ///< Registers loaded immediately on LDOK=1
+      PdbLoadMode_Modulo        = PDB_SC_LDMOD(1), ///< Registers loaded when PDB counter reaches MOD
+      PdbLoadMode_Event         = PDB_SC_LDMOD(2), ///< Registers loaded on trigger input event
+      PdbLoadMode_EventOrModulo = PDB_SC_LDMOD(3), ///< Registers loaded when PDB counter reaches MOD or on trigger input event
+
+   };
+
+   /**
+    * PDB Channel select
+    *
+    * Selects a PDB channel
+    */
+   enum PdbChannel {
+      PdbChannel_0 = 0, ///< Channel 0
+
+   };
+
+   /**
+    * Clock Prescaler Divider Select
+    *
+    * The PDB input clock is divided by this factor
+    */
+   enum PdbPrescale {
+      PdbPrescale_DivBy_1    = PDB_SC_MULT(0)|PDB_SC_PRESCALER(0), ///< Divide by 1
+      PdbPrescale_DivBy_2    = PDB_SC_MULT(0)|PDB_SC_PRESCALER(1), ///< Divide by 2
+      PdbPrescale_DivBy_4    = PDB_SC_MULT(0)|PDB_SC_PRESCALER(2), ///< Divide by 4
+      PdbPrescale_DivBy_8    = PDB_SC_MULT(0)|PDB_SC_PRESCALER(3), ///< Divide by 8
+      PdbPrescale_DivBy_10   = PDB_SC_MULT(1)|PDB_SC_PRESCALER(0), ///< Divide by 10
+      PdbPrescale_DivBy_16   = PDB_SC_MULT(0)|PDB_SC_PRESCALER(4), ///< Divide by 16
+      PdbPrescale_DivBy_20   = PDB_SC_MULT(1)|PDB_SC_PRESCALER(1), ///< Divide by 20
+      PdbPrescale_DivBy_32   = PDB_SC_MULT(0)|PDB_SC_PRESCALER(5), ///< Divide by 32
+      PdbPrescale_DivBy_40   = PDB_SC_MULT(1)|PDB_SC_PRESCALER(2), ///< Divide by 40
+      PdbPrescale_DivBy_64   = PDB_SC_MULT(0)|PDB_SC_PRESCALER(6), ///< Divide by 64
+      PdbPrescale_DivBy_80   = PDB_SC_MULT(1)|PDB_SC_PRESCALER(3), ///< Divide by 80
+      PdbPrescale_DivBy_128  = PDB_SC_MULT(0)|PDB_SC_PRESCALER(7), ///< Divide by 128
+      PdbPrescale_DivBy_160  = PDB_SC_MULT(1)|PDB_SC_PRESCALER(4), ///< Divide by 160
+      PdbPrescale_DivBy_320  = PDB_SC_MULT(1)|PDB_SC_PRESCALER(5), ///< Divide by 320
+      PdbPrescale_DivBy_640  = PDB_SC_MULT(1)|PDB_SC_PRESCALER(6), ///< Divide by 640
+      PdbPrescale_DivBy_1280 = PDB_SC_MULT(1)|PDB_SC_PRESCALER(7), ///< Divide by 1280
+      PdbPrescale_DivBy_2560 = PDB_SC_MULT(2)|PDB_SC_PRESCALER(7), ///< Divide by 2560
+      PdbPrescale_DivBy_5120 = PDB_SC_MULT(3)|PDB_SC_PRESCALER(7), ///< Divide by 5120
+
+   };
+
+   /**
+    * Auto select divider from period in seconds
+    *
+    * Auto select divider from period in seconds
+    */
+   enum PdbPrescale_Auto {
+      PdbPrescale_Auto_Select = PDB_SC_MULT(3)|PDB_SC_PRESCALER(0), ///< Auto select divider
+
+   };
+
+   /**
+    * Interrupt action
+    *
+    * Selects the action when timer reached interrupt delay value
+    */
+   enum PdbAction {
+      PdbAction_None      = PDB_SC_DMAEN(0)|PDB_SC_PDBIE(0), ///< No action on event
+      PdbAction_Interrupt = PDB_SC_DMAEN(0)|PDB_SC_PDBIE(1), ///< Interrupt on event
+      PdbAction_Dma       = PDB_SC_DMAEN(1)|PDB_SC_PDBIE(1), ///< DMA request on event
+
+   };
+
+   /**
+    * Channel Pretrigger control (usually ADC0.SC1[0])
+    *
+    * Select pre-trigger mode
+    */
+   enum PdbPretrigger0 {
+      PdbPretrigger0_Disabled   = PDB_C1_EN(0<<0)|PDB_C1_TOS(0<<0)|PDB_C1_BB(0<<0), ///< Pretrigger disabled
+      PdbPretrigger0_Bypassed   = PDB_C1_EN(1<<0)|PDB_C1_TOS(0<<0)|PDB_C1_BB(0<<0), ///< Pretrigger asserts 1 clock after trigger
+      PdbPretrigger0_Delayed    = PDB_C1_EN(1<<0)|PDB_C1_TOS(1<<0)|PDB_C1_BB(0<<0), ///< Pretrigger asserts 1 clock + delay after trigger
+      PdbPretrigger0_BackToBack = PDB_C1_EN(1<<0)|PDB_C1_TOS(0<<0)|PDB_C1_BB(1<<0), ///< Back-to-back, pretrigger asserts 2 clocks after previous acknowledge
+
+   };
+
+   /**
+    * Channel Pretrigger control (usually ADC0.SC1[1])
+    *
+    * Select pre-trigger mode
+    */
+   enum PdbPretrigger1 {
+      PdbPretrigger1_Disabled   = PDB_C1_EN(0<<1)|PDB_C1_TOS(0<<1)|PDB_C1_BB(0<<1), ///< Pretrigger disabled
+      PdbPretrigger1_Bypassed   = PDB_C1_EN(1<<1)|PDB_C1_TOS(0<<1)|PDB_C1_BB(0<<1), ///< Pretrigger asserts 1 clock after trigger
+      PdbPretrigger1_Delayed    = PDB_C1_EN(1<<1)|PDB_C1_TOS(1<<1)|PDB_C1_BB(0<<1), ///< Pretrigger asserts 1 clock + delay after trigger
+      PdbPretrigger1_BackToBack = PDB_C1_EN(1<<1)|PDB_C1_TOS(0<<1)|PDB_C1_BB(1<<1), ///< Back-to-back, pretrigger asserts 2 clocks after previous acknowledge
+
+   };
+
+   /**
+    * Pulse output trigger enable
+    *
+    * Enable the trigger to DAC 0
+    */
+   enum PdbPulseOutput0 {
+      PdbPulseOutput0_Disabled = PDB_POEN_POEN(0<<0), ///< Pulse output disabled
+      PdbPulseOutput0_Enabled  = PDB_POEN_POEN(1<<0), ///< Pulse output 0 is enabled
+
+   };
+
+   /**
+    * Pulse output trigger enable
+    *
+    * Enable the trigger to DAC 1
+    */
+   enum PdbPulseOutput1 {
+      PdbPulseOutput1_Disabled = PDB_POEN_POEN(0<<1), ///< Pulse output disabled
+      PdbPulseOutput1_Enabled  = PDB_POEN_POEN(1<<1), ///< Pulse output 1 is enabled
+
+   };
+
+class Pdb0BasicInfo {
+   
+public:
+   /**
+    * Type definition for Pdb0 interrupt call back.
+    */
+   typedef void (*CallbackFunction)();
+   
+   /**
+    * Class used to do main initialisation of a Pdb0
+    *
+    * This class has a templated constructor that accepts various values.  <br>
+    * Parameters available may vary with device - see Pdb0::DefaultInitValue for relevant example.  <br>
+    * Omitted parameters default to zero (disabled) or unchanged if initialiser is provided as last parameter.  <br>
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * // Example initialisation values for Pdb0
+    *
+    * // This example uses 'ticks'
+    * static const Pdb::Init pdbInit_ticks {
+    *
+    *    PdbTrigger_Software ,      // Trigger Input Source Select - Software trigger is selected
+    *    PdbMode_OneShot ,          // PDB operation mode - Sequence runs once only
+    *    PdbLoadMode_Immediate ,    // Register Load Select - Register loaded immediately
+    *
+    *    PdbPrescale_DivBy_4 ,      // Clock Prescaler Divider Select - Divide by 4
+    *    0x1000_ticks ,             // Counter modulus
+    *
+    *    NvicPriority_VeryHigh,     // IRQ level for this peripheral - VeryHigh
+    *
+    *    PdbAction_Interrupt ,      // Action done on event - Interrupt req on event
+    *    0x900_ticks ,              // Interrupt delay
+    *    pdbCallback,               // Action call-back
+    *
+    *    PdbErrorAction_None ,      // Sequence Error Interrupt Enable - No interrupt on error
+    *
+    *    // ADC Pretriggers
+    *    PdbChannel_0, PdbPretrigger0_Delayed, 0x111_ticks, // Channel 0 Pretrigger 0
+    *    PdbChannel_0, PdbPretrigger1_Disabled,             // Channel 0 Pretrigger 1
+    *    PdbChannel_1, PdbPretrigger0_Delayed, 0x222_ticks, // Channel 1 Pretrigger 0
+    *    PdbChannel_1, PdbPretrigger1_Bypassed,             // Channel 1 Pretrigger 1
+    *
+    *    // DAC triggers
+    *    PdbDac0TriggerMode_Periodic, 0x333_ticks, // DAC0 Trigger
+    *    PdbDac1TriggerMode_External,              // DAC1 Trigger
+    *
+    *    // Pulse outputs
+    *    PdbPulseOutput0_Enabled, 0x444_ticks, 0x555_ticks,  // Pulse output 0 (CMP0)
+    *    PdbPulseOutput1_Enabled, 0x666_ticks, 0x777_ticks,  // Pulse output 0 (CMP1)
+    *
+    *    Pdb0::DefaultInitValue,  // Optional initial value.  Above parameters modify this
+    * };
+    *
+    * // Initialise PDB channel from values specified above
+    * Pdb::configure(pdbInit_ticks)
+    *
+    * // Example initialisation values for Pdb0
+    * // This example uses 'seconds'
+    * static const Pdb::Init pdbInit_seconds {
+    *
+    *    PdbTrigger_Software ,      // Trigger Input Source Select - Software trigger is selected
+    *    PdbMode_OneShot ,          // PDB operation mode - Sequence runs once only
+    *    PdbLoadMode_Immediate ,    // Register Load Select - Register loaded immediately
+    *
+    *    PdbPrescale_Auto_Select ,  // Clock Prescaler auto-selected by PDB period
+    *    200_ms ,                   // Counter period
+    *
+    *    NvicPriority_VeryHigh,     // IRQ level for this peripheral - VeryHigh
+    *
+    *    PdbAction_None ,           // Action done on event - No action on event
+    *    190_ms ,                   // Interrupt delay
+    *
+    *    PdbErrorAction_Interrupt , // Sequence Error Interrupt Enable - Interrupt on error
+    *    pdbCallback,               // Error action call-back
+    *
+    *    // ADC Pretriggers
+    *    PdbChannel_0, PdbPretrigger0_Delayed, 100_ms, // Channel 0 Pretrigger 0 @ 100 ms
+    *    PdbChannel_0, PdbPretrigger1_Disabled,        // Channel 0 Pretrigger 1 disabled
+    *    PdbChannel_1, PdbPretrigger0_Delayed, 150_ms, // Channel 1 Pretrigger 0 @ 150 ms
+    *    PdbChannel_1, PdbPretrigger1_Bypassed,        // Channel 1 Pretrigger 1 disabled
+    *
+    *    // DAC triggers
+    *    PdbDac0TriggerMode_Periodic, 50_ms, // DAC0 Trigger @ 50 ms
+    *    PdbDac1TriggerMode_External,        // DAC1 Trigger directly triggered by external input
+    *
+    *    // Pulse outputs
+    *    PdbPulseOutput0_Enabled, 120_ms, 130_ms,  // Pulse output 0 (CMP0 window) @ 120-130 ms
+    *    PdbPulseOutput1_Enabled, 220_ms, 230_ms,  // Pulse output 0 (CMP1 window) @ 220-230 ms
+    * };
+    *
+    * // Initialise PDB channel from values specified above
+    * Pdb::configure(pdbInit_seconds)
+    * @endcode
+    */
+   class Init {
+   
+   public:
+   
+      // Shadow larger definition to save space when not using float
+      struct Seconds_Ticks {
+   
+         ///  Time in Ticks
+         uint32_t value;
+   
+         constexpr Seconds_Ticks() : value(0) {}
+   
+         constexpr Ticks   toTicks()   const { return value; }
+   
+#if (false)
+         constexpr void fromTicks(Ticks ticks)       { value = ticks.getValue(); }
+#else
+         constexpr void fromTicks(Ticks ticks)       { value = ticks; }
+#endif
+      };
+   
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      /// IRQ priority levels
+      NvicPriority irqlevel = NvicPriority_Normal;
+
+      /// Pulse-Out Enable register
+      uint8_t poen = 0;
+
+      /// Pulse-Out[Y] Delay 1 - rising edge
+      Seconds_Ticks dly1[2];
+
+      /// Pulse-Out[Y] Delay 1 - falling edge
+      Seconds_Ticks dly2[2];
+
+      /// Status and Control register
+      uint32_t sc = 0;
+
+      /// Counter mod register value
+      Seconds_Ticks mod;
+
+      /// Interrupt delay
+      Seconds_Ticks idly;
+
+      /// Channel[N] Pretrigger control
+      uint32_t c1[1] = {0};
+
+      /// Channel[N] PretriggerDelay[M]
+      Seconds_Ticks dly[1][2];
+
+      /**
+       * Constructor for Trigger Input Source Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbTrigger Selects the trigger input source for the PDB.
+       *        The trigger input source can be internal or external (EXTRG pin),
+       *        or the software trigger
+       */
+      template <typename... Types>
+      constexpr Init(PdbTrigger pdbTrigger, Types... rest) : Init(rest...) {
+   
+         sc = (sc & ~(PDB_SC_PDBEN_MASK|PDB_SC_TRGSEL_MASK)) | pdbTrigger;
+      }
+
+      /**
+       * Constructor for PDB operation mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbMode Select continuous or one-shot mode
+       */
+      template <typename... Types>
+      constexpr Init(PdbMode pdbMode, Types... rest) : Init(rest...) {
+   
+         sc = (sc & ~PDB_SC_CONT_MASK) | pdbMode;
+      }
+
+      /**
+       * Constructor for Register Load Select
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbLoadMode Selects when to load the MOD, IDLY, CHnDLYm, INTx, and POyDLY registers,
+       *        after 1 is written to LDOK
+       */
+      template <typename... Types>
+      constexpr Init(PdbLoadMode pdbLoadMode, Types... rest) : Init(rest...) {
+   
+         sc = (sc & ~PDB_SC_LDMOD_MASK) | pdbLoadMode;
+      }
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr Init(NvicPriority nvicPriority, Types... rest) : Init(rest...) {
+   
+         irqlevel = nvicPriority;
+      }
+
+      /**
+       * Constructor for Interrupt action and Interrupt delay
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbAction     Selects the action when timer reached interrupt delay value
+       * @param ticks         Specifies the delay value to schedule the PDB event.
+       *        It can be used to schedule an independent interrupt or DMA at some point in the PDB cycle
+       */
+      template <typename... Types>
+      constexpr Init(
+            PdbAction     pdbAction,
+            const Ticks&  ticks, Types... rest) : Init(rest...) {
+   
+         sc = (sc & ~(PDB_SC_DMAEN_MASK|PDB_SC_PDBIE_MASK)) | pdbAction;
+         idly.fromTicks(ticks);
+      }
+
+      /**
+       * Constructor for Sequence Error Interrupt Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbErrorAction This bit enables the sequence error interrupt
+       *        When this bit is set, any of the channel sequence error flags generates a sequence error interrupt
+       */
+      template <typename... Types>
+      constexpr Init(PdbErrorAction pdbErrorAction, Types... rest) : Init(rest...) {
+   
+         sc = (sc & ~PDB_SC_PDBEIE_MASK) | pdbErrorAction;
+      }
+
+      /**
+       * Constructor for Clock Prescaler Divider Select and Counter mod register value
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbPrescale   The PDB input clock is divided by this factor
+       * @param ticks         Controls the period of the main PDB counter [0..mod]
+       *        When the counter reaches this value, it will be reset back to zero.
+       *        If the PDB is in Continuous mode, the count begins anew
+       *        Counter modulus is (mod+1)
+       */
+      template <typename... Types>
+      constexpr Init(
+            PdbPrescale   pdbPrescale,
+            const Ticks&  ticks, Types... rest) : Init(rest...) {
+   
+         sc        = (sc & ~(PDB_SC_MULT_MASK|PDB_SC_PRESCALER_MASK)) | pdbPrescale;
+         mod.fromTicks(ticks);
+      }
+
+      /**
+       * Constructor for Channel Pretrigger 0 with delay
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbChannel     Selects a PDB channel
+       * @param pdbPretrigger0 Select pre-trigger mode
+       * @param ticks          Specifies the delay value for the pre-trigger of corresponding channel
+       */
+      template <typename... Types>
+      constexpr Init(
+            PdbChannel     pdbChannel,
+            PdbPretrigger0 pdbPretrigger0,
+            const Ticks&   ticks, Types... rest) : Init(rest...) {
+   
+         c1[pdbChannel] |= pdbPretrigger0;
+         dly[pdbChannel][0].fromTicks(ticks);
+      }
+
+      /**
+       * Constructor for Channel Pretrigger 0
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbChannel     Selects a PDB channel
+       * @param pdbPretrigger0 Select pre-trigger mode
+       */
+      template <typename... Types>
+      constexpr Init(
+            PdbChannel     pdbChannel,
+            PdbPretrigger0 pdbPretrigger0, Types... rest) : Init(rest...) {
+   
+         c1[pdbChannel] |= pdbPretrigger0;
+         dly[pdbChannel][0].fromTicks(0_ticks);
+      }
+
+      /**
+       * Constructor for Channel Pretrigger 1 with delay
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbChannel     Selects a PDB channel
+       * @param pdbPretrigger1 Select pre-trigger mode
+       * @param ticks          Specifies the delay value for the pre-trigger of corresponding channel
+       */
+      template <typename... Types>
+      constexpr Init(
+            PdbChannel     pdbChannel,
+            PdbPretrigger1 pdbPretrigger1,
+            const Ticks&   ticks, Types... rest) : Init(rest...) {
+   
+         c1[pdbChannel] |= pdbPretrigger1;
+         dly[pdbChannel][1].fromTicks(ticks);
+      }
+
+      /**
+       * Constructor for Channel Pretrigger 1
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbChannel     Selects a PDB channel
+       * @param pdbPretrigger1 Select pre-trigger mode
+       */
+      template <typename... Types>
+      constexpr Init(
+            PdbChannel     pdbChannel,
+            PdbPretrigger1 pdbPretrigger1, Types... rest) : Init(rest...) {
+   
+         c1[pdbChannel] |= pdbPretrigger1;
+         dly[pdbChannel][1].fromTicks(0_ticks);
+      }
+
+      /**
+       * Constructor for Pulse output trigger enable 0 with
+       *         Pulse-Output Delay 1 - rising edge,
+       *         Pulse-Output Delay 2 - falling edge
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbPulseOutput0 Enable the trigger to DAC 0
+       * @param rising          This specifies the delay 1 value for the Pulse-Out
+       *        Pulse-Output goes high when the counter is equal to the dly1
+       * @param falling         These bits specify the delay 2 value for the Pulse-Out
+       *        Pulse-Output goes low when the counter is equal to the dly2
+       */
+      template <typename... Types>
+      constexpr Init(
+            PdbPulseOutput0 pdbPulseOutput0,
+            const Ticks&    rising,
+            const Ticks&    falling, Types... rest) : Init(rest...) {
+   
+         poen          |= pdbPulseOutput0;
+         dly1[0].fromTicks(rising);
+         dly2[0].fromTicks(falling);
+      }
+
+      /**
+       * Constructor for Pulse output trigger enable 1 with
+       *         Pulse-Output Delay 1 - rising edge,
+       *         Pulse-Output Delay 2 - falling edge
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pdbPulseOutput1 Enable the trigger to DAC 1
+       * @param rising          This specifies the delay 1 value for the Pulse-Out
+       *        Pulse-Output goes high when the counter is equal to the dly1
+       * @param falling         These bits specify the delay 2 value for the Pulse-Out
+       *        Pulse-Output goes low when the counter is equal to the dly2
+       */
+      template <typename... Types>
+      constexpr Init(
+            PdbPulseOutput1 pdbPulseOutput1,
+            const Ticks&    rising,
+            const Ticks&    falling, Types... rest) : Init(rest...) {
+   
+         poen          |= pdbPulseOutput1;
+         dly1[1].fromTicks(rising);
+         dly2[1].fromTicks(falling);
+      }
+
+   };
+
+};
+
 class Pdb0Info {
 public:
-   // Template:pdb0_1ch_2pt_0dac_2po
-
+   /*
+    * Template:pdb0_1ch_2pt_0dac_2po
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = PDB0_BasePtr;
 
@@ -4828,70 +9604,6 @@ public:
 
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
-
-   static constexpr uint32_t pdb_sc = 
-      PDB_SC_MULT(0) |      // Multiplication Factor Select for Prescaler
-      PDB_SC_PDBIE(0) |     // Interrupt Enable
-      PDB_SC_TRGSEL(0) |    // Trigger Input Source Select
-      PDB_SC_PRESCALER(0) | // Prescaler Divider Select
-      PDB_SC_DMAEN(0) |     // DMA Enable
-      PDB_SC_CONT(0) |     // Continuous Mode Enable
-      PDB_SC_PDBEIE(0) |    // Sequence Error Interrupt Enable
-      PDB_SC_LDMOD(0);      // Load Mode Select
-
-   static constexpr uint32_t pdb_mod = 
-      PDB_MOD_MOD(65535);  // PDB Modulus
-
-   static constexpr uint32_t pdb_idly = 
-      PDB_IDLY_IDLY(0);  // Counter Modulus
-
-   struct PdbChannel {
-      uint32_t c1;
-      uint32_t dly0;
-      uint32_t dly1;
-   };
-
-   // Number of PDB channels
-   static constexpr size_t numChannels = 1;
-
-   // Default values for channel registers
-   static constexpr PdbChannel pdb_ch[numChannels] = {
-   {                   // Channel[0] Control Register 1
-      PDB_C1_BB(0x0) |   // Pre-Trigger Back-to-Back Operation Enable
-      PDB_C1_TOS(0x0) |  // Pre-Trigger Output Select
-      PDB_C1_EN(0x0),    // Pre-Trigger Enable
-      PDB_DLY_DLY(0),  // Channel[0] pre-trigger delay 0
-      PDB_DLY_DLY(0),  // Channel[0] pre-trigger delay 1
-   },
-   };
-
-   // Number of DACs
-   static constexpr size_t numDacs = 0;
-
-   static constexpr uint32_t pdb_poen = 
-      PDB_POEN_POEN(0x0);   // Pulse-Out Enable
-
-   // Number of PDB pulse outputs
-   static constexpr size_t numPulseOutputs = 2;
-
-   static constexpr uint32_t pdb_podly[numPulseOutputs] = {
-      // Pulse Output[0] Delays {
-      PDB_PODLY_DLY1(0) |  // Delay 1
-      PDB_PODLY_DLY2(0),   // Delay 2
-
-      // Pulse Output[1] Delays
-      PDB_PODLY_DLY1(0) |  // Delay 1
-      PDB_PODLY_DLY2(0),   // Delay 2
-   }; 
-
-   /**
-     * Get PDB clock frequency
-     *
-     * @return Frequency as a uint32_t in Hz
-     */
-   static __attribute__((always_inline)) uint32_t getInputClockFrequency() {
-      return SystemBusClock;
-   }
 
    /* Template_irqOption.xml */
 
@@ -4902,10 +9614,10 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /** 
     *  Enable clock to Pdb0
@@ -4927,6 +9639,171 @@ public:
 #else
       SIM->SCGC6 = SIM->SCGC6 & ~SIM_SCGC6_PDB_MASK;
 #endif
+   }
+
+   /**
+    * Class used to do main initialisation of a Pdb0
+    *
+    * This class has a templated constructor that accepts various values.  <br>
+    * Parameters available may vary with device - see Pdb0::DefaultInitValue for relevant example.  <br>
+    * Omitted parameters default to zero (disabled) or unchanged if initialiser is provided as last parameter.  <br>
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * // Example initialisation values for Pdb0
+    *
+    * // This example uses 'ticks'
+    * static const Pdb::Init pdbInit_ticks {
+    *
+    *    PdbTrigger_Software ,      // Trigger Input Source Select - Software trigger is selected
+    *    PdbMode_OneShot ,          // PDB operation mode - Sequence runs once only
+    *    PdbLoadMode_Immediate ,    // Register Load Select - Register loaded immediately
+    *
+    *    PdbPrescale_DivBy_4 ,      // Clock Prescaler Divider Select - Divide by 4
+    *    0x1000_ticks ,             // Counter modulus
+    *
+    *    NvicPriority_VeryHigh,     // IRQ level for this peripheral - VeryHigh
+    *
+    *    PdbAction_Interrupt ,      // Action done on event - Interrupt req on event
+    *    0x900_ticks ,              // Interrupt delay
+    *    pdbCallback,               // Action call-back
+    *
+    *    PdbErrorAction_None ,      // Sequence Error Interrupt Enable - No interrupt on error
+    *
+    *    // ADC Pretriggers
+    *    PdbChannel_0, PdbPretrigger0_Delayed, 0x111_ticks, // Channel 0 Pretrigger 0
+    *    PdbChannel_0, PdbPretrigger1_Disabled,             // Channel 0 Pretrigger 1
+    *    PdbChannel_1, PdbPretrigger0_Delayed, 0x222_ticks, // Channel 1 Pretrigger 0
+    *    PdbChannel_1, PdbPretrigger1_Bypassed,             // Channel 1 Pretrigger 1
+    *
+    *    // DAC triggers
+    *    PdbDac0TriggerMode_Periodic, 0x333_ticks, // DAC0 Trigger
+    *    PdbDac1TriggerMode_External,              // DAC1 Trigger
+    *
+    *    // Pulse outputs
+    *    PdbPulseOutput0_Enabled, 0x444_ticks, 0x555_ticks,  // Pulse output 0 (CMP0)
+    *    PdbPulseOutput1_Enabled, 0x666_ticks, 0x777_ticks,  // Pulse output 0 (CMP1)
+    *
+    *    Pdb0::DefaultInitValue,  // Optional initial value.  Above parameters modify this
+    * };
+    *
+    * // Initialise PDB channel from values specified above
+    * Pdb::configure(pdbInit_ticks)
+    *
+    * // Example initialisation values for Pdb0
+    * // This example uses 'seconds'
+    * static const Pdb::Init pdbInit_seconds {
+    *
+    *    PdbTrigger_Software ,      // Trigger Input Source Select - Software trigger is selected
+    *    PdbMode_OneShot ,          // PDB operation mode - Sequence runs once only
+    *    PdbLoadMode_Immediate ,    // Register Load Select - Register loaded immediately
+    *
+    *    PdbPrescale_Auto_Select ,  // Clock Prescaler auto-selected by PDB period
+    *    200_ms ,                   // Counter period
+    *
+    *    NvicPriority_VeryHigh,     // IRQ level for this peripheral - VeryHigh
+    *
+    *    PdbAction_None ,           // Action done on event - No action on event
+    *    190_ms ,                   // Interrupt delay
+    *
+    *    PdbErrorAction_Interrupt , // Sequence Error Interrupt Enable - Interrupt on error
+    *    pdbCallback,               // Error action call-back
+    *
+    *    // ADC Pretriggers
+    *    PdbChannel_0, PdbPretrigger0_Delayed, 100_ms, // Channel 0 Pretrigger 0 @ 100 ms
+    *    PdbChannel_0, PdbPretrigger1_Disabled,        // Channel 0 Pretrigger 1 disabled
+    *    PdbChannel_1, PdbPretrigger0_Delayed, 150_ms, // Channel 1 Pretrigger 0 @ 150 ms
+    *    PdbChannel_1, PdbPretrigger1_Bypassed,        // Channel 1 Pretrigger 1 disabled
+    *
+    *    // DAC triggers
+    *    PdbDac0TriggerMode_Periodic, 50_ms, // DAC0 Trigger @ 50 ms
+    *    PdbDac1TriggerMode_External,        // DAC1 Trigger directly triggered by external input
+    *
+    *    // Pulse outputs
+    *    PdbPulseOutput0_Enabled, 120_ms, 130_ms,  // Pulse output 0 (CMP0 window) @ 120-130 ms
+    *    PdbPulseOutput1_Enabled, 220_ms, 230_ms,  // Pulse output 0 (CMP1 window) @ 220-230 ms
+    * };
+    *
+    * // Initialise PDB channel from values specified above
+    * Pdb::configure(pdbInit_seconds)
+    * @endcode
+    */
+   typedef Pdb0BasicInfo::Init Init;
+   
+   /**
+    * Pdb0 interrupt call back
+    */
+   typedef Pdb0BasicInfo::CallbackFunction CallbackFunction;
+   
+   
+   /**
+    * Shadow larger definition to save space when not using float
+    */
+   typedef Pdb0BasicInfo::Init::Seconds_Ticks Seconds_Ticks;
+
+   /**
+    * Default initialisation values for PDB
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultInitValue = {
+
+      PdbTrigger_PdbDisabled , // Trigger Input Source Select - PDB Disabled
+      PdbMode_OneShot , // PDB operation mode - Sequence runs once only
+      PdbLoadMode_Immediate , // Register Load Select - Registers loaded immediately on LDOK=1
+      PdbPrescale_DivBy_1 , // Clock Prescaler Divider Select - Divide by 1
+      65535_ticks , // Counter mod register value
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      PdbAction_None , // Interrupt action - No action on event
+      0_ticks , // Interrupt delay
+      PdbErrorAction_None,  // Sequence Error Interrupt Enable - No interrupt on error
+      
+      // Pre-trigger 0 configuration
+      PdbChannel_0, 
+      PdbPretrigger0_Disabled , // Channel Pretrigger control (usually ADC0.SC1[0]) - Pretrigger disabled
+      0_ticks,  // Delay
+      
+      // Pre-trigger 0 configuration
+      PdbChannel_0, 
+      PdbPretrigger1_Disabled , // Channel Pretrigger control (usually ADC0.SC1[1]) - Pretrigger disabled
+      0_ticks,  // Delay
+      
+      // Pulse output 0 (CMP0) configuration
+      PdbPulseOutput0_Disabled , // Pulse output trigger enable - Pulse output disabled
+      0_ticks , // Pulse-Output Delay 1 - rising edge
+      0_ticks,  // Pulse-Output Delay 2 - falling edge 
+   
+      // Pulse output 1 (CMP1) configuration
+      PdbPulseOutput1_Disabled , // Pulse output trigger enable - Pulse output disabled
+      0_ticks , // Pulse-Output Delay 1 - rising edge
+      0_ticks,  // Pulse-Output Delay 2 - falling edge 
+   };
+
+   // Number of PDB channels
+   static constexpr size_t numChannels = 1;
+   
+   // Number of PDB Triggers (to DACs)
+   static constexpr size_t numDacIntervalTriggers = 0;
+   
+   // Number of PDB pulse outputs (to CMPs)
+   static constexpr size_t numPulseOutputs = 2;
+   
+   // Number of PDB pre-trigger outputs (to ADCs)
+   static constexpr size_t numPreTriggers = 2;
+
+
+   
+   // Minimum resolution in ticks
+   static constexpr Ticks MinimumResolution = 1000_ticks;
+
+   /**
+     * Get PDB clock frequency
+     *
+     * @return Frequency as a uint32_t in Hz
+     */
+   static __attribute__((always_inline)) uint32_t getInputClockFrequency() {
+      return SystemBusClock;
    }
 
    //! Number of signals available in info table
@@ -4966,20 +9843,235 @@ public:
  * @brief Abstraction for Programmable Interrupt Timer
  * @{
  */
-#define USBDM_PIT_IS_DEFINED
 /**
  * Peripheral information for PIT, Programmable Interrupt Timer.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Pit Channel Number
+    *
+    * Select a PIT channel
+    */
+   enum PitChannelNum : uint8_t {
+      PitChannelNum_0    = 0,          ///< Channel 0
+      PitChannelNum_1    = 1,          ///< Channel 1
+      PitChannelNum_2    = 2,          ///< Channel 2
+      PitChannelNum_3    = 3,          ///< Channel 3
+      PitChannelNum_None = 0b10000000, ///< Channel Not Allocated
+
+   };
+
+   /**
+    * Freeze in debug mode
+    *
+    * Controls whether the timer continues to run in debug mode
+    */
+   enum PitDebugMode {
+      PitDebugMode_Run  = PIT_MCR_FRZ(0), ///< Timers continue to run in debug mode
+      PitDebugMode_Stop = PIT_MCR_FRZ(1), ///< Timers are stopped in Debug mode
+
+   };
+
+   /**
+    * Timer Channel Enable
+    *
+    * Allows operation of this channel
+    */
+   enum PitChannelEnable {
+      PitChannelEnable_Disabled = PIT_TCTRL_TEN(0), ///< Channel disabled
+      PitChannelEnable_Enabled  = PIT_TCTRL_TEN(1), ///< Channel enabled
+
+   };
+
+   /**
+    * Timer Interrupt Enable
+    *
+    * Allows interrupts from this channel
+    */
+   enum PitChannelIrq {
+      PitChannelIrq_Disabled = PIT_TCTRL_TIE(0), ///< Interrupts are disabled
+      PitChannelIrq_Enabled  = PIT_TCTRL_TIE(1), ///< Interrupts are enabled
+
+   };
+
+class PitBasicInfo {
+   
+public:
+   /**
+    * Type definition for Pit interrupt call back.
+    */
+   typedef void (*CallbackFunction)();
+
+   /**
+    * Class used to do initialisation of a Pit channel
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * // Initialisation values for Pit channel
+    * // Parameters available may vary with device - see Pit::DefaultChannelInitValues[] for relevant example 
+    * static const Pit::Init pitInit {
+    *       PitChannelNum_0,
+    *
+    *       PitChannelEnable_Enabled , // Timer Channel Enable - Channel enabled
+    *       PitChannelChain_Disabled , // Chain with previous channel - Timers are not chained
+    *       PitChannelIrq_Disabled ,   // Timer Interrupt Enable - Interrupts are disabled
+    *       callBackFunction,          // Call-back function to use
+    *       NvicPriority_Normal ,      // IRQ level for this peripheral - Normal
+    *       3999_ticks,                // Reload value for channel (in ticks or seconds)
+    * };
+    *
+    * // Initialise PIT channel from values specified above
+    * Pit::configure(pitInit)
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**                               
+       * Copy Constructor                  
+       */                             
+      constexpr Init(const Init &other) = delete;
+      
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      /// Peripheral interrupt handling
+      CallbackFunction callbackFunction = nullptr;
+
+      /// Reload value channel 0
+      Ticks ldval = 0_ticks;
+
+      /// Default period of timer
+      Seconds period = 0_s;
+
+      /// IRQ priority levels
+      NvicPriority irqlevel = NvicPriority_Normal;
+
+      /// Timer Control Register
+      uint8_t tctrl = 0;
+
+      /// Pit Channel Number
+      PitChannelNum channelnumber = PitChannelNum_None;
+
+      /**
+       * Constructor for Peripheral interrupt handling
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param callbackFunction If enabled, the handler may be set using the setCallback() function or
+       *        by overriding the interrupt handler method in the peripheral class
+       *        If not enabled, then interrupt handlers may be installed by naming them 
+       *        (see weak names used in vector table).
+       */
+      template <typename... Types>
+      constexpr Init(CallbackFunction callbackFunction, Types... rest) : Init(rest...) {
+   
+         this->callbackFunction = callbackFunction;
+      }
+
+      /**
+       * Constructor for Pit Channel Number
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pitChannelNum Select a PIT channel
+       */
+      template <typename... Types>
+      constexpr Init(PitChannelNum pitChannelNum, Types... rest) : Init(rest...) {
+   
+         channelnumber = pitChannelNum;
+      }
+
+      /**
+       * Constructor for Reload value channel 0
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param ticks   Value loaded in timer register on roll-over
+       */
+      template <typename... Types>
+      constexpr Init(Ticks&  ticks, Types... rest) : Init(rest...) {
+   
+         ldval = ticks;
+      }
+
+      /**
+       * Constructor for Default period of timer
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param seconds   Used to calculate the timer load value
+       */
+      template <typename... Types>
+      constexpr Init(Seconds&  seconds, Types... rest) : Init(rest...) {
+   
+         period = seconds;
+      }
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr Init(NvicPriority nvicPriority, Types... rest) : Init(rest...) {
+   
+         irqlevel = nvicPriority;
+      }
+
+      /**
+       * Constructor for Timer Channel Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pitChannelEnable Allows operation of this channel
+       */
+      template <typename... Types>
+      constexpr Init(PitChannelEnable pitChannelEnable, Types... rest) : Init(rest...) {
+      
+         tctrl = (tctrl&~PIT_TCTRL_TEN_MASK) | pitChannelEnable;
+      }
+
+      /**
+       * Constructor for Timer Interrupt Enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param pitChannelIrq Allows interrupts from this channel
+       */
+      template <typename... Types>
+      constexpr Init(PitChannelIrq pitChannelIrq, Types... rest) : Init(rest...) {
+      
+         tctrl = (tctrl&~PIT_TCTRL_TIE_MASK) | pitChannelIrq;
+      }
+
+   };
+
+};
+
 class PitInfo {
 public:
-   // Template:pit_4ch
-
-   //! Number of PIT channels
-   static constexpr uint32_t NumChannels  = 4;
-
+   /*
+    * Template:pit_4ch
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = PIT_BasePtr;
 
@@ -4995,18 +10087,89 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 1;
+   static constexpr bool irqHandlerInstalled = true;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
-   //! Default value for PIT load value register
-   static constexpr uint32_t pit_ldval  = 4799;
+   /// Number of PIT channels
+   static constexpr uint32_t NumChannels  = 4;
 
-   //! PIT operation in debug mode
+   /// Freeze in debug mode
    static constexpr uint32_t mcr = 
-      PIT_MCR_FRZ(0) |  // Freeze in debug mode
-      PIT_MCR_MDIS(0);  // Disable
+      PitDebugMode_Stop;  // Freeze in debug mode - Timers are stopped in Debug mode; 
+
+   /**
+    * Class used to do initialisation of a Pit channel
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * // Initialisation values for Pit channel
+    * // Parameters available may vary with device - see Pit::DefaultChannelInitValues[] for relevant example 
+    * static const Pit::Init pitInit {
+    *       PitChannelNum_0,
+    *
+    *       PitChannelEnable_Enabled , // Timer Channel Enable - Channel enabled
+    *       PitChannelChain_Disabled , // Chain with previous channel - Timers are not chained
+    *       PitChannelIrq_Disabled ,   // Timer Interrupt Enable - Interrupts are disabled
+    *       callBackFunction,          // Call-back function to use
+    *       NvicPriority_Normal ,      // IRQ level for this peripheral - Normal
+    *       3999_ticks,                // Reload value for channel (in ticks or seconds)
+    * };
+    *
+    * // Initialise PIT channel from values specified above
+    * Pit::configure(pitInit)
+    * @endcode
+    */
+   typedef PitBasicInfo::Init Init;
+   
+   /**
+    * Pit interrupt call back
+    */
+   typedef PitBasicInfo::CallbackFunction CallbackFunction;
+   
+   /**
+    * Default initialisation values for PIT channels
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultChannelInitValues[] = {
+      {
+      PitChannelNum_0,
+
+      PitChannelEnable_Disabled , // Timer Channel Enable - Channel disabled
+      PitChannelIrq_Disabled , // Timer Interrupt Enable - Interrupts are disabled
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      0_ticks,  // Reload value channel 0
+      },
+      {
+      PitChannelNum_1,
+
+      PitChannelEnable_Disabled , // Timer Channel Enable - Channel disabled
+      PitChannelIrq_Disabled , // Timer Interrupt Enable - Interrupts are disabled
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      0_ticks,  // Reload value channel 1
+      },
+      {
+      PitChannelNum_2,
+
+      PitChannelEnable_Disabled , // Timer Channel Enable - Channel disabled
+      PitChannelIrq_Disabled , // Timer Interrupt Enable - Interrupts are disabled
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      0_ticks,  // Reload value channel 2
+      },
+      {
+      PitChannelNum_3,
+
+      PitChannelEnable_Disabled , // Timer Channel Enable - Channel disabled
+      PitChannelIrq_Disabled , // Timer Interrupt Enable - Interrupts are disabled
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      0_ticks,  // Reload value channel 3
+      },
+   };
 
    /**
     * Get clock frequency
@@ -5050,7 +10213,6 @@ public:
  * @brief Abstraction for Power
  * @{
  */
-#define USBDM_POWER_IS_DEFINED
 /**
  * Peripheral information for POWER, Power.
  * 
@@ -5059,8 +10221,9 @@ public:
  */
 class PowerInfo {
 public:
-   // Template:power
-
+   /*
+    * Template:power
+    */
    //! Number of signals available in info table
    static constexpr int numSignals  = 13;
 
@@ -5094,7 +10257,6 @@ public:
  * @brief Abstraction for Reset Control Module
  * @{
  */
-#define USBDM_RCM_IS_DEFINED
 /**
  * Peripheral information for RCM, Reset Control Module.
  * 
@@ -5103,8 +10265,9 @@ public:
  */
 class RcmInfo {
 public:
-   // Template:rcm_mk10d5
-
+   /*
+    * Template:rcm_mk10d5
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = RCM_BasePtr;
 
@@ -5131,53 +10294,481 @@ public:
  * @brief Abstraction for System Mode Controller
  * @{
  */
-#define USBDM_SMC_IS_DEFINED
 /**
  * Peripheral information for SMC, System Mode Controller.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Allow very low power modes
+    *
+    * Allows the MCU to enter any very low power modes: VLPR, VLPW, and VLPS
+    */
+   enum SmcAllowVeryLowPower : uint8_t {
+      SmcAllowVeryLowPower_Disabled = SMC_PMPROT_AVLP(0), ///< VLPR, VLPW and VLPS are not allowed
+      SmcAllowVeryLowPower_Enabled  = SMC_PMPROT_AVLP(1), ///< VLPR, VLPW and VLPS are allowed
+
+   };
+
+   /**
+    * Allow low leakage stop mode
+    *
+    * Allows the MCU to enter any low leakage stop mode: LLS
+    */
+   enum SmcAllowLowLeakageStop : uint8_t {
+      SmcAllowLowLeakageStop_Disabled = SMC_PMPROT_ALLS(0), ///< LLS is not allowed
+      SmcAllowLowLeakageStop_Enabled  = SMC_PMPROT_ALLS(1), ///< LLS is allowed
+
+   };
+
+   /**
+    * Allow very low leakage stop mode
+    *
+    * Allows the MCU to enter any low leakage stop mode: VLLSx
+    */
+   enum SmcAllowVeryLowLeakageStop : uint8_t {
+      SmcAllowVeryLowLeakageStop_Disabled = SMC_PMPROT_AVLLS(0), ///< VLLSx is not allowed
+      SmcAllowVeryLowLeakageStop_Enabled  = SMC_PMPROT_AVLLS(1), ///< VLLSx is allowed
+
+   };
+
+   /**
+    * Exit low power on interrupt
+    *
+    * Causes the SMC to exit to normal RUN mode when any active interrupt
+    * occurs while in a VLP mode (VLPR, VLPW or VLPS)
+    */
+   enum SmcExitLowPowerOnInt : uint8_t {
+      SmcExitLowPowerOnInt_Disabled = SMC_PMCTRL_LPWUI(0), ///< Stay in VLPR on int
+      SmcExitLowPowerOnInt_Enabled  = SMC_PMCTRL_LPWUI(1), ///< Exit VLPR on int
+
+   };
+
+   /**
+    * Run mode
+    *
+    * Determines the clock speed restrictions that apply
+    */
+   enum SmcRunMode : uint8_t {
+      SmcRunMode_Normal       = SMC_PMCTRL_RUNM(0), ///< Normal RUN
+      SmcRunMode_VeryLowPower = SMC_PMCTRL_RUNM(2), ///< Very Low Power RUN
+
+   };
+
+   /**
+    * Stop Mode Control
+    *
+    * Controls entry into the selected stop mode when Sleep-Now or Sleep-On-Exit 
+    * mode is entered with SLEEPDEEP=1
+    */
+   enum SmcStopMode : uint8_t {
+      SmcStopMode_NormalStop         = SMC_PMCTRL_STOPM(0), ///< Normal Stop (STOP)
+      SmcStopMode_VeryLowPowerStop   = SMC_PMCTRL_STOPM(2), ///< Very-Low-Power Stop (VLPS)
+      SmcStopMode_LowLeakageStop     = SMC_PMCTRL_STOPM(3), ///< Low-Leakage Stop (LLSx)
+      SmcStopMode_VeryLowLeakageStop = SMC_PMCTRL_STOPM(4), ///< Very-Low-Leakage Stop (VLLSx)
+
+   };
+
+   /**
+    * Power-On_Reset Detection in VLLS0 mode
+    *
+    * Controls whether the Power-On-Reset detect circuit is enabled in VLLS0 mode (Brown-out detection)
+    */
+   enum SmcPowerOnResetInVlls0 : uint8_t {
+      SmcPowerOnResetInVlls0_Enabled  = SMC_STOPCTRL_PORPO(0), ///< POR detect circuit is enabled in VLLS0
+      SmcPowerOnResetInVlls0_Disabled = SMC_STOPCTRL_PORPO(1), ///< POR detect circuit is disabled in VLLS0
+
+   };
+
+   /**
+    * Low Leakage Mode Control
+    *
+    * Controls which VLLS sub-mode to enter if STOPM = VLLSx
+    */
+   enum SmcLowLeakageStopMode : uint8_t {
+      SmcLowLeakageStopMode_VLLS0 = SMC_STOPCTRL_VLLSM(0), ///< Enter VLLS0 in VLLSx mode
+      SmcLowLeakageStopMode_VLLS1 = SMC_STOPCTRL_VLLSM(1), ///< Enter VLLS1 in VLLSx mode
+      SmcLowLeakageStopMode_VLLS2 = SMC_STOPCTRL_VLLSM(2), ///< Enter VLLS2 in VLLSx mode
+      SmcLowLeakageStopMode_VLLS3 = SMC_STOPCTRL_VLLSM(3), ///< Enter VLLS3 in VLLSx mode
+
+   };
+
+   /**
+    * Processor execution state
+    *
+    * This register changes to reflect the execution state of the processor
+    */
+   enum SmcStatus : uint8_t {
+      SmcStatus_RUN  = SMC_PMSTAT_PMSTAT(1<<0), ///< Processor is in Normal Run mode
+      SmcStatus_VLPR = SMC_PMSTAT_PMSTAT(1<<2), ///< Processor is in Very Low Power Run mode
+      SmcStatus_VLPW = SMC_PMSTAT_PMSTAT(1<<3), ///< Processor is in Very Low Power Wait mode
+      SmcStatus_STOP = SMC_PMSTAT_PMSTAT(1<<1), ///< Processor is in Stop mode
+      SmcStatus_VLPS = SMC_PMSTAT_PMSTAT(1<<4), ///< Processor is in Very Low Power Stop mode
+      SmcStatus_LLS  = SMC_PMSTAT_PMSTAT(1<<5), ///< Processor is in Low Leakage Stop mode
+      SmcStatus_VLLS = SMC_PMSTAT_PMSTAT(1<<6), ///< Processor is in Very Low Leakage Stop mode
+
+   };
+
+   consteval uint32_t make16(uint8_t pmctrl, uint8_t stopctrl=0, uint8_t bias=0) {
+      return pmctrl+(stopctrl<<8)+(bias<<16);
+   }
+
+   enum SmcPowerMode {
+      /*                           value                                                                                    Entry             Trans  Core       Requirements                                           */ //
+      SmcPowerMode_RUN           = make16(SmcRunMode_Normal),                                                            /* (VLPR,HSRUN)->RUN 3,12   Run        SMC_PMCTRL_RUNM(0)                                     */ ///<  Run mode
+      SmcPowerMode_VLPR          = make16(SmcRunMode_VeryLowPower),                                                      /* RUN->VLPR         3      Run        SMC_PMCTRL_RUNM(2)                                     */ ///<  Very low power run mode     
+   
+      SmcPowerMode_WAIT          = make16(SmcRunMode_Normal,0,1),                                                        /* RUN->WAIT         1      Sleep      wfi+SMC_PMCTRL_RUNM(0)                                 */ ///<  Wait mode
+      SmcPowerMode_VLPW          = make16(SmcRunMode_VeryLowPower,0,1),                                                  /* VLPR->VLPW        4      Sleep      wfi+SMC_PMCTRL_RUNM(2)                                 */ ///<  Very low power wait mode
+   
+      SmcPowerMode_NormalSTOP    = make16(SmcRunMode_Normal|SmcStopMode_NormalStop,0,2),                                 /* RUN->STOP         2a     Deep Sleep wfi+sleepDeep+SMC_PMCTRL_STOPM(0) RUN<->STOP           */ ///<  Stop mode                   
+   
+      SmcPowerMode_VLPS          = make16(SmcRunMode_Normal|SmcStopMode_VeryLowPowerStop),                               /* (RUN,VLPR)->VLPS  7,6    Deep Sleep wfi+sleepDeep+SMC_PMCTRL_STOPM(2)                      */ ///<  Very low power stop mode
+      /*                               or if SmcRunMode_VeryLowPower,                                                       VLPR->VLPS        6      Deep Sleep wfi+sleepDeep+SMC_PMCTRL_STOPM(0/2)                    */ ///<  Very low power stop mode    
+   
+      SmcPowerMode_VLLS0         = make16(SmcRunMode_Normal|SmcStopMode_VeryLowLeakageStop,SmcLowLeakageStopMode_VLLS0), /* (RUN,VLPR)->VLLS0 8,9a   Deep Sleep wfi+sleepDeep+SMC_PMCTRL_STOPM(4)+SMC_STOPCTRL_LLSM(0) */ ///<  Very low leakage stop mode 0
+      SmcPowerMode_VLLS1         = make16(SmcRunMode_Normal|SmcStopMode_VeryLowLeakageStop,SmcLowLeakageStopMode_VLLS1), /* (RUN,VLPR)->VLLS1 8,9b   Deep Sleep wfi+sleepDeep+SMC_PMCTRL_STOPM(4)+SMC_STOPCTRL_LLSM(1) */ ///<  Very low leakage stop mode 1
+      SmcPowerMode_VLLS2         = make16(SmcRunMode_Normal|SmcStopMode_VeryLowLeakageStop,SmcLowLeakageStopMode_VLLS2), /* (RUN,VLPR)->VLLS2 8,9c   Deep Sleep wfi+sleepDeep+SMC_PMCTRL_STOPM(4)+SMC_STOPCTRL_LLSM(2) */ ///<  Very low leakage stop mode 2
+      SmcPowerMode_VLLS3         = make16(SmcRunMode_Normal|SmcStopMode_VeryLowLeakageStop,SmcLowLeakageStopMode_VLLS3), /* (RUN,VLPR)->VLLS3 8,9d   Deep Sleep wfi+sleepDeep+SMC_PMCTRL_STOPM(4)+SMC_STOPCTRL_LLSM(3) */ ///<  Very low leakage stop mode 3 
+   };
+
 class SmcInfo {
 public:
-   // Template:smc_mk10d5
-
+   /*
+    * Template:smc_mk10d5
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = SMC_BasePtr;
 
    //! Hardware base pointer
    static constexpr HardwarePtr<SMC_Type> smc = baseAddress;
 
-   // Power Mode Protection Register
-   static constexpr uint8_t pmprot =  
-#ifdef SMC_PMPROT_AHSRUN
-      SMC_PMPROT_AHSRUN(0) |  // Allow High Speed Run mode
-#endif
-      SMC_PMPROT_AVLP(1) |  // Allow very low power modes
-      SMC_PMPROT_ALLS(1) |  // Allow low leakage stop mode
-      SMC_PMPROT_AVLLS(1);  // Allow very low leakage stop mode
+   /**
+    * Enable all power modes.
+    * A power mode must be enabled before it can be entered.
+    *
+    * @note This is a write-once-after-reset operation
+    */
+   static ErrorCode enableAllPowerModes() {
+      smc->PMPROT = 0xFF;
+      return E_NO_ERROR;
+   }
 
-#ifdef SMC_PMCTRL_LPWUI
-   // Power Mode Control Register
-   static constexpr uint8_t pmctrl =  
-      SMC_PMCTRL_LPWUI(1);   // Low Power Wake Up on Interrupt
-#endif
+   /**
+    * Enable the given power modes
+    * A mode must be enabled before it can be entered.
+   
+    * @note This is a write-once operation after reset
+    *
+    * @param smcAllowVeryLowPower       Allows the MCU to enter any very low power modes: VLPR, VLPW, and VLPS
+    * @param smcAllowLowLeakageStop     Allows the MCU to enter any low leakage stop mode: LLS
+    * @param smcAllowVeryLowLeakageStop Allows the MCU to enter any low leakage stop mode: VLLSx
+    */
+   static void enablePowerModes(
+         SmcAllowVeryLowPower       smcAllowVeryLowPower,
+         SmcAllowLowLeakageStop     smcAllowLowLeakageStop     = SmcAllowLowLeakageStop_Enabled,
+         SmcAllowVeryLowLeakageStop smcAllowVeryLowLeakageStop = SmcAllowVeryLowLeakageStop_Enabled) {
 
-   // VLLS Control Register
-   static constexpr uint8_t stopctrl =  
-#ifdef SMC_STOPCTRL_PSTOPO
-      SMC_STOPCTRL_PSTOPO(0) |  // Partial Stop Option (if present)
-#endif
-#ifdef SMC_STOPCTRL_PORPO
-      SMC_STOPCTRL_PORPO(0) |  // POR Power Option
-#endif
-#ifdef SMC_STOPCTRL_LPOPO
-      SMC_STOPCTRL_LPOPO(0) |  // POR Power Option (if present)
-#endif
-#ifdef SMC_STOPCTRL_RAM2PO
-      SMC_STOPCTRL_RAM2PO(0) |  // RAM2 Power Option (if present)
-#endif
-      SMC_STOPCTRL_VLLSM(3);   // LLS or VLLS Mode Control
+      smc->PMPROT = smcAllowVeryLowPower|smcAllowLowLeakageStop|smcAllowVeryLowLeakageStop;
+   }
+
+   /**
+    * Set Exit low power on interrupt
+    *
+    * @param smcExitLowPowerOnInt Causes the SMC to exit to normal RUN mode when any active interrupt
+    *        occurs while in a VLP mode (VLPR, VLPW or VLPS)
+    *
+    * @return E_NO_ERROR                 Success
+    * @return E_ILLEGAL_POWER_TRANSITION If not in RUN mode
+    */
+   static ErrorCode setExitVeryLowPowerOnInterrupt(SmcExitLowPowerOnInt smcExitLowPowerOnInt) {
+      if (getStatus() != SmcStatus_RUN) {
+         // Can only change in RUN mode
+         return setErrorCode(E_ILLEGAL_POWER_TRANSITION);
+      }
+   
+      smc->PMCTRL = (smc->PMCTRL&~SMC_PMCTRL_LPWUI_MASK) | smcExitLowPowerOnInt;
+   
+      // Make sure write completes
+      (void)smc->PMCTRL;
+      return E_NO_ERROR;
+   }
+
+   /**
+    * Set Stop Mode Control
+    *
+    * @param smcStopMode Controls entry into the selected stop mode when Sleep-Now or Sleep-On-Exit 
+    *        mode is entered with SLEEPDEEP=1
+    */
+   static void setStopMode(SmcStopMode smcStopMode) {
+      smc->PMCTRL = (smc->PMCTRL&~SMC_PMCTRL_STOPM_MASK) | smcStopMode;
+      // Make sure write completes
+      (void)(smc->PMCTRL);
+   }
+
+   /**
+    * Set Power-On_Reset Detection in VLLS0 mode
+    *
+    * @param smcPowerOnResetInVlls0 Controls whether the Power-On-Reset detect circuit is enabled in VLLS0 mode (Brown-out detection)
+    */
+   static void setPowerOnResetInVLLS0(SmcPowerOnResetInVlls0 smcPowerOnResetInVlls0) {
+      smc->STOPCTRL = (smc->STOPCTRL&~SMC_STOPCTRL_PORPO_MASK) | smcPowerOnResetInVlls0;
+   }
+
+   /**
+    * Set Low Leakage Mode Control
+    *
+    * @param smcLowLeakageStopMode Controls which VLLS sub-mode to enter if STOPM = VLLSx
+    */
+   static void setLowLeakageStopMode(SmcLowLeakageStopMode smcLowLeakageStopMode) {
+      smc->STOPCTRL = (smc->STOPCTRL&~SMC_STOPCTRL_VLLSM_MASK) | smcLowLeakageStopMode;
+   }
+
+   /**
+    * Allows the detailed operation in STOP mode to be controlled.
+    *
+    * @param smcLowLeakageStopMode  Controls which VLLS sub-mode to enter if STOPM = VLLSx
+    * @param smcPowerOnResetInVlls0 Controls whether the Power-On-Reset detect circuit is enabled in VLLS0 mode (Brown-out detection)
+    */
+   static void setStopOptions(
+         SmcLowLeakageStopMode  smcLowLeakageStopMode,
+         SmcPowerOnResetInVlls0 smcPowerOnResetInVlls0 = SmcPowerOnResetInVlls0_Enabled) {
+
+      smc->STOPCTRL = smcLowLeakageStopMode|smcPowerOnResetInVlls0;
+   }
+
+   /**
+    * Get Processor execution state
+    *
+    * @param smcStatus This register changes to reflect the execution state of the processor
+    *
+    * @return Processor execution state
+    */
+   static SmcStatus getStatus() {
+   
+      return (SmcStatus) (smc->PMSTAT & SMC_PMSTAT_PMSTAT_MASK);
+   }
+
+   /**
+    **
+    * Class used to do initialisation of SMC.
+    *
+    * This class has a templated constructor that accepts a list of options to be configured.
+    * The last parameter may be a previous instance used as a base for options.
+    * Options not explicitly mentioned are cleared to 0 unless an previous value is given.
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example1: Create value in ROM
+    * @code
+    * // Parameters may be in any order
+    * // Omitted values are taken to be zero unless a default value is given
+    * // Options available vary with target - See SmcInfo::DefaultInitValue for specific example
+    * static const Smc::Init smcInit{
+    *    // Allow all power modes
+    *    SmcAllowVeryLowPower_Enabled, SmcAllowLowLeakageStop_Enabled, SmcAllowVeryLowLeakageStop_Enabled,
+    *    // Partial Stop mode to use
+    *    SmcPartialStopMode_Partial2,
+    *    // (Very) Low leakage stop mode to use
+    *    SmcLowLeakageStopMode_LLS3,
+    *    // Allow brown-out detection in VLLS0
+    *    SmcPowerOnResetInVlls0_Enabled,
+    *    // Power RAM2 in in LLS2/VLLS2 mode
+    *    SmcLowLeakageRam2_Enabled,
+    *    // Stop mode to enter on Deep-sleep
+    *    SmcStopMode_NormalStop
+    *    // Optional value to build upon - must be last in parameter list
+    *    // The value below is generated from Configure.usbdmProject
+    *    Smc::DefaultInitValue,
+    * };
+    *
+    * // This version initialises all registers including write-once
+    * // Use for initial setup
+    * smcInit.initialise();
+    *
+    * // This version initialises all registers apart from write-once
+    * // It may be used to change settings later
+    * smcInit.setOptions();
+    *
+    * The value can also be used with enterStopMode()
+    * Smc::enterStopMode(smcInit);
+    * @endcode
+    *
+    * Example2: Inline example
+    * @code
+    * Smc::Init{
+    *    // Stop mode to enter on Deep-sleep
+    *    SmcStopMode_NormalStop,
+    *    // The value below is generated from Configure.usbdmProject
+    *    Smc::DefaultInitValue}.setOptions();
+    * @endcode
+    */
+   class Init {
+   
+   public:
+     /**
+      * Value for PMPROT register
+      * Note: This is a write-once register
+      */
+      uint8_t pmprot    = 0;
+   
+      /**
+       * Value for PMCTRL register
+       * The PMCTRL register controls entry into low-power Run and Stop modes.
+       * Note: This variable ONLY contains the STOPM field
+       */
+      uint8_t pmctrl    = 0;
+   
+      /**
+       * Value for STOPCTRL register
+       * The STOPCTRL register provides various control bits allowing the user to fine tune
+       * power consumption during the stop mode selected by the STOPM field.
+       */
+      uint8_t stopctrl  = 0;
+   
+   public:
+      /**
+       * Configure STOP mode options as specified in the constructor.
+       * This does not include write-once registers.
+       */
+      inline void setOptions() const {
+         smc->STOPCTRL  = stopctrl;
+         smc->PMCTRL    = (smc->PMCTRL & ~(SMC_PMCTRL_STOPM_MASK))|pmctrl;
+      }
+   
+      /**
+       * Configure all STOP mode options as specified in the constructor.
+       * This includes write-once registers
+       */
+      inline void initialise() const {
+         smc->PMPROT    = pmprot;
+         setOptions();
+      }
+   
+      /**
+       * Read the current STOP mode options from hardware registers
+       */
+      void readConfig() {
+         pmprot   = smc->PMPROT;
+         stopctrl = smc->STOPCTRL;
+         pmctrl   = smc->PMCTRL & SMC_PMCTRL_STOPM_MASK;
+      }
+   
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
+   
+      /**
+       * Constructor
+       */
+      constexpr Init() = default;
+
+      /**
+       * Constructor - Allow very low power modes
+       *
+       * @note - This value is only used by initialise() method to set write-once register PMPROT
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param smcAllowVeryLowPower Allows the MCU to enter any very low power modes: VLPR, VLPW, and VLPS
+       */
+      template <typename... Types>
+      constexpr Init(SmcAllowVeryLowPower smcAllowVeryLowPower, Types... rest) : Init(rest...) {
+         pmprot = (pmprot&~SMC_PMPROT_AVLP_MASK) | smcAllowVeryLowPower;
+      }
+
+      /**
+       * Constructor - Allow low leakage stop mode
+       *
+       * @note - This value is only used by initialise() method to set write-once register PMPROT
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param smcAllowLowLeakageStop Allows the MCU to enter any low leakage stop mode: LLS
+       */
+      template <typename... Types>
+      constexpr Init(SmcAllowLowLeakageStop smcAllowLowLeakageStop, Types... rest) : Init(rest...) {
+         pmprot = (pmprot&~SMC_PMPROT_ALLS_MASK) | smcAllowLowLeakageStop;
+      }
+
+      /**
+       * Constructor - Allow very low leakage stop mode
+       *
+       * @note - This value is only used by initialise() method to set write-once register PMPROT
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param smcAllowVeryLowLeakageStop Allows the MCU to enter any low leakage stop mode: VLLSx
+       */
+      template <typename... Types>
+      constexpr Init(SmcAllowVeryLowLeakageStop smcAllowVeryLowLeakageStop, Types... rest) : Init(rest...) {
+         pmprot = (pmprot&~SMC_PMPROT_AVLLS_MASK) | smcAllowVeryLowLeakageStop;
+      }
+
+      /**
+       * Constructor - Power-On_Reset Detection in VLLS0 mode
+       *
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param smcPowerOnResetInVlls0 Controls whether the Power-On-Reset detect circuit is enabled in VLLS0 mode (Brown-out detection)
+       */
+      template <typename... Types>
+      constexpr Init(SmcPowerOnResetInVlls0 smcPowerOnResetInVlls0, Types... rest) : Init(rest...) {
+         stopctrl = (stopctrl&~SMC_STOPCTRL_PORPO_MASK) | smcPowerOnResetInVlls0;
+      }
+
+      /**
+       * Constructor - Low Leakage Mode Control
+       *
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param smcLowLeakageStopMode Controls which VLLS sub-mode to enter if STOPM = VLLSx
+       */
+      template <typename... Types>
+      constexpr Init(SmcLowLeakageStopMode smcLowLeakageStopMode, Types... rest) : Init(rest...) {
+         stopctrl = (stopctrl&~SMC_STOPCTRL_VLLSM_MASK) | smcLowLeakageStopMode;
+      }
+
+      /**
+       * Constructor - Exit low power on interrupt
+       *
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param smcExitLowPowerOnInt Causes the SMC to exit to normal RUN mode when any active interrupt
+       *        occurs while in a VLP mode (VLPR, VLPW or VLPS)
+       */
+      template <typename... Types>
+      constexpr Init(SmcExitLowPowerOnInt smcExitLowPowerOnInt, Types... rest) : Init(rest...) {
+         pmctrl = (pmctrl&~SMC_PMCTRL_LPWUI_MASK) | smcExitLowPowerOnInt;
+      }
+
+      /**
+       * Constructor - Stop Mode Control
+       *
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param smcStopMode Controls entry into the selected stop mode when Sleep-Now or Sleep-On-Exit 
+       *        mode is entered with SLEEPDEEP=1
+       */
+      template <typename... Types>
+      constexpr Init(SmcStopMode smcStopMode, Types... rest) : Init(rest...) {
+         pmctrl = (pmctrl&~SMC_PMCTRL_STOPM_MASK) | smcStopMode;
+      }
+
+   };
 
 };
 
@@ -5190,7 +10781,6 @@ public:
  * @brief Abstraction for Serial Peripheral Interface
  * @{
  */
-#define USBDM_SPI0_IS_DEFINED
 /**
  * Peripheral information for SPI, Serial Peripheral Interface.
  * 
@@ -5199,8 +10789,9 @@ public:
  */
 class Spi0Info {
 public:
-   // Template:spi0_mk_pcsis6
-
+   /*
+    * Template:spi0_mk_pcsis6
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = SPI0_BasePtr;
 
@@ -5228,10 +10819,10 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /** 
     *  Enable clock to Spi0
@@ -5315,7 +10906,6 @@ public:
  * @brief Abstraction for Touch Sense Interface
  * @{
  */
-#define USBDM_TSI0_IS_DEFINED
 /**
  * Peripheral information for TSI, Touch Sense Interface.
  * 
@@ -5324,8 +10914,9 @@ public:
  */
 class Tsi0Info {
 public:
-   // Template:tsi0_mk
-
+   /*
+    * Template:tsi0_mk
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = TSI0_BasePtr;
 
@@ -5371,7 +10962,7 @@ public:
     */
    static uint32_t getInputClockFrequency() {
       switch(tsi->SCANC&TSI_SCANC_AMCLKS_MASK) {
-         case TSI_SCANC_AMCLKS(0):  return 1000;
+         case TSI_SCANC_AMCLKS(0):  return PmcInfo::getLpoClock();
          case TSI_SCANC_AMCLKS(1):  return McgInfo::getMcgIrClock();
          case TSI_SCANC_AMCLKS(2):  return Osc0Info::getOscerClock();
       }
@@ -5385,7 +10976,7 @@ public:
     */
    static uint32_t getLowPowerInputClockFrequency() {
       switch(tsi->GENCS&TSI_GENCS_LPCLKS_MASK) {
-         case TSI_GENCS_LPCLKS(0):  return 1000;
+         case TSI_GENCS_LPCLKS(0):  return PmcInfo::getLpoClock();
          case TSI_GENCS_LPCLKS(1):  return SimInfo::getErc32kClock();
       }
       return 0;
@@ -5400,10 +10991,10 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /** 
     *  Enable clock to Tsi0
@@ -5479,17 +11070,86 @@ public:
  * @brief Abstraction for Universal Asynchronous Receiver/Transmitter
  * @{
  */
-#define USBDM_UART0_IS_DEFINED
 /**
  * Peripheral information for UART, Universal Asynchronous Receiver/Transmitter.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * UART default baud rate
+    *
+    * Used by default UART setup for stdio
+    */
+   enum UartBaudRate {
+      UartBaudRate_110    = 110,    ///< 110
+      UartBaudRate_300    = 300,    ///< 300
+      UartBaudRate_600    = 600,    ///< 600
+      UartBaudRate_1200   = 1200,   ///< 1200
+      UartBaudRate_2400   = 2400,   ///< 2400
+      UartBaudRate_4800   = 4800,   ///< 4800
+      UartBaudRate_9600   = 9600,   ///< 9600
+      UartBaudRate_14400  = 14400,  ///< 14400
+      UartBaudRate_19200  = 19200,  ///< 19200
+      UartBaudRate_28800  = 28800,  ///< 28800
+      UartBaudRate_38400  = 38400,  ///< 38400
+      UartBaudRate_56000  = 56000,  ///< 56000
+      UartBaudRate_57600  = 57600,  ///< 57600
+      UartBaudRate_115200 = 115200, ///< 115200
+
+   };
+
+   /**
+    * Transmit complete action
+    *
+    * Enable interrupt on transmission complete
+    */
+   enum UartTxCompleteAction {
+      UartTxCompleteAction_None      = UART_C2_TCIE(0), ///< None
+      UartTxCompleteAction_Interrupt = UART_C2_TCIE(1), ///< Interrupt
+
+   };
+
+   /**
+    * Idle line detect sction
+    *
+    * Enable interrupt on tidele line detect
+    */
+   enum UartIdleLineDetectAction {
+      UartIdleLineDetectAction_None      = UART_C2_ILIE(0), ///< None
+      UartIdleLineDetectAction_Interrupt = UART_C2_ILIE(1), ///< Interrupt
+
+   };
+
+   /**
+    * Transmit empty DMA/Interrupt action
+    *
+    * Enable transmit holding register empty DMA/Interrupt action
+    */
+   enum UartTxEmptyAction {
+      UartTxEmptyAction_None      = (UART_C5_TDMAS(0)<<8)|UART_C2_TIE(0), ///< None
+      UartTxEmptyAction_Interrupt = (UART_C5_TDMAS(0)<<8)|UART_C2_TIE(1), ///< Interrupt
+      UartTxEmptyAction_Dma       = (UART_C5_TDMAS(1)<<8)|UART_C2_TIE(1), ///< DMA
+
+   };
+
+   /**
+    * Receive full DMA/interrupt action
+    *
+    * Enable receive buffer full DMA/interrupt action
+    */
+   enum UartRxFullAction {
+      UartRxFullAction_None      = (UART_C5_RDMAS(0)<<8)|UART_C2_RIE(0), ///< None
+      UartRxFullAction_Interrupt = (UART_C5_RDMAS(0)<<8)|UART_C2_RIE(1), ///< Interrupt
+      UartRxFullAction_Dma       = (UART_C5_RDMAS(1)<<8)|UART_C2_RIE(1), ///< DMA
+
+   };
+
 class Uart0Info {
 public:
-   // Template:uart0_mk10d10_c7816_cea709
-
+   /*
+    * Template:uart0_mk10d10_c7816_cea709
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = UART0_BasePtr;
 
@@ -5508,7 +11168,7 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
@@ -5537,13 +11197,13 @@ public:
 
    //! Indicates whether the UART needs a write to clear status errors
    static constexpr bool statusNeedsWrite = false;
-
+   
    //! Default Baud rate used if not explicitly given
    static constexpr uint32_t defaultBaudRate = 115200;
-
+   
    //! Default buffer size for receive queue when interrupt driven
    static constexpr unsigned receiveBufferSize = 50;
-
+   
    //! Default buffer size for transmit queue when interrupt driven
    static constexpr unsigned transmitBufferSize = 50;
 
@@ -5578,12 +11238,12 @@ public:
    static void initPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK);
 #endif
 
-PORTA->GPCLR = 0x0200UL|PORT_GPCLR_GPWE(0x0006UL);
+   PORTA->GPCLR = 0x0200UL|PORT_GPCLR_GPWE(0x0006UL);
    }
 
    /**
@@ -5594,17 +11254,16 @@ PORTA->GPCLR = 0x0200UL|PORT_GPCLR_GPWE(0x0006UL);
    static void clearPCRs() {
 
 #if defined(PCC_PCCn_CGC_MASK)
-PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
+   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
 #else
-enablePortClocks(PORTA_CLOCK_MASK);
+   enablePortClocks(PORTA_CLOCK_MASK);
 #endif
 
-PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
+   PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0006UL);
    }
 
 };
 
-#define USBDM_UART1_IS_DEFINED
 /**
  * Peripheral information for UART, Universal Asynchronous Receiver/Transmitter.
  * 
@@ -5613,8 +11272,9 @@ PORTA->GPCLR = PinMux_Disabled|PORT_GPCLR_GPWE(0x0U);
  */
 class Uart1Info {
 public:
-   // Template:uart1_mk10d10
-
+   /*
+    * Template:uart1_mk10d10
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = UART1_BasePtr;
 
@@ -5633,7 +11293,7 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
@@ -5662,13 +11322,13 @@ public:
 
    //! Indicates whether the UART needs a write to clear status errors
    static constexpr bool statusNeedsWrite = false;
-
+   
    //! Default Baud rate used if not explicitly given
    static constexpr uint32_t defaultBaudRate = 115200;
-
+   
    //! Default buffer size for receive queue when interrupt driven
    static constexpr unsigned receiveBufferSize = 50;
-
+   
    //! Default buffer size for transmit queue when interrupt driven
    static constexpr unsigned transmitBufferSize = 50;
 
@@ -5712,7 +11372,6 @@ public:
 
 };
 
-#define USBDM_UART2_IS_DEFINED
 /**
  * Peripheral information for UART, Universal Asynchronous Receiver/Transmitter.
  * 
@@ -5721,8 +11380,9 @@ public:
  */
 class Uart2Info {
 public:
-   // Template:uart1_mk10d10
-
+   /*
+    * Template:uart1_mk10d10
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = UART2_BasePtr;
 
@@ -5741,7 +11401,7 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
@@ -5770,13 +11430,13 @@ public:
 
    //! Indicates whether the UART needs a write to clear status errors
    static constexpr bool statusNeedsWrite = false;
-
+   
    //! Default Baud rate used if not explicitly given
    static constexpr uint32_t defaultBaudRate = 115200;
-
+   
    //! Default buffer size for receive queue when interrupt driven
    static constexpr unsigned receiveBufferSize = 50;
-
+   
    //! Default buffer size for transmit queue when interrupt driven
    static constexpr unsigned transmitBufferSize = 50;
 
@@ -5829,7 +11489,6 @@ public:
  * @brief Abstraction for USB OTG Controller
  * @{
  */
-#define USBDM_USB0_IS_DEFINED
 /**
  * Peripheral information for USB, USB OTG Controller.
  * 
@@ -5838,8 +11497,9 @@ public:
  */
 class Usb0Info {
 public:
-   // Template:usb0_otg_c
-
+   /*
+    * Template:usb0_otg_c
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = USB0_BasePtr;
 
@@ -5858,7 +11518,7 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 1;
+   static constexpr bool irqHandlerInstalled = true;
 
    //! Default IRQ level
    static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
@@ -5925,7 +11585,6 @@ public:
  * @brief Abstraction for USB Device Charger Detection
  * @{
  */
-#define USBDM_USBDCD0_IS_DEFINED
 /**
  * Peripheral information for USBDCD, USB Device Charger Detection.
  * 
@@ -5934,8 +11593,9 @@ public:
  */
 class Usbdcd0Info {
 public:
-   // Template:usbdcd0_v1_1
-
+   /*
+    * Template:usbdcd0_v1_1
+    */
    using USBHSDCD_Type = USBDCD_Type;
 
    //! Hardware base address as uint32_t 
@@ -5953,10 +11613,10 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /** 
     *  Enable clock to Usbdcd0
@@ -5991,17 +11651,207 @@ public:
  * @brief Abstraction for Voltage Reference
  * @{
  */
-#define USBDM_VREF_IS_DEFINED
 /**
  * Peripheral information for VREF, Voltage Reference.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Internal Voltage Reference enable
+    *
+    * This controls the bandgap reference within the Voltage Reference module
+    */
+   enum VrefEnable {
+      VrefEnable_Disabled = VREF_SC_VREFEN(0), ///< Disabled
+      VrefEnable_Enabled  = VREF_SC_VREFEN(1), ///< Enabled
+
+   };
+
+   /**
+    * Chop oscillator enable
+    *
+    * Controls the internal chopping operation to minimise the internal analogue offset
+    * This option is enabled during factory trimming of the VREF voltage.
+    * This should be enabled to achieve the performance stated in the data sheet.
+    * If the chop oscillator is to be used in very low power modes, the system (bandgap)
+    * voltage reference must also be enabled. See PmcBandgapLowPowerEnable
+    */
+   enum VrefChop {
+      VrefChop_Disabled = VREF_TRM_CHOPEN(0), ///< Disabled
+      VrefChop_Enabled  = VREF_TRM_CHOPEN(1), ///< Enabled
+
+   };
+
+   /**
+    * Regulator enable
+    *
+    * This controls the internal 1.75 V regulator which produce a constant
+    * internal voltage supply in order to reduce the sensitivity to external supply noise and variation
+    * If it is desired to keep the regulator enabled in very low power modes see PmcBandgapLowPowerEnable
+    */
+   enum VrefReg {
+      VrefReg_Disabled = VREF_SC_REGEN(0), ///< Disabled
+      VrefReg_Enabled  = VREF_SC_REGEN(1), ///< Enabled
+
+   };
+
+   /**
+    * Second order curvature compensation enable
+    *
+    * This should be enabled to achieve the performance stated in the data sheet
+    */
+   enum VrefIcomp {
+      VrefIcomp_Disabled = VREF_SC_ICOMPEN(0), ///< Disabled
+      VrefIcomp_Enabled  = VREF_SC_ICOMPEN(1), ///< Enabled
+
+   };
+
+   /**
+    * Buffer Mode selection
+    *
+    * This selects the buffer modes for the Voltage Reference module
+    */
+   enum VrefBuffer {
+      VrefBuffer_Bandgap   = VREF_SC_MODE_LV(0), ///< Bandgap on only, for stabilisation and startup
+      VrefBuffer_HighPower = VREF_SC_MODE_LV(1), ///< High power buffer mode enabled
+      VrefBuffer_LowPower  = VREF_SC_MODE_LV(2), ///< Low-power buffer mode enabled
+
+   };
+
+class VrefBasicInfo {
+   
+public:
+      /**
+    * Class used to do initialisation of the VREF
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Vref::Init vrefInit {
+         VrefEnable_Enabled ,   // Internal Voltage Reference enable
+         VrefChop_Enabled ,     // Chop oscillator enable
+         VrefReg_Enabled ,      // Regulator enable
+         VrefIcomp_Enabled ,    // Second order curvature compensation enable
+         VrefBuffer_HighPower,  // Buffer Mode selection
+    * };
+    *
+    * // Initialise VREF from values specified above
+    * Vref::configure(vrefInit)
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**                               
+       * Copy Constructor                  
+       */                             
+      constexpr Init(const Init &other) = delete;
+      
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      ///  Voltage Reference Trim Register
+      uint8_t trm = 0;
+
+      ///  Voltage Reference Status and Control Register
+      uint8_t sc = 0;
+
+      /**
+       * Constructor for Regulator enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param vrefReg This controls the internal 1.75 V regulator which produce a constant
+       *        internal voltage supply in order to reduce the sensitivity to external supply noise and variation
+       *        If it is desired to keep the regulator enabled in very low power modes see PmcBandgapLowPowerEnable
+       */
+      template <typename... Types>
+      constexpr Init(VrefReg vrefReg, Types... rest) : Init(rest...) {
+   
+         if (vrefReg) {
+            // Chop must be enabled as well
+            trm |= VrefChop_Enabled;
+         }
+   
+         sc = (sc&~VREF_SC_REGEN_MASK) | vrefReg;
+      }
+   
+      /**
+       * Constructor for Chop oscillator enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param vrefChop Controls the internal chopping operation to minimise the internal analogue offset
+       *        This option is enabled during factory trimming of the VREF voltage.
+       *        This should be enabled to achieve the performance stated in the data sheet.
+       *        If the chop oscillator is to be used in very low power modes, the system (bandgap)
+       *        voltage reference must also be enabled. See PmcBandgapLowPowerEnable
+       */
+      template <typename... Types>
+      constexpr Init(VrefChop vrefChop, Types... rest) : Init(rest...) {
+      
+         trm = (trm&~VREF_TRM_CHOPEN_MASK) | vrefChop;
+      }
+   
+      /**
+       * Constructor for Internal Voltage Reference enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param vrefEnable This controls the bandgap reference within the Voltage Reference module
+       */
+      template <typename... Types>
+      constexpr Init(VrefEnable vrefEnable, Types... rest) : Init(rest...) {
+      
+         sc = (sc&~VREF_SC_VREFEN_MASK) | vrefEnable;
+      }
+   
+      /**
+       * Constructor for Second order curvature compensation enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param vrefIcomp This should be enabled to achieve the performance stated in the data sheet
+       */
+      template <typename... Types>
+      constexpr Init(VrefIcomp vrefIcomp, Types... rest) : Init(rest...) {
+      
+         sc = (sc&~VREF_SC_ICOMPEN_MASK) | vrefIcomp;
+      }
+   
+      /**
+       * Constructor for Buffer Mode selection
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param vrefBuffer This selects the buffer modes for the Voltage Reference module
+       */
+      template <typename... Types>
+      constexpr Init(VrefBuffer vrefBuffer, Types... rest) : Init(rest...) {
+      
+         sc = (sc&~VREF_SC_MODE_LV_MASK) | vrefBuffer;
+      }
+   
+   };
+
+};
+
 class VrefInfo {
 public:
-   // Template:vref_c
-
+   /*
+    * Template:vref_c
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = VREF_BasePtr;
 
@@ -6014,15 +11864,40 @@ public:
    //! Map all allocated pins on a peripheral when enabled
    static constexpr bool mapPinsOnEnable = false;
 
-   static constexpr uint8_t vref_trm = 
-       VREF_TRM_CHOPEN(1); // Chop oscillator enable
-       //                  // Trim bits are preserved
-
-   static constexpr uint8_t vref_sc = 
-       VREF_SC_VREFEN(1) |   // Internal Voltage Reference enable
-       VREF_SC_REGEN(1) |    // Regulator enable
-       VREF_SC_ICOMPEN(1) |  // Second order curvature compensation enable
-       VREF_SC_MODE_LV(1);   // Buffer Mode selection 
+   /**
+    * Class used to do initialisation of the VREF
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Vref::Init vrefInit {
+         VrefEnable_Enabled ,   // Internal Voltage Reference enable
+         VrefChop_Enabled ,     // Chop oscillator enable
+         VrefReg_Enabled ,      // Regulator enable
+         VrefIcomp_Enabled ,    // Second order curvature compensation enable
+         VrefBuffer_HighPower,  // Buffer Mode selection
+    * };
+    *
+    * // Initialise VREF from values specified above
+    * Vref::configure(vrefInit)
+    * @endcode
+    */
+   typedef VrefBasicInfo::Init Init;
+   
+   /**
+    * Default initialisation value for Vref
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultInitValue = {
+      VrefChop_Enabled , // Chop oscillator enable - Enabled
+      VrefEnable_Enabled , // Internal Voltage Reference enable - Enabled
+      VrefReg_Enabled , // Regulator enable - Enabled
+      VrefIcomp_Enabled , // Second order curvature compensation enable - Enabled
+      VrefBuffer_HighPower,  // Buffer Mode selection - High power buffer mode enabled
+   };
 
    /** 
     *  Enable clock to Vref
@@ -6083,17 +11958,399 @@ public:
  * @brief Abstraction for Watchdog Timer
  * @{
  */
-#define USBDM_WDOG_IS_DEFINED
 /**
  * Peripheral information for WDOG, Watchdog Timer.
  * 
  * This may include pin information, constants, register addresses, and default register values,
  * along with simple accessor functions.
  */
+   /**
+    * Watchdog enable
+    *
+    * Main enable for WDOG
+    */
+   enum WdogEnable : uint16_t {
+      WdogEnable_Disabled = WDOG_STCTRLH_WDOGEN(0), ///< Watchdog disabled
+      WdogEnable_Enabled  = WDOG_STCTRLH_WDOGEN(1), ///< Watchdog enabled
+
+   };
+
+   /**
+    * Test mode disable
+    *
+    * Disables watchdog test mode until next reset
+    */
+   enum WdogTestMode : uint16_t {
+      WdogTestMode_Enabled  = WDOG_STCTRLH_DISTESTWDOG(0), ///< Test mode enabled
+      WdogTestMode_Disabled = WDOG_STCTRLH_DISTESTWDOG(1), ///< Test mode disabled
+
+   };
+
+   /**
+    * Enable watchdog in WAIT mode
+    *
+    * Control watchdog operation in WAIT mode
+    */
+   enum WdogEnableInWait : uint16_t {
+      WdogEnableInWait_Enabled  = WDOG_STCTRLH_WAITEN(1), ///< Enabled in WAIT mode
+      WdogEnableInWait_Disabled = WDOG_STCTRLH_WAITEN(0), ///< Disabled in WAIT mode
+
+   };
+
+   /**
+    * Enable watchdog in STOP mode
+    *
+    * Control watchdog operation in STOP mode
+    */
+   enum WdogEnableInStop : uint16_t {
+      WdogEnableInStop_Enabled  = WDOG_STCTRLH_STOPEN(1), ///< Enabled in STOP mode
+      WdogEnableInStop_Disabled = WDOG_STCTRLH_STOPEN(0), ///< Disabled in STOP mode
+
+   };
+
+   /**
+    * Enable watchdog in DEBUG mode
+    *
+    * Control watchdog operation in DEBUG mode
+    */
+   enum WdogEnableInDebug : uint16_t {
+      WdogEnableInDebug_Enabled  = WDOG_STCTRLH_DBGEN(1), ///< Enabled in DEBUG mode
+      WdogEnableInDebug_Disabled = WDOG_STCTRLH_DBGEN(0), ///< Disabled in DEBUG mode
+
+   };
+
+   /**
+    * Allow watchdog update
+    *
+    * Enables updates to watchdog write-once registers, after 
+    * the reset-triggered initial configuration window closes
+    * This still requires the unlock sequence
+    */
+   enum WdogAllowUpdate : uint16_t {
+      WdogAllowUpdate_Disabled = WDOG_STCTRLH_ALLOWUPDATE(0), ///< Update Disabled
+      WdogAllowUpdate_Enabled  = WDOG_STCTRLH_ALLOWUPDATE(1), ///< Update Enabled
+
+   };
+
+   /**
+    * Enable watchdog windowing mode
+    *
+    * Windowing mode only allows refresh during a restricted window
+    */
+   enum WdogWindow : uint16_t {
+      WdogWindow_Disabled = WDOG_STCTRLH_WINEN(0), ///< Windowing mode is disabled
+      WdogWindow_Enabled  = WDOG_STCTRLH_WINEN(1), ///< Windowing mode is enabled
+
+   };
+
+   /**
+    * Enable interrupt before reset
+    *
+    * Allows an interrupt handler to record state before the watchdog reset occurs
+    */
+   enum WdogIntBeforeReset : uint16_t {
+      WdogIntBeforeReset_Disabled = WDOG_STCTRLH_IRQRSTEN(0), ///< Reset only
+      WdogIntBeforeReset_Enabled  = WDOG_STCTRLH_IRQRSTEN(1), ///< Interrupt followed by reset
+
+   };
+
+   /**
+    * Watchdog clock source
+    *
+    * Clock source for WDOG
+    */
+   enum WdogClock : uint16_t {
+      WdogClock_LpoClk       = WDOG_STCTRLH_CLKSRC(0), ///< LPO oscillator
+      WdogClock_SystemBusClk = WDOG_STCTRLH_CLKSRC(1), ///< System bus clock
+
+   };
+
+   /**
+    * Prescaler for the watchdog clock source
+    *
+    * This prescaler divides the input clock for the watchdog counter
+    */
+   enum WdogPrescale : uint16_t {
+      WdogPrescale_Direct = WDOG_PRESC_PRESCVAL(0), ///< Prescaler = 1
+      WdogPrescale_DivBy2 = WDOG_PRESC_PRESCVAL(1), ///< Prescaler = 2
+      WdogPrescale_DivBy3 = WDOG_PRESC_PRESCVAL(2), ///< Prescaler = 3
+      WdogPrescale_DivBy4 = WDOG_PRESC_PRESCVAL(3), ///< Prescaler = 4
+      WdogPrescale_DivBy5 = WDOG_PRESC_PRESCVAL(4), ///< Prescaler = 5
+      WdogPrescale_DivBy6 = WDOG_PRESC_PRESCVAL(5), ///< Prescaler = 6
+      WdogPrescale_DivBy7 = WDOG_PRESC_PRESCVAL(6), ///< Prescaler = 7
+      WdogPrescale_DivBy8 = WDOG_PRESC_PRESCVAL(7), ///< Prescaler = 8
+
+   };
+
+   /**
+    * Values for refresh and update registers
+    *
+    * 
+    */
+   enum WdogRefresh {
+      WdogRefresh_1 = 0xA602, ///< 1st refresh value
+      WdogRefresh_2 = 0xB480, ///< 2nd refresh value
+
+   };
+
+   /**
+    * Values for refresh and update registers
+    *
+    * 
+    */
+   enum WdogUnlock {
+      WdogUnlock_1 = 0xC520, ///< 1st unlock value
+      WdogUnlock_2 = 0xD928, ///< 2nd unlock value
+
+   };
+
+class WdogBasicInfo {
+   
+public:
+   
+   /**
+    * Type definition for Wdog interrupt call back
+    */
+   typedef void (*CallbackFunction)();
+
+   /**
+    * Class used to do initialisation of a Wdog
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Wdog::Init wdogInit {
+    *    WdogEnable_Enabled ,          // Watchdog enable
+    *    WdogEnableInWait_Disabled ,   // Enable watchdog in WAIT mode
+    *    WdogEnableInStop_Disabled ,   // Enable watchdog in STOP mode
+    *    WdogEnableInDebug_Disabled ,  // Enable watchdog in DEBUG mode
+    *    WdogAllowUpdate_Enabled ,     // Allow watchdog update
+    *    WdogWindow_Disabled ,         // Enable watchdog windowing mode
+    *    WdogIntBeforeReset_Enabled ,  // Enable interrupt before reset
+    *    wdogCallback,                 // Call-back
+    *    WdogClock_SystemBusClk ,      // Watchdog clock source
+    *    NvicPriority_Normal,          // IRQ level for this peripheral
+    *    call-back,                    // Call-back
+    *    // Either
+    *    WdogPrescale_DivBy2 ,         // Prescaler for the watchdog clock source (must be in this order)
+    *    2000_ticks, 1000_ticks,       // Timeout and Window values
+    *    // **** OR ****
+    *    20_seconds, 10_seconds,       // Timeout and Window values (must be in this order)
+    *    // Option
+    *    Wdog::DefaultInitValue,       // Take base values from DefaultInitValue
+    * };
+    *
+    * // Initialise WDOG from values specified above
+    * Wdog::configure(wdogInit)
+    * @endcode
+    */
+   class Init {
+   
+   public:
+      /**
+       * Copy Constructor
+       */
+      constexpr Init(const Init &other) = default;
+   
+      /**
+       * Default Constructor
+       */
+      constexpr Init() = default;
+   
+      ///  Watchdog Timeout in ticks
+      Seconds_Ticks timeout;
+
+      ///  Watchdog Window in ticks
+      Seconds_Ticks window;
+
+      ///  Watchdog Status and Control Register High
+      uint16_t stctrlh = 0;
+
+      ///  Prescaler for the watchdog clock source
+      uint16_t presc = 0;
+
+      /**
+       * Constructor for IRQ priority levels
+       *
+       * @tparam   Types
+       * @param    rest
+       * @param nvicPriority Priority level used to configure the NVIC
+       *        Subset of available levels
+       */
+      template <typename... Types>
+      constexpr Init(NvicPriority nvicPriority, Types... rest) : Init(rest...) {
+   
+#if false
+         irqlevel = nvicPriority;
+#else
+         (void)nvicPriority;
+#endif
+      }
+
+      /**
+       * Constructor for Test mode disable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogTestMode Disables watchdog test mode until next reset
+       */
+      template <typename... Types>
+      constexpr Init(WdogTestMode wdogTestMode, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_DISTESTWDOG_MASK) | wdogTestMode;
+      }
+   
+      /**
+       * Constructor for Enable watchdog in WAIT mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogEnableInWait Control watchdog operation in WAIT mode
+       */
+      template <typename... Types>
+      constexpr Init(WdogEnableInWait wdogEnableInWait, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_WAITEN_MASK) | wdogEnableInWait;
+      }
+   
+      /**
+       * Constructor for Enable watchdog in STOP mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogEnableInStop Control watchdog operation in STOP mode
+       */
+      template <typename... Types>
+      constexpr Init(WdogEnableInStop wdogEnableInStop, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_STOPEN_MASK) | wdogEnableInStop;
+      }
+   
+      /**
+       * Constructor for Enable watchdog in DEBUG mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogEnableInDebug Control watchdog operation in DEBUG mode
+       */
+      template <typename... Types>
+      constexpr Init(WdogEnableInDebug wdogEnableInDebug, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_DBGEN_MASK) | wdogEnableInDebug;
+      }
+   
+      /**
+       * Constructor for Allow watchdog update
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogAllowUpdate Enables updates to watchdog write-once registers, after 
+       *        the reset-triggered initial configuration window closes
+       *        This still requires the unlock sequence
+       */
+      template <typename... Types>
+      constexpr Init(WdogAllowUpdate wdogAllowUpdate, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_ALLOWUPDATE_MASK) | wdogAllowUpdate;
+      }
+   
+      /**
+       * Constructor for Enable watchdog windowing mode
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogWindow Windowing mode only allows refresh during a restricted window
+       */
+      template <typename... Types>
+      constexpr Init(WdogWindow wdogWindow, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_WINEN_MASK) | wdogWindow;
+      }
+   
+      /**
+       * Constructor for Enable interrupt before reset
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogIntBeforeReset Allows an interrupt handler to record state before the watchdog reset occurs
+       */
+      template <typename... Types>
+      constexpr Init(WdogIntBeforeReset wdogIntBeforeReset, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_IRQRSTEN_MASK) | wdogIntBeforeReset;
+      }
+   
+      /**
+       * Constructor for Watchdog clock source
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogClock Clock source for WDOG
+       */
+      template <typename... Types>
+      constexpr Init(WdogClock wdogClock, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_CLKSRC_MASK) | wdogClock;
+      }
+   
+      /**
+       * Constructor for Watchdog enable
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogEnable Main enable for WDOG
+       */
+      template <typename... Types>
+      constexpr Init(WdogEnable wdogEnable, Types... rest) : Init(rest...) {
+   
+         stctrlh = (stctrlh&~WDOG_STCTRLH_WDOGEN_MASK) | wdogEnable;
+      }
+   
+      /**
+       * Constructor for Prescaler for the watchdog clock source, Watchdog Timeout in ticks & Watchdog Window in ticks
+       *
+       *
+       * @tparam   Types
+       * @param    rest
+       *
+       * @param wdogPrescale This prescaler divides the input clock for the watchdog counter
+       * @param timeout      The watchdog must be refreshed before the counter reaches this value
+       * @param window       If windowed operation is enabled, then the watchdog can only be refreshed 
+       *        if the timer reaches a value greater than or equal to this window length value.
+       *        A refresh outside of this window resets the system
+       */
+      template <typename... Types>
+      constexpr Init(
+            WdogPrescale wdogPrescale,
+            Ticks        timeout,
+            Ticks        window       = 0_ticks, Types... rest) : Init(rest...) {
+   
+         this->timeout.fromTicks(timeout);
+         this->window.fromTicks(window);
+         this->presc = wdogPrescale;
+      }
+   
+   };
+
+};
+
 class WdogInfo {
 public:
-   // Template:wdog_mk
-
+   /*
+    * Template:wdog_mk
+    */
    //! Hardware base address as uint32_t 
    static constexpr uint32_t baseAddress = WDOG_BasePtr;
 
@@ -6109,24 +12366,107 @@ public:
    static constexpr uint32_t irqCount  = sizeofArray(irqNums);
 
    //! Class based callback handler has been installed in vector table
-   static constexpr bool irqHandlerInstalled = 0;
+   static constexpr bool irqHandlerInstalled = false;
 
    //! Default IRQ level
-   static constexpr NvicPriority irqLevel =  NvicPriority_NotInstalled;
+   static constexpr NvicPriority irqLevel =  NvicPriority_Normal;
 
    /**
-    * Get input clock frequency
+    * Set Watchdog clock source
     *
-    * @return Input clock frequency as a uint32_t in Hz
+    * @param wdogClock Clock source for WDOG
+    */
+   static void setClockSource(WdogClock wdogClock) {
+      wdog->STCTRLH = (wdog->STCTRLH&~WDOG_STCTRLH_CLKSRC_MASK) | wdogClock;
+   }
+
+   /**
+    * Get Watchdog clock source
+    *
+    * @param wdogClock Clock source for WDOG
+    *
+    * @return Clock frequency in Hz
+    */
+   static inline uint32_t getInputClockFrequency(WdogClock wdogClock) {
+   
+      switch(wdogClock) {
+         default:
+         case WdogClock_LpoClk       : return PmcInfo::getLpoClock(); ///< LPO oscillator
+         case WdogClock_SystemBusClk : return SystemBusClock;         ///< System bus clock
+
+      }
+   }
+   
+   /**
+    * Get Watchdog clock source
+    *
+    * @return Clock frequency in Hz
     */
    static uint32_t getInputClockFrequency() {
    
-      switch(wdog->STCTRLH&WDOG_STCTRLH_CLKSRC_MASK) {
-      default:
-      case WDOG_STCTRLH_CLKSRC(0): return PmcInfo::getLpoClock(); // LPO
-      case WDOG_STCTRLH_CLKSRC(1): return SystemBusClock;         // Alt = System Bus Clock
-      }
+      return getInputClockFrequency((WdogClock)(wdog->STCTRLH&WDOG_STCTRLH_CLKSRC_MASK));
    }
+
+   /**
+    * Class used to do initialisation of a Wdog
+    *
+    * This class has a templated constructor that accepts various values:
+    *
+    * @note This constructor may be used to create a const instance in ROM
+    *
+    * Example:
+    * @code
+    * static const Wdog::Init wdogInit {
+    *    WdogEnable_Enabled ,          // Watchdog enable
+    *    WdogEnableInWait_Disabled ,   // Enable watchdog in WAIT mode
+    *    WdogEnableInStop_Disabled ,   // Enable watchdog in STOP mode
+    *    WdogEnableInDebug_Disabled ,  // Enable watchdog in DEBUG mode
+    *    WdogAllowUpdate_Enabled ,     // Allow watchdog update
+    *    WdogWindow_Disabled ,         // Enable watchdog windowing mode
+    *    WdogIntBeforeReset_Enabled ,  // Enable interrupt before reset
+    *    wdogCallback,                 // Call-back
+    *    WdogClock_SystemBusClk ,      // Watchdog clock source
+    *    NvicPriority_Normal,          // IRQ level for this peripheral
+    *    call-back,                    // Call-back
+    *    // Either
+    *    WdogPrescale_DivBy2 ,         // Prescaler for the watchdog clock source (must be in this order)
+    *    2000_ticks, 1000_ticks,       // Timeout and Window values
+    *    // **** OR ****
+    *    20_seconds, 10_seconds,       // Timeout and Window values (must be in this order)
+    *    // Option
+    *    Wdog::DefaultInitValue,       // Take base values from DefaultInitValue
+    * };
+    *
+    * // Initialise WDOG from values specified above
+    * Wdog::configure(wdogInit)
+    * @endcode
+    */
+   typedef WdogBasicInfo::Init Init;
+   
+   /**
+    * Wdog interrupt call back
+    */
+   typedef WdogBasicInfo::CallbackFunction CallbackFunction;
+   
+   /**
+    * Default initialisation value for Wdog
+    * This value is created from Configure.usbdmProject settings
+    */
+   static constexpr Init DefaultInitValue = {
+      WdogTestMode_Enabled , // Test mode disable - Test mode enabled
+      WdogEnableInWait_Enabled , // Enable watchdog in WAIT mode - Enabled in WAIT mode
+      WdogEnableInStop_Enabled , // Enable watchdog in STOP mode - Enabled in STOP mode
+      WdogEnableInDebug_Enabled , // Enable watchdog in DEBUG mode - Enabled in DEBUG mode
+      WdogAllowUpdate_Disabled , // Allow watchdog update - Update Disabled
+      WdogWindow_Disabled , // Enable watchdog windowing mode - Windowing mode is disabled
+      WdogIntBeforeReset_Disabled , // Enable interrupt before reset - Reset only
+      WdogClock_LpoClk , // Watchdog clock source - LPO oscillator
+      WdogEnable_Disabled , // Watchdog enable - Watchdog disabled
+      NvicPriority_Normal , // IRQ level for this peripheral - Normal
+      WdogPrescale_Direct , // Prescaler for the watchdog clock source - Prescaler = 1
+      0_ticks , // Watchdog Timeout in ticks
+      0_ticks,  // Watchdog Window in ticks
+   };
 
 };
 

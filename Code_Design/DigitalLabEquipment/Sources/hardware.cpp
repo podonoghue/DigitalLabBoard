@@ -45,7 +45,7 @@ extern "C" void __attribute__((constructor)) cpp_initialise() {
 void mapAllPins() {
 #if false
 
-#warning "PCR Not initialised for PTD6       : Multiple signals mapped to pin - ADC0_SE7b, GPIOD_6/LLWU_P15"
+#warning "PCR Not initialised for PTD6       : Multiple signals mapped to pin - ADC0_SE7b[TargetVddSample], GPIOD_6[TargetVddDischarge]/LLWU_P15"
 
 #endif
 
@@ -89,6 +89,35 @@ void mapAllPins() {
  * End group USBDM_Group
  * @}
  */
+/*
+ *  Static objects
+ */
+   /**
+    * Callback to catch unhandled interrupt
+    */
+   void unhandledCallback() {
+      setAndCheckErrorCode(E_NO_HANDLER);
+   }
+   
+   /**
+    * Callback to catch unhandled channel interrupt
+    *
+    * @param mask Mask identifying channel
+    */
+   void timerUnhandledChannelCallback(uint8_t mask) {
+      (void)mask;
+      setAndCheckErrorCode(E_NO_HANDLER);
+   }
+
+   /**
+    * Callback table for programmatically set handlers for Ftm0
+    */
+   Ftm0Info::ChannelCallbackFunction Ftm0Info::channelCallbacks[] = {
+
+      timerUnhandledChannelCallback,
+   };
+
+
 
 } // End namespace USBDM
 

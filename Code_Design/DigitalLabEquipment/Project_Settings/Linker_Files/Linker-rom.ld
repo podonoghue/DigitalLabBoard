@@ -71,8 +71,9 @@ SECTIONS
       /* Emit a Security field */
       . = __flash_start + 0x400;
       KEEP(*(.security_information))
-      KEEP(*(.FlashConfig))    /* KDS Flash Configuration Field (FCF) */
       ASSERT (. == __flash_start + 0x410, "No Freescale security information");
+      KEEP(*(.FlashConfig))    /* KDS Flash Configuration Field (FCF) */
+      KEEP(*(.freertos_information))
    } > flash
 
 /* Size of RAM vector table (if needed) */
@@ -193,6 +194,8 @@ M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? (__VECTOR_TABLE_END - __VECT
       *(.data*)
 
       . = ALIGN(4);
+      KEEP(*(.ram_functions))
+      . = ALIGN(4);
       /* All data end */
       __data_end__ = .;
    } > data_ram
@@ -248,7 +251,7 @@ M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? (__VECTOR_TABLE_END - __VECT
    } > stack_ram
 
    /* 
-    * SRAM_U region
+    * Bitband region
     *
     * This area is partitioned from the top of SRAM
     *
@@ -264,7 +267,7 @@ M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? (__VECTOR_TABLE_END - __VECT
    /*
     * Bitband region
     *
-    * Each word in this region maps to a bit in the .sram_u region 
+    * Each word in this region maps to a bit in the .bitband_ram region 
     */
    .bitband (NOLOAD) :
    {
@@ -276,7 +279,7 @@ M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? (__VECTOR_TABLE_END - __VECT
   PROVIDE(__stack = __StackTop);
   PROVIDE(__cs3_stack = __StackTop);
   
-   /* FlexRAM region for non-volatile variables */
+     /* FlexRAM region for non-volatile variables */
    .flexRAM (NOLOAD) :
    {
       . = ALIGN(4);

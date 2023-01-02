@@ -18,6 +18,7 @@
  * Any manual changes will be lost.
  */
 #include "pin_mapping.h"
+
 #ifdef __CMSIS_RTOS
 #include "cmsis.h"
 #endif
@@ -272,6 +273,7 @@ struct SpiConfiguration {
  *       {10'000'000, SpiMode_0, SpiOrder_MsbFirst, SpiFrameSize_12}, // Configuration 1 (CTAR1)
  *       0b000000, // All PCSs idle low                               // PCS idle levels
  *    };
+ * @endcode
  */
 struct SpiConfigurations {
    SpiConfiguration     ctar0;
@@ -283,7 +285,7 @@ struct SpiConfigurations {
     *
     * @param ctar0         CTAR 0 value
     * @param ctar1         CTAR 1 value
-    * @param pcsIdleLevel  PCS signals idle level (bit-mask)
+    * @param pcsPolarity   Polarity of PCS signals (bit-mask made up of SpiPeripheralSelect values)
     */
    constexpr SpiConfigurations (
          SpiConfiguration     ctar0,
@@ -296,7 +298,7 @@ struct SpiConfigurations {
     * Constructor for a single configuration
     *
     * @param ctar0         CTAR 0 value
-    * @param pcsIdleLevel  PCS signals idle level (bit-mask)
+    * @param pcsPolarity   Polarity of PCS signals (bit-mask made up of SpiPeripheralSelect values)
     */
    constexpr SpiConfigurations (
          SpiConfiguration     ctar0,
@@ -345,11 +347,13 @@ protected:
     * Calculate communication speed from SPI clock frequency and speed factors
     *
     * @param[in]  clockFrequency  Clock frequency of SPI in Hz
-    * @param[in]  spiCtarSelect   Configuration providing SPI_CTAR_BR, SPI_CTAR_PBR fields
+    * @param[in]  spiCtarSelect   CTAR selection providing SPI_CTAR_BR, SPI_CTAR_PBR fields
     *
     * @return Clock frequency of SPI in Hz for these factors
     */
-   uint32_t calculateSpeed(uint32_t clockFrequency, SpiCtarSelect spiCtarSelect);
+   uint32_t calculateSpeed(uint32_t clockFrequency, SpiCtarSelect spiCtarSelect) {
+      return calculateSpeed(clockFrequency, spi->CTAR[spiCtarSelect]);
+   }
 
    /**
     * Calculate Delay factors
@@ -407,6 +411,25 @@ protected:
    }
 
    /**
+    * Get the frequency of the input clock to the SPI
+    *
+    * @return Frequency on Hz
+    */
+   virtual uint32_t getSpiInputClockFrequency() = 0;
+
+public:
+
+   /**
+    * Calculate communication speed from SPI clock frequency and speed factors
+    *
+    * @param[in]  clockFrequency  Clock frequency of SPI in Hz
+    * @param[in]  spiCtarValue    Configuration providing SPI_CTAR_BR, SPI_CTAR_PBR fields
+    *
+    * @return Clock frequency of SPI in Hz for these factors
+    */
+   static uint32_t calculateSpeed(uint32_t clockFrequency, uint32_t spiCtarValue);
+
+   /**
     * Calculate CTAR timing related values \n
     * Uses default delays
     *
@@ -435,15 +458,6 @@ protected:
 
       return ctarValue;
    }
-
-   /**
-    * Get the frequency of the input clock to the SPI
-    *
-    * @return Frequency on Hz
-    */
-   virtual uint32_t getSpiInputClockFrequency() = 0;
-
-public:
 
    /**
     * Sets communication speed for SPI
@@ -675,12 +689,12 @@ public:
 
       pushrMask = spiPeripheralSelect|spiSelectMode|SPI_PUSHR_CTAS(spiCtarSelect);
 
-      if (polarity) {
-         // ActiveHigh
+      if (polarity == ActiveHigh) {
+         // ActiveHigh (inactive level is low)
          spi->MCR = spi->MCR & ~spiPeripheralSelect;
       }
       else {
-         // ActiveLow
+         // ActiveLow (inactive level is high)
          spi->MCR = spi->MCR | spiPeripheralSelect;
       }
    }
@@ -720,6 +734,7 @@ public:
     *  Transmit and receive a series of values
     *
     *  @tparam T Type for data transfer (may be inferred from parameters)
+    *  @tparam N Size of arrays (may be inferred from parameters)
     *
     *  @param[in]  txData    Transmit bytes (tx-rx size is inferred from this array)
     *  @param[out] rxData    Receive byte buffer
@@ -732,9 +747,68 @@ public:
    }
 
    /**
+    *  Transmit and receive a series of values
+    *
+    *  @tparam T Type for data transfer (may be inferred from parameters)
+    *  @tparam N Size of arrays (may be inferred from parameters)
+    *
+    *  @param[in]  txData    Transmit bytes (tx-rx size is inferred from this array)
+    *  @param[out] rxData    Receive byte buffer
+    *
+    *  @note: rxData may use same buffer as txData
+    */
+   template<typename T, unsigned N>
+   void txRx(const std::array<const T, N> &txData, std::array<T, N> &rxData) {
+      txRx(N, txData.data(), rxData.data());
+   }
+
+   /**
+    *  Transmit and receive a series of values
+    *
+    *  @tparam T Type for data transfer (may be inferred from parameters)
+    *  @tparam N Size of arrays (may be inferred from parameters)
+    *
+    *  @param[in]  txData    Transmit bytes (tx-rx size is inferred from this array)
+    *  @param[out] rxData    Receive byte buffer
+    *
+    *  @note: rxData may use same buffer as txData
+    */
+   template<typename T, unsigned N>
+   void txRx(const std::array<T, N> &txData, std::array<T, N> &rxData) {
+      txRx(N, txData.data(), rxData.data());
+   }
+
+   /**
     *  Transmit a series of values
     *
     *  @tparam T Type for data transfer (may be inferred from parameters)
+    *  @tparam N Size of arrays (may be inferred from parameters)
+    *
+    *  @param[in]  txData    Transmit bytes (tx size is inferred from this array)
+    */
+   template<typename T, unsigned N>
+   void tx(const std::array<const T, N> &txData) {
+      txRx(N, txData.data(), (T*)nullptr);
+   }
+
+   /**
+    *  Transmit a series of values
+    *
+    *  @tparam T Type for data transfer (may be inferred from parameters)
+    *  @tparam N Size of arrays (may be inferred from parameters)
+    *
+    *  @param[in]  txData    Transmit bytes (tx size is inferred from this array)
+    */
+   template<typename T, unsigned N>
+   void tx(const std::array<T, N> &txData) {
+      txRx(N, txData.data(), (T*)nullptr);
+   }
+
+   /**
+    *  Transmit a series of values
+    *
+    *  @tparam T Type for data transfer (may be inferred from parameters)
+    *  @tparam N Size of arrays (may be inferred from parameters)
     *
     *  @param[in]  txData    Transmit bytes (tx size is inferred from this array)
     */
@@ -747,6 +821,7 @@ public:
     *  Transmit and receive a series of values
     *
     *  @tparam T Type for data transfer (may be inferred from parameters)
+    *  @tparam N Size of arrays (may be inferred from parameters)
     *
     *  @param[out] rxData    Receive byte buffer (rx size is inferred from this array)
     */
@@ -763,17 +838,18 @@ public:
     *
     * @return Data received
     */
-   uint16_t txRx(uint16_t data);
+   uint32_t txRxRaw(uint32_t data);
 
    /**
     * Transmit and receive a value over SPI
     *
-    * @param[in] data - Data to send (4-16 bits) <br>
-    *                   May include other control bits as for PUSHR
+    * @param[in] data - Data to send (4-16 bits)
     *
     * @return Data received
     */
-   uint32_t txRxRaw(uint32_t data);
+   uint16_t txRx(uint16_t data) {
+      return txRxRaw(data|pushrMask);
+   }
 
    /**
     * Clear Transmit and/or Receive FIFOs
@@ -907,7 +983,7 @@ public:
    /** Address of SPI.CR register as uint32_t */
    static constexpr uint32_t spiCR     = Info::baseAddress + offsetof(SPI_Type, TCR);
    /** Address of SPI.CTAR[n] register as uint32_t */
-   static constexpr uint32_t spiCTAR(unsigned index) {return Info::baseAddress + offsetof(SPI_Type, CTAR[index]); }
+   static constexpr uint32_t spiCTAR(unsigned index) {return Info::baseAddress + offsetof(SPI_Type, CTAR) + index * sizeof(SPI_Type::CTAR[0]) ; }
    /** Address of SPI.SR register as uint32_t */
    static constexpr uint32_t spiSR     = Info::baseAddress + offsetof(SPI_Type, SR);
    /** Address of SPI.PUSHR register as uint32_t */
@@ -1080,7 +1156,7 @@ public:
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::initPCRs();
       }
    }
@@ -1095,7 +1171,7 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::clearPCRs();
       }
    }
@@ -1250,85 +1326,22 @@ void __attribute__((noinline)) Spi::txRx(uint32_t dataSize, const T *txData, T *
 
 template<class Info> SpiCallbackFunction SpiBase_T<Info>::sCallback = Spi::unhandledCallback;
 
-#if defined(USBDM_SPI0_IS_DEFINED)
-/**
- * @brief Template class representing a SPI0 interface
- *
- * <b>Example</b>
- * @code
- * USBDM::Spi *spi = new USBDM::Spi0();
- *
- * uint8_t txData[] = {1,2,3};
- * uint8_t rxData[10];
- * spi->txRxBytes(sizeof(txData), txData, rxData);
- * @endcode
- *
- */
-class Spi0 : public SpiBase_T<Spi0Info> {
-public:
+   /**
+    * Class representing SPI0 interface
+    * <b>Example</b>
+    * @code
+    * USBDM::Spi *spi = new USBDM::Spi0;
+    *
+    * uint8_t txData[] = {1,2,3};
+    * uint8_t rxData[10];
+    * spi->txRxBytes(sizeof(txData), txData, rxData);
+    * @endcode
+    */
+   class Spi0 : public SpiBase_T<Spi0Info> {
+   public:
+   
+   };
 
-};
-#endif
-
-#if defined(USBDM_SPI1_IS_DEFINED)
-/**
- * @brief Template class representing a SPI1 interface
- *
- * <b>Example</b>
- * @code
- * USBDM::Spi *spi = new USBDM::Spi1();
- *
- * uint8_t txData[] = {1,2,3};
- * uint8_t rxData[10];
- * spi->txRxBytes(sizeof(txData), txData, rxData);
- * @endcode
- *
- */
-class Spi1 : public SpiBase_T<Spi1Info> {
-public:
-// No user mappings found
-};
-#endif
-
-#if defined(USBDM_SPI2_IS_DEFINED)
-/**
- * @brief Template class representing a SPI2 interface
- *
- * <b>Example</b>
- * @code
- * USBDM::Spi *spi = new USBDM::Spi2();
- *
- * uint8_t txData[] = {1,2,3};
- * uint8_t rxData[10];
- * spi->txRxBytes(sizeof(txData), txData, rxData);
- * @endcode
- *
- */
-class Spi2 : public SpiBase_T<Spi2Info> {
-public:
-// No user mappings found
-};
-#endif
-
-#if defined(USBDM_SPI3_IS_DEFINED)
-/**
- * @brief Template class representing a SPI3 interface
- *
- * <b>Example</b>
- * @code
- * USBDM::Spi *spi = new USBDM::Spi3();
- *
- * uint8_t txData[] = {1,2,3};
- * uint8_t rxData[10];
- * spi->txRxBytes(sizeof(txData), txData, rxData);
- * @endcode
- *
- */
-class Spi3 : public SpiBase_T<Spi3Info> {
-public:
-// No user mappings found
-};
-#endif
 /**
  * End SPI_Group
  * @}

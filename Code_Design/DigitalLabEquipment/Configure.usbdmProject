@@ -121,8 +121,9 @@
    <item key="$signal$XTAL0_descriptionSetting"            value="16 MHz Crystal" />
    <item key="$signal$XTAL32_descriptionSetting"           value="Unused" />
    <item key="/ADC0/irqHandlingMethod"                     value="$ClassMethod" />
+   <item key="/CMP0/cmp_fpr_filt_per"                      value="0" />
+   <item key="/CMP1/cmp_fpr_filt_per"                      value="0" />
    <item key="/Console/consoleEnable"                      value="false" />
-   <item key="/FTFL/peripheral_file"                       value="ftfl_32k_flexrom" />
    <item key="/FTM0/check_minimums"                        value="false" />
    <item key="/FTM0/irqHandlingMethod"                     value="$ClassMethod" />
    <item key="/HARDWARE/mapAllPins"                        value="true" />
@@ -130,38 +131,44 @@
    <item key="/I2S0/mapPinsOnEnable"                       value="false" />
    <item key="/LINKER/enableBootloader"                    value="true" />
    <item key="/LINKER/heapSize"                            value="0" />
-   <item key="/LINKER/linkerExtraRegions"                  value="Not initialised" />
-   <item key="/LINKER/linkerInformation"                   value="Not initialised" />
+   <item key="/LINKER/stackSize"                           value="2048" />
    <item key="/LINKER/text_rom"                            value="flexNVM" />
-   <item key="/LLWU/device_list"                           value="LPTMR0;CMP0;CMP1;;TSI;RTC_Alarm;;RTC_Seconds" />
    <item key="/LLWU/irqHandlingMethod"                     value="$ClassMethod" />
-   <item key="/MCG/ClockConfig[0]"                         value="ClockConfig_PEE_48MHz" />
-   <item key="/MCG/ClockConfig[1]"                         value="ClockConfig_BLPE_4MHz" />
-   <item key="/MCG/ClockConfig[2]"                         value="ClockConfig_FEE_40MHz" />
-   <item key="/MCG/DummyClockConfig[0]"                    value="ClockConfig_0" />
-   <item key="/MCG/DummyClockConfig[1]"                    value="ClockConfig_1" />
-   <item key="/MCG/DummyClockConfig[2]"                    value="ClockConfig_2" />
-   <item key="/MCG/clock_mode[0]"                          value="ClockMode_PEE" />
-   <item key="/MCG/clock_mode[1]"                          value="ClockMode_BLPE" />
-   <item key="/MCG/clock_mode[2]"                          value="ClockMode_FEE" />
+   <item key="/LLWU/llwu_filt1_filtsel"                    value="0" />
+   <item key="/LLWU/llwu_filt2_filtsel"                    value="0" />
+   <item key="/MCG/ClockConfig[0]"                         value="ClockConfig_RUN_PEE_48MHz" />
+   <item key="/MCG/ClockConfig[1]"                         value="ClockConfig_VLPR_BLPI_4MHz" />
+   <item key="/MCG/ClockConfig[2]"                         value="ClockConfig_RUN_FEE_40MHz" />
+   <item key="/MCG/ClockConfig[3]"                         value="ClockConfig_RUN_FEI_48MHz" />
+   <item key="/MCG/mcgClockMode[0]"                        value="7" />
+   <item key="/MCG/mcgClockMode[1]"                        value="3" />
+   <item key="/MCG/mcgClockMode[2]"                        value="1" />
+   <item key="/MCG/mcg_c1_frdiv[2]"                        value="4" />
+   <item key="/MCG/mcg_c2_range0[2]"                       value="1" />
+   <item key="/MCG/mcg_c4_dmx32[3]"                        value="true" />
    <item key="/MCG/pll0OutputFrequency[0]"                 value="96000000" />
-   <item key="/MCG/system_mcgfllclk_clock[1]"              value="80000000" />
-   <item key="/MCG/system_mcgfllclk_clock[2]"              value="80000000" />
+   <item key="/MCG/system_mcgfllclk_clock[3]"              value="95944704" />
+   <item key="/OSC0/EnableOsc"                             value="true" />
    <item key="/OSC0/mapPinsOnEnable"                       value="false" />
    <item key="/OSC0/osc_input_freq"                        value="16000000" />
+   <item key="/PDB0/pdb_ch0_dly0"                          value="0" />
+   <item key="/PDB0/pdb_ch0_dly1"                          value="0" />
    <item key="/PIT/irqHandlingMethod"                      value="$ClassMethod" />
+   <item key="/PIT/pit_ldval_tsv[0]"                       value="0" />
+   <item key="/PIT/pit_ldval_tsv[1]"                       value="0" />
+   <item key="/PIT/pit_ldval_tsv[2]"                       value="0" />
+   <item key="/PIT/pit_ldval_tsv[3]"                       value="0" />
    <item key="/RTC/mapPinsOnEnable"                        value="false" />
-   <item key="/SIM/ClockConfig[0]"                         value="" />
-   <item key="/SIM/ClockConfig[1]"                         value="" />
-   <item key="/SIM/ClockConfig[2]"                         value="" />
-   <item key="/SIM/sim_clkdiv2_usb"                        value="2" />
+   <item key="/SIM/sim_clkdiv1_outdiv1[1]"                 value="0" />
+   <item key="/SIM/sim_clkdiv1_outdiv1[2]"                 value="0" />
+   <item key="/SIM/sim_clkdiv1_outdiv2[1]"                 value="0" />
+   <item key="/SIM/sim_clkdiv1_outdiv2[2]"                 value="0" />
+   <item key="/SIM/sim_clkdiv1_outdiv4[0]"                 value="3" />
+   <item key="/SIM/sim_clkdiv1_outdiv4[1]"                 value="3" />
+   <item key="/SIM/sim_clkdiv1_outdiv4[3]"                 value="3" />
+   <item key="/SIM/sim_clkdiv2_usb[0]"                     value="2" />
    <item key="/SIM/sim_sopt2_pllfllsel[0]"                 value="1" />
-   <item key="/SIM/system_bus_clock[1]"                    value="4000000" />
-   <item key="/SIM/system_bus_clock[2]"                    value="40000000" />
-   <item key="/SIM/system_core_clock[1]"                   value="4000000" />
-   <item key="/SIM/system_core_clock[2]"                   value="40000000" />
-   <item key="/SIM/system_flash_clock[1]"                  value="1000000" />
-   <item key="/SIM/system_flash_clock[2]"                  value="20000000" />
+   <item key="/SMC/smc_pmctrl_runm[1]"                     value="2" />
    <item key="/SPI0/mapPinsOnEnable"                       value="false" />
    <item key="/UART0/mapPinsOnEnable"                      value="false" />
    <item key="/UART1/mapPinsOnEnable"                      value="false" />
