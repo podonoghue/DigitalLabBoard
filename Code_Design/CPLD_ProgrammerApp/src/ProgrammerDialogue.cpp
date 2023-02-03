@@ -132,7 +132,7 @@ bool ProgrammerDialogue::loadProgrammingFile(wxString filePath, wxString fileNam
       xsvf_filePath = "";
       xsvf_fileName = "";
 
-      loadedFile_static->SetLabel("-- No file loaded --");
+      selectedFile_static->SetLabel("-- No file loaded --");
       programDevice_button->Enable(false);
 
       wxMessageBox(msg, "Failed to load file");
@@ -145,7 +145,7 @@ bool ProgrammerDialogue::loadProgrammingFile(wxString filePath, wxString fileNam
       xsvf_fileName = fileName;
       wxDateTime time(xsvf_file_modified_time);
       time.FormatISOCombined(':');
-      loadedFile_static->SetLabel(wxString::Format("%s (%s)", fileName, time.FormatISOCombined(' ')));
+      selectedFile_static->SetLabel(wxString::Format("%s (%s)", fileName, time.FormatISOCombined(' ')));
       programDevice_button->Enable(true);
       return true;
    }
@@ -157,8 +157,8 @@ bool ProgrammerDialogue::fileIsCurrent() {
    return (file_modified_time <= xsvf_file_modified_time);
 }
 
-void ProgrammerDialogue::onLoadFile(wxCommandEvent &event) {
-   wxString caption  = _("Select Binary File to Load");
+void ProgrammerDialogue::onSelectFile(wxCommandEvent &event) {
+   wxString caption  = _("Select CPLD Binary File to use ");
    wxString wildcard = _(
          "Programming Files(*.jed;*.xsvf)|*.jed;*.xsvf|"
          "Jedec Files(*.jed)|*.jed|"

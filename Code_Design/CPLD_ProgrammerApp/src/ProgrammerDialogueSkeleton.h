@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version 3.9.0 Sep  6 2020)
+// C++ code generated with wxFormBuilder (version 3.9.0 Sep 11 2020)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -34,15 +34,15 @@ class ProgrammerDialogueSkeleton : public wxDialog
 	private:
 
 	protected:
-		wxButton* loadFile_button;
-		wxStaticText* loadedFile_static;
+		wxButton* selectFile_button;
+		wxStaticText* selectedFile_static;
 		wxButton* confirmId_button;
 		wxStaticText* idcode_static;
 		wxButton* programDevice_button;
 		wxStaticText* programAction_static;
 
 		// Virtual event handlers, overide them in your derived class
-		virtual void onLoadFile( wxCommandEvent& event ) { event.Skip(); }
+		virtual void onSelectFile( wxCommandEvent& event ) { event.Skip(); }
 		virtual void onConfirmId( wxCommandEvent& event ) { event.Skip(); }
 		virtual void onProgramDevice( wxCommandEvent& event ) { event.Skip(); }
 

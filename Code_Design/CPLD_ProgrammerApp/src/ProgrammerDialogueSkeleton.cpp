@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version 3.9.0 Sep  6 2020)
+// C++ code generated with wxFormBuilder (version 3.9.0 Sep 11 2020)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -19,16 +19,16 @@ ProgrammerDialogueSkeleton::ProgrammerDialogueSkeleton( wxWindow* parent, wxWind
 	wxStaticBoxSizer* sbSizer1;
 	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("JEDEC File") ), wxHORIZONTAL );
 
-	loadFile_button = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Load File"), wxDefaultPosition, wxSize( 120,-1 ), 0 );
-	loadFile_button->SetToolTip( wxT("Load file to program to device") );
+	selectFile_button = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Select File"), wxDefaultPosition, wxSize( 120,-1 ), 0 );
+	selectFile_button->SetToolTip( wxT("Select file to program to device") );
 
-	sbSizer1->Add( loadFile_button, 0, wxALL|wxEXPAND, 5 );
+	sbSizer1->Add( selectFile_button, 0, wxALL|wxEXPAND, 5 );
 
-	loadedFile_static = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("-- No file loaded --"), wxDefaultPosition, wxDefaultSize, 0 );
-	loadedFile_static->Wrap( -1 );
-	loadedFile_static->SetToolTip( wxT("Name of currently loaded file") );
+	selectedFile_static = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("-- No file loaded --"), wxDefaultPosition, wxDefaultSize, 0 );
+	selectedFile_static->Wrap( -1 );
+	selectedFile_static->SetToolTip( wxT("Currently selected file (last modified)") );
 
-	sbSizer1->Add( loadedFile_static, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	sbSizer1->Add( selectedFile_static, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 
 
 	bSizer1->Add( sbSizer1, 1, wxALL|wxEXPAND, 5 );
@@ -55,7 +55,7 @@ ProgrammerDialogueSkeleton::ProgrammerDialogueSkeleton( wxWindow* parent, wxWind
 
 	programDevice_button = new wxButton( sbSizer3->GetStaticBox(), wxID_ANY, wxT("Program Device"), wxDefaultPosition, wxSize( 120,-1 ), 0 );
 	programDevice_button->Enable( false );
-	programDevice_button->SetToolTip( wxT("Program file to device") );
+	programDevice_button->SetToolTip( wxT("Program selected file to device") );
 
 	sbSizer3->Add( programDevice_button, 0, wxALL|wxEXPAND, 5 );
 
@@ -75,7 +75,7 @@ ProgrammerDialogueSkeleton::ProgrammerDialogueSkeleton( wxWindow* parent, wxWind
 	this->Centre( wxBOTH );
 
 	// Connect Events
-	loadFile_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ProgrammerDialogueSkeleton::onLoadFile ), NULL, this );
+	selectFile_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ProgrammerDialogueSkeleton::onSelectFile ), NULL, this );
 	confirmId_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ProgrammerDialogueSkeleton::onConfirmId ), NULL, this );
 	programDevice_button->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ProgrammerDialogueSkeleton::onProgramDevice ), NULL, this );
 }
@@ -83,7 +83,7 @@ ProgrammerDialogueSkeleton::ProgrammerDialogueSkeleton( wxWindow* parent, wxWind
 ProgrammerDialogueSkeleton::~ProgrammerDialogueSkeleton()
 {
 	// Disconnect Events
-	loadFile_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ProgrammerDialogueSkeleton::onLoadFile ), NULL, this );
+	selectFile_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ProgrammerDialogueSkeleton::onSelectFile ), NULL, this );
 	confirmId_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ProgrammerDialogueSkeleton::onConfirmId ), NULL, this );
 	programDevice_button->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ProgrammerDialogueSkeleton::onProgramDevice ), NULL, this );
 

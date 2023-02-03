@@ -59,7 +59,7 @@ protected:
     */
    bool loadProgrammingFile(wxString filePath, wxString fileName);
 
-   virtual void onLoadFile(wxCommandEvent &event) override;
+   virtual void onSelectFile(wxCommandEvent &event) override;
    virtual void onConfirmId( wxCommandEvent& event ) override;
    virtual void onProgramDevice(wxCommandEvent &event) override;
 
