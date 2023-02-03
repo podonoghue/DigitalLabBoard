@@ -1,0 +1,537 @@
+ 
+cpldfit:  version P.20131013                        Xilinx Inc.
+                                  Fitter Report
+Design Name: cpld_tester                         Date:  2- 3-2023, 10:56PM
+Device Used: XC2C64A-5-VQ44
+Fitting Status: Successful
+
+*************************  Mapped Resource Summary  **************************
+
+Macrocells     Product Terms    Function Block   Registers      Pins           
+Used/Tot       Used/Tot         Inps Used/Tot    Used/Tot       Used/Tot       
+42 /64  ( 66%) 57  /224  ( 25%) 22  /160  ( 14%) 40 /64  ( 62%) 33 /33  (100%)
+
+** Function Block Resources **
+
+Function Mcells   FB Inps  Pterms   IO       CTC      CTR      CTS      CTE     
+Block    Used/Tot Used/Tot Used/Tot Used/Tot Used/Tot Used/Tot Used/Tot Used/Tot
+FB1      16/16*    10/40    27/56     8/ 8*   0/1      0/1      0/1      0/1
+FB2      10/16      8/40    12/56     8/ 9    0/1      0/1      0/1      0/1
+FB3       9/16      2/40    10/56     9/ 9*   0/1      0/1      0/1      0/1
+FB4       7/16      2/40     8/56     7/ 7*   0/1      0/1      0/1      0/1
+         -----    -------  -------   -----    ---      ---      ---      ---
+Total    42/64     22/160   57/224   32/33    0/4      0/4      0/4      0/4 
+
+CTC - Control Term Clock
+CTR - Control Term Reset
+CTS - Control Term Set
+CTE - Control Term Output Enable
+
+* - Resource is exhausted
+
+** Global Control Resources **
+
+GCK         GSR         GTS         DGE         
+Used/Tot    Used/Tot    Used/Tot    Used/Tot    
+1/3         0/1         0/4         0/0
+
+Signal 'clock' mapped onto global clock net GCK2.
+
+** Pin Resources **
+
+Signal Type    Required     Mapped  |  Pin Type            Used    Total 
+------------------------------------|------------------------------------
+Input         :    0           0    |  I/O              :    25     25
+Output        :   32          32    |  GCK/IO           :     3      3
+Bidirectional :    0           0    |  GTS/IO           :     4      4
+GCK           :    1           1    |  GSR/IO           :     1      1
+GTS           :    0           0    |  
+GSR           :    0           0    |  
+                 ----        ----
+        Total     33          33
+
+End of Mapped Resource Summary
+**************************  Errors and Warnings  ***************************
+
+WARNING:Cpld - Unable to retrieve the path to the iSE Project Repository. Will
+   use the default filename of 'cpld_tester.ise'.
+INFO:Cpld - Inferring BUFG constraint for signal 'clock' based upon the LOC
+   constraint 'P1'. It is recommended that you declare this BUFG explicitedly in
+   your design. Note that for certain device families the output of a BUFG
+   constraint can not drive a gated clock, and the BUFG constraint will be
+   ignored.
+*************************  Summary of Mapped Logic  ************************
+
+** 32 Outputs **
+
+Signal              Total Total Bank Loc     Pin   Pin       Pin     I/O      I/O       Slew Reg     Reg Init
+Name                Pts   Inps               No.   Type      Use     STD      Style     Rate Use     State
+leds<25>            2     2     2    FB1_1   38    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<26>            2     2     2    FB1_2   37    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<27>            2     2     2    FB1_3   36    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<28>            2     2     2    FB1_9   34    GTS/I/O   O       LVCMOS33           FAST DEFF    RESET
+leds<29>            2     2     2    FB1_10  33    GTS/I/O   O       LVCMOS33           FAST DEFF    RESET
+leds<30>            2     2     2    FB1_11  32    GTS/I/O   O       LVCMOS33           FAST DEFF    RESET
+leds<31>            2     2     2    FB1_12  31    GTS/I/O   O       LVCMOS33           FAST DEFF    RESET
+leds<13>            2     2     2    FB1_13  30    GSR/I/O   O       LVCMOS33           FAST DEFF    RESET
+leds<24>            2     2     1    FB2_1   39    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<23>            2     2     1    FB2_2   40    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<22>            2     2     1    FB2_5   41    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<21>            2     2     1    FB2_6   42    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<20>            2     2     1    FB2_7   43    GCK/I/O   O       LVCMOS33           FAST DEFF    RESET
+leds<19>            2     2     1    FB2_8   44    GCK/I/O   O       LVCMOS33           FAST DEFF    RESET
+leds<18>            2     2     1    FB2_12  2     I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<17>            2     2     1    FB2_13  3     I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<12>            2     2     2    FB3_1   29    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<11>            2     2     2    FB3_2   28    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<10>            2     2     2    FB3_3   27    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<9>             2     2     2    FB3_6   23    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<8>             2     2     2    FB3_10  22    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<7>             2     2     2    FB3_11  21    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<6>             2     2     2    FB3_12  20    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<5>             2     2     2    FB3_14  19    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<4>             2     2     2    FB3_15  18    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<16>            2     2     1    FB4_1   5     I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<15>            2     2     1    FB4_2   6     I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<14>            2     2     1    FB4_7   8     I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<0>             2     2     1    FB4_11  12    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<1>             2     2     1    FB4_13  13    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<2>             2     2     1    FB4_14  14    I/O       O       LVCMOS33           FAST DEFF    RESET
+leds<3>             2     2     1    FB4_15  16    I/O       O       LVCMOS33           FAST DEFF    RESET
+
+** 10 Buried Nodes **
+
+Signal              Total Total Loc     Reg     Reg Init
+Name                Pts   Inps          Use     State
+counter<6>          4     7     FB1_4   DFF     RESET
+counter<3>          2     5     FB1_5   TFF     RESET
+N_PZ_137            3     6     FB1_6           
+counter<0>          2     5     FB1_7   DFF     RESET
+counter<1>          4     6     FB1_8   DFF     RESET
+counter<4>          2     6     FB1_14  TFF     RESET
+counter<5>          2     7     FB1_15  TFF     RESET
+toggle              1     1     FB1_16  TFF     RESET
+N_PZ_133            1     2     FB2_15          
+counter<2>          2     4     FB2_16  TFF     RESET
+
+** 1 Inputs **
+
+Signal              Bank Loc     Pin   Pin       Pin     I/O      I/O
+Name                             No.   Type      Use     STD      Style
+clock               1    FB2_10  1     GCK/I/O   GCK     LVCMOS33 S/KPR
+
+Legend:
+Pin No.   - ~     - User Assigned
+I/O Style - OD    - OpenDrain
+          - PU    - Pullup
+          - KPR   - Keeper
+          - S     - SchmittTrigger
+          - DG    - DataGate
+Reg Use   - LATCH - Transparent latch
+          - DFF   - D-flip-flop
+          - DEFF  - D-flip-flop with clock enable
+          - TFF   - T-flip-flop
+          - TDFF  - Dual-edge-triggered T-flip-flop
+          - DDFF  - Dual-edge-triggered flip-flop
+          - DDEFF - Dual-edge-triggered flip-flop with clock enable
+          /S (after any above flop/latch type) indicates initial state is Set
+**************************  Function Block Details  ************************
+Legend:
+Total Pt     - Total product terms used by the macrocell signal
+Loc          - Location where logic was mapped in device
+Pin Type/Use - I  - Input             GCK - Global clock
+               O  - Output            GTS - Global Output Enable
+              (b) - Buried macrocell  GSR - Global Set/Reset
+              VRF - Vref
+Pin No.      - ~  - User Assigned
+*********************************** FB1  ***********************************
+This function block is part of I/O Bank number:               2
+Number of function block inputs used/remaining:               10/30
+Number of function block control terms used/remaining:        0/4
+Number of PLA product terms used/remaining:                   27/29
+Signal                        Total Loc     Pin  Pin     Pin   CTC CTR CTS CTE
+Name                          Pt            No.  Type    Use   
+leds<25>                      2     FB1_1   38   I/O     O                 
+leds<26>                      2     FB1_2   37   I/O     O                 
+leds<27>                      2     FB1_3   36   I/O     O                 
+counter<6>                    4     FB1_4        (b)     (b)               
+counter<3>                    2     FB1_5        (b)     (b)               
+N_PZ_137                      3     FB1_6        (b)     (b)               
+counter<0>                    2     FB1_7        (b)     (b)               
+counter<1>                    4     FB1_8        (b)     (b)               
+leds<28>                      2     FB1_9   34   GTS/I/O O                 
+leds<29>                      2     FB1_10  33   GTS/I/O O                 
+leds<30>                      2     FB1_11  32   GTS/I/O O                 
+leds<31>                      2     FB1_12  31   GTS/I/O O                 
+leds<13>                      2     FB1_13  30   GSR/I/O O                 
+counter<4>                    2     FB1_14       (b)     (b)               
+counter<5>                    2     FB1_15       (b)     (b)               
+toggle                        1     FB1_16       (b)     (b)               
+
+Signals Used by Logic in Function Block
+  1: N_PZ_133           5: counter<2>         8: counter<5> 
+  2: N_PZ_137           6: counter<3>         9: counter<6> 
+  3: counter<0>         7: counter<4>        10: toggle 
+  4: counter<1>       
+
+Signal                     1         2         3         4 FB      
+Name             0----+----0----+----0----+----0----+----0 Inputs  
+leds<25>          .X.......X.............................. 2       
+leds<26>          .X.......X.............................. 2       
+leds<27>          .X.......X.............................. 2       
+counter<6>        ..XXXXXXX............................... 7       
+counter<3>        X.XXXX.................................. 5       
+N_PZ_137          X.XXXXX................................. 6       
+counter<0>        X.X.XXX................................. 5       
+counter<1>        X.XXXXX................................. 6       
+leds<28>          .X.......X.............................. 2       
+leds<29>          .X.......X.............................. 2       
+leds<30>          .X.......X.............................. 2       
+leds<31>          .X.......X.............................. 2       
+leds<13>          .X.......X.............................. 2       
+counter<4>        X.XXXXX................................. 6       
+counter<5>        XXXXXXX................................. 7       
+toggle            .X...................................... 1       
+                 0----+----1----+----2----+----3----+----4
+                           0         0         0         0
+*********************************** FB2  ***********************************
+This function block is part of I/O Bank number:               1
+Number of function block inputs used/remaining:               8/32
+Number of function block control terms used/remaining:        0/4
+Number of PLA product terms used/remaining:                   12/44
+Signal                        Total Loc     Pin  Pin     Pin   CTC CTR CTS CTE
+Name                          Pt            No.  Type    Use   
+leds<24>                      2     FB2_1   39   I/O     O                 
+leds<23>                      2     FB2_2   40   I/O     O                 
+(unused)                      0     FB2_3        (b)           
+(unused)                      0     FB2_4        (b)           
+leds<22>                      2     FB2_5   41   I/O     O                 
+leds<21>                      2     FB2_6   42   I/O     O                 
+leds<20>                      2     FB2_7   43   GCK/I/O O                 
+leds<19>                      2     FB2_8   44   GCK/I/O O                 
+(unused)                      0     FB2_9        (b)           
+(unused)                      0     FB2_10  1    GCK/I/O GCK   
+(unused)                      0     FB2_11       (b)           
+leds<18>                      2     FB2_12  2    I/O     O                 
+leds<17>                      2     FB2_13  3    I/O     O                 
+(unused)                      0     FB2_14       (b)           
+N_PZ_133                      1     FB2_15       (b)     (b)               
+counter<2>                    2     FB2_16       (b)     (b)               
+
+Signals Used by Logic in Function Block
+  1: N_PZ_133           4: counter<1>         7: counter<6> 
+  2: N_PZ_137           5: counter<2>         8: toggle 
+  3: counter<0>         6: counter<5>       
+
+Signal                     1         2         3         4 FB      
+Name             0----+----0----+----0----+----0----+----0 Inputs  
+leds<24>          .X.....X................................ 2       
+leds<23>          .X.....X................................ 2       
+leds<22>          .X.....X................................ 2       
+leds<21>          .X.....X................................ 2       
+leds<20>          .X.....X................................ 2       
+leds<19>          .X.....X................................ 2       
+leds<18>          .X.....X................................ 2       
+leds<17>          .X.....X................................ 2       
+N_PZ_133          .....XX................................. 2       
+counter<2>        X.XXX................................... 4       
+                 0----+----1----+----2----+----3----+----4
+                           0         0         0         0
+*********************************** FB3  ***********************************
+This function block is part of I/O Bank number:               2
+Number of function block inputs used/remaining:               2/38
+Number of function block control terms used/remaining:        0/4
+Number of PLA product terms used/remaining:                   10/46
+Signal                        Total Loc     Pin  Pin     Pin   CTC CTR CTS CTE
+Name                          Pt            No.  Type    Use   
+leds<12>                      2     FB3_1   29   I/O     O                 
+leds<11>                      2     FB3_2   28   I/O     O                 
+leds<10>                      2     FB3_3   27   I/O     O                 
+(unused)                      0     FB3_4        (b)           
+(unused)                      0     FB3_5        (b)           
+leds<9>                       2     FB3_6   23   I/O     O                 
+(unused)                      0     FB3_7        (b)           
+(unused)                      0     FB3_8        (b)           
+(unused)                      0     FB3_9        (b)           
+leds<8>                       2     FB3_10  22   I/O     O                 
+leds<7>                       2     FB3_11  21   I/O     O                 
+leds<6>                       2     FB3_12  20   I/O     O                 
+(unused)                      0     FB3_13       (b)           
+leds<5>                       2     FB3_14  19   I/O     O                 
+leds<4>                       2     FB3_15  18   I/O     O                 
+(unused)                      0     FB3_16       (b)           
+
+Signals Used by Logic in Function Block
+  1: N_PZ_137           2: toggle           
+
+Signal                     1         2         3         4 FB      
+Name             0----+----0----+----0----+----0----+----0 Inputs  
+leds<12>          XX...................................... 2       
+leds<11>          XX...................................... 2       
+leds<10>          XX...................................... 2       
+leds<9>           XX...................................... 2       
+leds<8>           XX...................................... 2       
+leds<7>           XX...................................... 2       
+leds<6>           XX...................................... 2       
+leds<5>           XX...................................... 2       
+leds<4>           XX...................................... 2       
+                 0----+----1----+----2----+----3----+----4
+                           0         0         0         0
+*********************************** FB4  ***********************************
+This function block is part of I/O Bank number:               1
+Number of function block inputs used/remaining:               2/38
+Number of function block control terms used/remaining:        0/4
+Number of PLA product terms used/remaining:                   8/48
+Signal                        Total Loc     Pin  Pin     Pin   CTC CTR CTS CTE
+Name                          Pt            No.  Type    Use   
+leds<16>                      2     FB4_1   5    I/O     O                 
+leds<15>                      2     FB4_2   6    I/O     O                 
+(unused)                      0     FB4_3        (b)           
+(unused)                      0     FB4_4        (b)           
+(unused)                      0     FB4_5        (b)           
+(unused)                      0     FB4_6        (b)           
+leds<14>                      2     FB4_7   8    I/O     O                 
+(unused)                      0     FB4_8        (b)           
+(unused)                      0     FB4_9        (b)           
+(unused)                      0     FB4_10       (b)           
+leds<0>                       2     FB4_11  12   I/O     O                 
+(unused)                      0     FB4_12       (b)           
+leds<1>                       2     FB4_13  13   I/O     O                 
+leds<2>                       2     FB4_14  14   I/O     O                 
+leds<3>                       2     FB4_15  16   I/O     O                 
+(unused)                      0     FB4_16       (b)           
+
+Signals Used by Logic in Function Block
+  1: N_PZ_137           2: toggle           
+
+Signal                     1         2         3         4 FB      
+Name             0----+----0----+----0----+----0----+----0 Inputs  
+leds<16>          XX...................................... 2       
+leds<15>          XX...................................... 2       
+leds<14>          XX...................................... 2       
+leds<0>           XX...................................... 2       
+leds<1>           XX...................................... 2       
+leds<2>           XX...................................... 2       
+leds<3>           XX...................................... 2       
+                 0----+----1----+----2----+----3----+----4
+                           0         0         0         0
+*******************************  Equations  ********************************
+
+********** Mapped Logic **********
+
+
+N_PZ_133 <= (counter(5) AND counter(6));
+
+
+N_PZ_137 <= ((NOT N_PZ_133)
+	OR (NOT counter(0) AND NOT counter(2) AND NOT counter(3) AND 
+	NOT counter(4))
+	OR (NOT counter(2) AND NOT counter(1) AND NOT counter(3) AND 
+	NOT counter(4)));
+
+FDCPE_counter0: FDCPE port map (counter(0),counter_D(0),clock,'0','0','1');
+counter_D(0) <= ((NOT counter(0) AND NOT N_PZ_133)
+	OR (NOT counter(0) AND NOT counter(2) AND NOT counter(3) AND 
+	NOT counter(4)));
+
+FDCPE_counter1: FDCPE port map (counter(1),counter_D(1),clock,'0','0','1');
+counter_D(1) <= ((counter(0) AND NOT N_PZ_133 AND NOT counter(1))
+	OR (NOT counter(0) AND NOT N_PZ_133 AND counter(1))
+	OR (counter(0) AND NOT counter(2) AND NOT counter(1) AND 
+	NOT counter(3) AND NOT counter(4))
+	OR (NOT counter(0) AND NOT counter(2) AND counter(1) AND 
+	NOT counter(3) AND NOT counter(4)));
+
+FTCPE_counter2: FTCPE port map (counter(2),counter_T(2),clock,'0','0','1');
+counter_T(2) <= ((counter(2) AND N_PZ_133)
+	OR (counter(0) AND NOT N_PZ_133 AND counter(1)));
+
+FTCPE_counter3: FTCPE port map (counter(3),counter_T(3),clock,'0','0','1');
+counter_T(3) <= ((N_PZ_133 AND counter(3))
+	OR (counter(0) AND counter(2) AND NOT N_PZ_133 AND counter(1)));
+
+FTCPE_counter4: FTCPE port map (counter(4),counter_T(4),clock,'0','0','1');
+counter_T(4) <= ((N_PZ_133 AND counter(4))
+	OR (counter(0) AND counter(2) AND NOT N_PZ_133 AND counter(1) AND 
+	counter(3)));
+
+FTCPE_counter5: FTCPE port map (counter(5),counter_T(5),clock,'0','0','1');
+counter_T(5) <= ((NOT N_PZ_137)
+	OR (counter(0) AND counter(2) AND NOT N_PZ_133 AND counter(1) AND 
+	counter(3) AND counter(4)));
+
+FDCPE_counter6: FDCPE port map (counter(6),counter_D(6),clock,'0','0','1');
+counter_D(6) <= ((NOT counter(5) AND counter(6))
+	OR (NOT counter(0) AND NOT counter(2) AND NOT counter(3) AND 
+	NOT counter(4) AND counter(6))
+	OR (NOT counter(2) AND NOT counter(1) AND NOT counter(3) AND 
+	NOT counter(4) AND counter(6))
+	OR (counter(0) AND counter(2) AND counter(5) AND 
+	counter(1) AND counter(3) AND counter(4) AND NOT counter(6)));
+
+FDCPE_leds0: FDCPE port map (leds(0),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds1: FDCPE port map (leds(1),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds2: FDCPE port map (leds(2),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds3: FDCPE port map (leds(3),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds4: FDCPE port map (leds(4),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds5: FDCPE port map (leds(5),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds6: FDCPE port map (leds(6),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds7: FDCPE port map (leds(7),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds8: FDCPE port map (leds(8),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds9: FDCPE port map (leds(9),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds10: FDCPE port map (leds(10),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds11: FDCPE port map (leds(11),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds12: FDCPE port map (leds(12),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds13: FDCPE port map (leds(13),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds14: FDCPE port map (leds(14),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds15: FDCPE port map (leds(15),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds16: FDCPE port map (leds(16),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds17: FDCPE port map (leds(17),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds18: FDCPE port map (leds(18),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds19: FDCPE port map (leds(19),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds20: FDCPE port map (leds(20),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds21: FDCPE port map (leds(21),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds22: FDCPE port map (leds(22),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds23: FDCPE port map (leds(23),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds24: FDCPE port map (leds(24),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds25: FDCPE port map (leds(25),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds26: FDCPE port map (leds(26),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds27: FDCPE port map (leds(27),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds28: FDCPE port map (leds(28),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds29: FDCPE port map (leds(29),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds30: FDCPE port map (leds(30),toggle,clock,'0','0',NOT N_PZ_137);
+
+FDCPE_leds31: FDCPE port map (leds(31),toggle,clock,'0','0',NOT N_PZ_137);
+
+FTCPE_toggle: FTCPE port map (toggle,NOT N_PZ_137,clock,'0','0','1');
+
+
+Register Legend:
+ FDCPE (Q,D,C,CLR,PRE,CE); 
+ FDDCPE (Q,D,C,CLR,PRE,CE); 
+ FTCPE (Q,D,C,CLR,PRE,CE); 
+ FTDCPE (Q,D,C,CLR,PRE,CE); 
+ LDCP  (Q,D,G,CLR,PRE); 
+
+******************************  Device Pin Out *****************************
+
+Device : XC2C64A-5-VQ44
+
+
+   --------------------------------  
+  /44 43 42 41 40 39 38 37 36 35 34 \
+ | 1                             33 | 
+ | 2                             32 | 
+ | 3                             31 | 
+ | 4                             30 | 
+ | 5         XC2C64A-5-VQ44      29 | 
+ | 6                             28 | 
+ | 7                             27 | 
+ | 8                             26 | 
+ | 9                             25 | 
+ | 10                            24 | 
+ | 11                            23 | 
+ \ 12 13 14 15 16 17 18 19 20 21 22 /
+   --------------------------------  
+
+
+Pin Signal                         Pin Signal                        
+No. Name                           No. Name                          
+  1 clock                            23 leds<9>                       
+  2 leds<18>                         24 TDO                           
+  3 leds<17>                         25 GND                           
+  4 GND                              26 VCCIO-3.3                     
+  5 leds<16>                         27 leds<10>                      
+  6 leds<15>                         28 leds<11>                      
+  7 VCCIO-3.3                        29 leds<12>                      
+  8 leds<14>                         30 leds<13>                      
+  9 TDI                              31 leds<31>                      
+ 10 TMS                              32 leds<30>                      
+ 11 TCK                              33 leds<29>                      
+ 12 leds<0>                          34 leds<28>                      
+ 13 leds<1>                          35 VCCAUX                        
+ 14 leds<2>                          36 leds<27>                      
+ 15 VCC                              37 leds<26>                      
+ 16 leds<3>                          38 leds<25>                      
+ 17 GND                              39 leds<24>                      
+ 18 leds<4>                          40 leds<23>                      
+ 19 leds<5>                          41 leds<22>                      
+ 20 leds<6>                          42 leds<21>                      
+ 21 leds<7>                          43 leds<20>                      
+ 22 leds<8>                          44 leds<19>                      
+
+
+Legend :  NC  = Not Connected, unbonded pin
+        PGND  = Unused I/O configured as additional Ground pin
+         KPR  = Unused I/O with weak keeper (leave unconnected)
+         WPU  = Unused I/O with weak pull up (leave unconnected)
+         TIE  = Unused I/O floating -- must tie to VCC, GND or other signal
+         VCC  = Dedicated Power Pin
+      VCCAUX  = Power supply for JTAG pins
+   VCCIO-3.3  = I/O supply voltage for LVTTL, LVCMOS33, SSTL3_I
+   VCCIO-2.5  = I/O supply voltage for LVCMOS25, SSTL2_I
+   VCCIO-1.8  = I/O supply voltage for LVCMOS18
+   VCCIO-1.5  = I/O supply voltage for LVCMOS15, HSTL_I
+        VREF  = Reference voltage for indicated input standard
+       *VREF  = Reference voltage pin selected by software
+         GND  = Dedicated Ground Pin
+         TDI  = Test Data In, JTAG pin
+         TDO  = Test Data Out, JTAG pin
+         TCK  = Test Clock, JTAG pin
+         TMS  = Test Mode Select, JTAG pin
+  PROHIBITED  = User reserved pin
+****************************  Compiler Options  ****************************
+
+Following is a list of all global compiler options used by the fitter run.
+
+Device(s) Specified                         : xc2c64a-5-VQ44
+Optimization Method                         : DENSITY
+Multi-Level Logic Optimization              : ON
+Ignore Timing Specifications                : OFF
+Default Register Power Up Value             : LOW
+Keep User Location Constraints              : ON
+What-You-See-Is-What-You-Get                : OFF
+Exhaustive Fitting                          : OFF
+Keep Unused Inputs                          : OFF
+Slew Rate                                   : FAST
+Set Unused I/O Pin Termination              : KEEPER
+Global Clock Optimization                   : ON
+Global Set/Reset Optimization               : ON
+Global Ouput Enable Optimization            : ON
+Enable Input Registers                      : ON
+Function Block Fan-in Limit                 : 38
+Use DATA_GATE Attribute                     : ON
+Set Tristate Outputs to Termination Mode    : KEEPER
+Default Voltage Standard for All Outputs    : LVCMOS18
+Input Limit                                 : 32
+Pterm Limit                                 : 28

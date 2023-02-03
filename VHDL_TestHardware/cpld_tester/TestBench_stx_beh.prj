@@ -1,0 +1,2 @@
+vhdl isim_temp "cpld_tester.vhd"
+vhdl isim_temp "TestBench.vhd"

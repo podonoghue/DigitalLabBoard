@@ -1,16 +1,43 @@
 #!/bin/bash
 
-Build_Folder=../Code_Design
-Files_to_collect="${Build_Folder}/Windows_Drivers/*.msi ${Build_Folder}/Windows_Installer/*.msi ${Build_Folder}/Linux_Installer/*.deb"
+SOURCE_DIRECTORY="$(dirname $(readlink -f $0))"
+echo SOURCE_DIRECTORY=${SOURCE_DIRECTORY}
 
-#echo ${Files_to_collect}
-#exit
+cd ${SOURCE_DIRECTORY}
 
-for file in ${Files_to_collect} ; do
-   if [ -e $file ]; then
-      echo collecting $file
-      mv $file .
-   fi
-done
-   
+collectFiles() {
+
+   echo "Working in " `pwd`
+
+   Build_Folder=../Code_Design
+   Files_to_collect="${Build_Folder}/Windows_Drivers/*.msi ${Build_Folder}/Windows_Installer/*.msi ${Build_Folder}/Linux_Installer/*.deb"
+
+   #echo ${Files_to_collect}
+   #exit
+
+   for file in ${Files_to_collect} ; do
+      if [ -e $file ]; then
+         echo collecting $file
+         mv $file .
+      fi
+   done
+}
+
+
+pausing() {
+   x=10
+   echo -n Pausing ...
+   while [ $x -gt 0 ];  do
+      sleep 1s
+      echo -n " $x"
+      x=$(( $x - 1 ))
+   done
+   echo 
+}
+
+collectFiles
+
+pausing
+exit
+
 

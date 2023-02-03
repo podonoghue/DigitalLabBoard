@@ -1,0 +1,73 @@
+Release 8.1i - Fit P.20131013
+Copyright(c) 1995-2003 Xilinx Inc. All rights reserved
+
+ 2- 3-2023 10:56PM
+
+NOTE: This file is designed to be imported into a spreadsheet program
+such as Microsoft Excel for viewing, printing and sorting. The pipe '|'
+character is used as the data field separator.
+This file is also designed to support parsing.
+
+Input file:  cpld_tester.ngd
+output file: cpld_tester.pad
+Part type:   xc2c64a
+Speed grade: -5
+Package:     vq44
+
+Pinout by Pin Number:
+
+-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+Pin Number|Signal Name|Pin Usage|Pin Name|Direction|IO Standard|IO Bank Number|{blank}|Slew Rate|Termination|{blank}|Voltage|Constraint|
+P1|clock|GCK|I/O/GCK2||LVCMOS33|1||FAST||||
+P2|leds<18>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P3|leds<17>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P4|GND||GND||||||||||
+P5|leds<16>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P6|leds<15>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P7||VCCIO-3.3|VCCIO|||1|||||||
+P8|leds<14>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P9|TDI||TDI||||||||||
+P10|TMS||TMS||||||||||
+P11|TCK||TCK||||||||||
+P12|leds<0>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P13|leds<1>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P14|leds<2>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P15||VCC|VCC||||||||||
+P16|leds<3>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P17|GND||GND||||||||||
+P18|leds<4>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P19|leds<5>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P20|leds<6>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P21|leds<7>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P22|leds<8>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P23|leds<9>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P24|TDO||TDO||||||||||
+P25|GND||GND||||||||||
+P26||VCCIO-3.3|VCCIO|||2|||||||
+P27|leds<10>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P28|leds<11>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P29|leds<12>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P30|leds<13>|O|I/O/GSR|OUTPUT|LVCMOS33|2||FAST||||
+P31|leds<31>|O|I/O/GTS2|OUTPUT|LVCMOS33|2||FAST||||
+P32|leds<30>|O|I/O/GTS3|OUTPUT|LVCMOS33|2||FAST||||
+P33|leds<29>|O|I/O/GTS0|OUTPUT|LVCMOS33|2||FAST||||
+P34|leds<28>|O|I/O/GTS1|OUTPUT|LVCMOS33|2||FAST||||
+P35||VCCAUX|VAUX||||||||||
+P36|leds<27>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P37|leds<26>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P38|leds<25>|O|I/O|OUTPUT|LVCMOS33|2||FAST||||
+P39|leds<24>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P40|leds<23>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P41|leds<22>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P42|leds<21>|O|I/O|OUTPUT|LVCMOS33|1||FAST||||
+P43|leds<20>|O|I/O/GCK0|OUTPUT|LVCMOS33|1||FAST||||
+P44|leds<19>|O|I/O/GCK1|OUTPUT|LVCMOS33|1||FAST||||
+
+To preserve the pinout above for future design iterations in
+Project Navigator simply execute the (Lock Pins) process
+located under the (Implement Design) process in a toolbox named
+(Optional Implementation Tools) or invoke PIN2UCF from the
+command line. The location constraints will be written into your
+specified UCF file
+
+

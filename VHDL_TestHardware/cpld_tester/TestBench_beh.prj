@@ -1,0 +1,2 @@
+vhdl work "cpld_tester.vhd"
+vhdl work "TestBench.vhd"

@@ -1,0 +1,1 @@
+-intstyle "ise" -incremental -o "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/TestBench_isim_beh.exe" -prj "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/TestBench_beh.prj" "work.TestBench" 

@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!DOCTYPE ibis [
+<!ELEMENT ibis (part, pin+)>
+<!ELEMENT part EMPTY>
+<!ELEMENT pin EMPTY>
+<!ATTLIST part
+  arch   CDATA #REQUIRED
+  device CDATA #REQUIRED
+  spg    CDATA #REQUIRED
+  pkg    CDATA #REQUIRED>
+<!ATTLIST pin
+  nm     CDATA #REQUIRED
+  no     CDATA #REQUIRED
+  iostd  (LVTTL|SSTL3_I|LVCMOS33|LVCMOS25|SSTL2_I|LVCMOS18|LVCMOS15|HSTL_I|NA) "NA"
+  sr     (SLOW|FAST|slow|fast) "SLOW"
+  dir    (BIDIR|bidir|INPUT|input|OUTPUT|output) "BIDIR">
+]>
+<ibis><part arch="xbr" device="XC2C64A" pkg="VQ44" spg="-5"/><pin dir="input" iostd="LVCMOS33" nm="clock" no="1"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;0&gt;" no="12" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;10&gt;" no="27" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;11&gt;" no="28" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;12&gt;" no="29" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;13&gt;" no="30" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;14&gt;" no="8" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;15&gt;" no="6" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;16&gt;" no="5" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;17&gt;" no="3" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;18&gt;" no="2" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;19&gt;" no="44" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;1&gt;" no="13" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;20&gt;" no="43" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;21&gt;" no="42" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;22&gt;" no="41" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;23&gt;" no="40" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;24&gt;" no="39" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;25&gt;" no="38" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;26&gt;" no="37" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;27&gt;" no="36" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;28&gt;" no="34" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;29&gt;" no="33" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;2&gt;" no="14" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;30&gt;" no="32" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;31&gt;" no="31" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;3&gt;" no="16" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;4&gt;" no="18" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;5&gt;" no="19" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;6&gt;" no="20" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;7&gt;" no="21" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;8&gt;" no="22" sr="fast"/><pin dir="output" iostd="LVCMOS33" nm="leds&lt;9&gt;" no="23" sr="fast"/></ibis>

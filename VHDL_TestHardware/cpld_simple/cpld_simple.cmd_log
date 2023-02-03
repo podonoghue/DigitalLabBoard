@@ -1,0 +1,1 @@
+xst -intstyle ise -ifn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_simple/cpld_simple.xst" -ofn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_simple/cpld_simple.syr" 

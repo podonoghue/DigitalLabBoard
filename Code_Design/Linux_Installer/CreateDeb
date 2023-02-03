@@ -2,7 +2,7 @@
 
 # Version Information
 MAJOR=4
-MINOR=0
+MINOR=1
 MICRO=5
 NANO=0
 DEBIAN_VERSION=1
@@ -13,6 +13,8 @@ ARCH=`uname -m`
 SOURCE_DIRECTORY="$(dirname $(readlink -f $0))"
 echo SOURCE_DIRECTORY=${SOURCE_DIRECTORY}
 
+cd ${SOURCE_DIRECTORY}
+
 DATE=`date +"%Y%m%d%H%M%S"`
 
 PACKAGE_NAME="digitallabboard"
@@ -21,6 +23,8 @@ PACKAGE_NAME="digitallabboard"
 # Create DEB file
 #
 makeDebFile() {
+
+   echo "Working in " `pwd`
 
 #   CP="cp -pv"
 #   MKDIR="mkdir -pv"

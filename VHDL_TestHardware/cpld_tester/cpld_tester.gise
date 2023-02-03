@@ -21,8 +21,176 @@
 
   <sourceproject xmlns="http://www.xilinx.com/XMLSchema" xil_pn:fileType="FILE_XISE" xil_pn:name="cpld_tester.xise"/>
 
-  <files xmlns="http://www.xilinx.com/XMLSchema"/>
+  <files xmlns="http://www.xilinx.com/XMLSchema">
+    <file xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="TestBench_beh.prj"/>
+    <file xil_pn:branch="BehavioralSim" xil_pn:fileType="FILE_ISIM_EXE" xil_pn:name="TestBench_isim_beh.exe"/>
+    <file xil_pn:fileType="FILE_ISIM_MISC" xil_pn:name="TestBench_isim_beh.wdb"/>
+    <file xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="TestBench_stx_beh.prj"/>
+    <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="_ngo"/>
+    <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/ngdbuild.xmsgs"/>
+    <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/xst.xmsgs"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGDBUILD_LOG" xil_pn:name="cpld_tester.bld"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_CHK" xil_pn:name="cpld_tester.chk"/>
+    <file xil_pn:fileType="FILE_CMD_LOG" xil_pn:name="cpld_tester.cmd_log"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_CXT" xil_pn:name="cpld_tester.cxt"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_GYD" xil_pn:name="cpld_tester.gyd"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_JEDEC" xil_pn:name="cpld_tester.jed"/>
+    <file xil_pn:fileType="FILE_LOG" xil_pn:name="cpld_tester.log"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_LSO" xil_pn:name="cpld_tester.lso"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_MFD" xil_pn:name="cpld_tester.mfd"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGA" xil_pn:name="cpld_tester.nga"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGC" xil_pn:name="cpld_tester.ngc"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGD" xil_pn:name="cpld_tester.ngd"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGR" xil_pn:name="cpld_tester.ngr"/>
+    <file xil_pn:fileType="FILE_PAD_MISC" xil_pn:name="cpld_tester.pad"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_PNX" xil_pn:name="cpld_tester.pnx"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="cpld_tester.prj"/>
+    <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="cpld_tester.rpt"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_STX" xil_pn:name="cpld_tester.stx"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_REPORT" xil_pn:name="cpld_tester.syr"/>
+    <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="cpld_tester.tim"/>
+    <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="cpld_tester.tspec"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_VM6" xil_pn:name="cpld_tester.vm6"/>
+    <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="cpld_tester.xml"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST" xil_pn:name="cpld_tester.xst"/>
+    <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="cpld_tester_build.xml"/>
+    <file xil_pn:fileType="FILE_HTML" xil_pn:name="cpld_tester_envsettings.html"/>
+    <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="cpld_tester_html"/>
+    <file xil_pn:fileType="FILE_XRPT" xil_pn:name="cpld_tester_ngdbuild.xrpt"/>
+    <file xil_pn:fileType="FILE_PAD_EXCEL_REPORT" xil_pn:name="cpld_tester_pad.csv"/>
+    <file xil_pn:fileType="FILE_HTML" xil_pn:name="cpld_tester_summary.html"/>
+    <file xil_pn:fileType="FILE_XRPT" xil_pn:name="cpld_tester_xst.xrpt"/>
+    <file xil_pn:fileType="FILE_LOG" xil_pn:name="fuse.log"/>
+    <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="isim"/>
+    <file xil_pn:branch="BehavioralSim" xil_pn:fileType="FILE_CMD" xil_pn:name="isim.cmd"/>
+    <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="webtalk_pn.xml"/>
+    <file xil_pn:branch="BehavioralSim" xil_pn:fileType="FILE_INI" xil_pn:name="xilinxsim.ini"/>
+    <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="xlnx_auto_0_xdb"/>
+    <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="xst"/>
+  </files>
 
-  <transforms xmlns="http://www.xilinx.com/XMLSchema"/>
+  <transforms xmlns="http://www.xilinx.com/XMLSchema">
+    <transform xil_pn:end_ts="1675407220" xil_pn:name="TRAN_copyInitialToAbstractSimulation" xil_pn:start_ts="1675407220">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1675423043" xil_pn:in_ck="6763466276305038105" xil_pn:name="TRAN_copyAbstractToPostAbstractSimulation" xil_pn:start_ts="1675423043">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputChanged"/>
+      <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="TestBench.vhd"/>
+      <outfile xil_pn:name="cpld_tester.vhd"/>
+    </transform>
+    <transform xil_pn:end_ts="1675411212" xil_pn:name="TRAN_schematicsToHdlSim" xil_pn:prop_ck="3551885925670325137" xil_pn:start_ts="1675411212">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1675411212" xil_pn:in_ck="6763466276305038105" xil_pn:name="TRAN_copyPostAbstractToPreSimulation" xil_pn:start_ts="1675411212">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputChanged"/>
+      <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="TestBench.vhd"/>
+      <outfile xil_pn:name="cpld_tester.vhd"/>
+    </transform>
+    <transform xil_pn:end_ts="1675411214" xil_pn:in_ck="6763466276305038105" xil_pn:name="TRAN_ISimulateBehavioralModelRunFuse" xil_pn:prop_ck="8545264026307778153" xil_pn:start_ts="1675411212">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="InputChanged"/>
+      <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="TestBench_beh.prj"/>
+      <outfile xil_pn:name="TestBench_isim_beh.exe"/>
+      <outfile xil_pn:name="fuse.log"/>
+      <outfile xil_pn:name="isim"/>
+      <outfile xil_pn:name="xilinxsim.ini"/>
+    </transform>
+    <transform xil_pn:end_ts="1675411214" xil_pn:in_ck="7142743428940672367" xil_pn:name="TRAN_ISimulateBehavioralModel" xil_pn:prop_ck="-5376858539133619018" xil_pn:start_ts="1675411214">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForPredecessor"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="TestBench_isim_beh.wdb"/>
+      <outfile xil_pn:name="isim.cmd"/>
+    </transform>
+    <transform xil_pn:end_ts="1675406867" xil_pn:name="TRAN_copyInitialToXSTAbstractSynthesis" xil_pn:start_ts="1675406867">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1675406867" xil_pn:name="TRAN_schematicsToHdl" xil_pn:prop_ck="-8453560767285983721" xil_pn:start_ts="1675406867">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1675425362" xil_pn:in_ck="2152261090076268169" xil_pn:name="TRANEXT_xstsynthesize_xbr" xil_pn:prop_ck="-3226761262782298185" xil_pn:start_ts="1675425359">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="_xmsgs/xst.xmsgs"/>
+      <outfile xil_pn:name="cpld_tester.lso"/>
+      <outfile xil_pn:name="cpld_tester.ngc"/>
+      <outfile xil_pn:name="cpld_tester.ngr"/>
+      <outfile xil_pn:name="cpld_tester.prj"/>
+      <outfile xil_pn:name="cpld_tester.stx"/>
+      <outfile xil_pn:name="cpld_tester.syr"/>
+      <outfile xil_pn:name="cpld_tester.xst"/>
+      <outfile xil_pn:name="cpld_tester_xst.xrpt"/>
+      <outfile xil_pn:name="webtalk_pn.xml"/>
+      <outfile xil_pn:name="xst"/>
+    </transform>
+    <transform xil_pn:end_ts="1675406902" xil_pn:in_ck="-3272996808029489004" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="9105857126248505073" xil_pn:start_ts="1675406902">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1675425364" xil_pn:in_ck="3995618630519820915" xil_pn:name="TRAN_ngdbuild" xil_pn:prop_ck="2257924951880178845" xil_pn:start_ts="1675425362">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="_ngo"/>
+      <outfile xil_pn:name="_xmsgs/ngdbuild.xmsgs"/>
+      <outfile xil_pn:name="cpld_tester.bld"/>
+      <outfile xil_pn:name="cpld_tester.ngd"/>
+      <outfile xil_pn:name="cpld_tester_ngdbuild.xrpt"/>
+    </transform>
+    <transform xil_pn:end_ts="1675425367" xil_pn:in_ck="2152261090076259424" xil_pn:name="TRANEXT_vm6File_xbr" xil_pn:prop_ck="5441916192402376701" xil_pn:start_ts="1675425364">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="WarningsGenerated"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="cpld_tester.chk"/>
+      <outfile xil_pn:name="cpld_tester.cxt"/>
+      <outfile xil_pn:name="cpld_tester.gyd"/>
+      <outfile xil_pn:name="cpld_tester.log"/>
+      <outfile xil_pn:name="cpld_tester.mfd"/>
+      <outfile xil_pn:name="cpld_tester.nga"/>
+      <outfile xil_pn:name="cpld_tester.pad"/>
+      <outfile xil_pn:name="cpld_tester.pnx"/>
+      <outfile xil_pn:name="cpld_tester.rpt"/>
+      <outfile xil_pn:name="cpld_tester.tim"/>
+      <outfile xil_pn:name="cpld_tester.tspec"/>
+      <outfile xil_pn:name="cpld_tester.vm6"/>
+      <outfile xil_pn:name="cpld_tester.xml"/>
+      <outfile xil_pn:name="cpld_tester_build.xml"/>
+      <outfile xil_pn:name="cpld_tester_html"/>
+      <outfile xil_pn:name="cpld_tester_pad.csv"/>
+    </transform>
+    <transform xil_pn:end_ts="1675425368" xil_pn:in_ck="2152261090076268288" xil_pn:name="TRANEXT_crtProg_xbr" xil_pn:prop_ck="158950916588" xil_pn:start_ts="1675425367">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="cpld_tester.jed"/>
+    </transform>
+    <transform xil_pn:end_ts="1675406908" xil_pn:in_ck="2152261090076268288" xil_pn:name="TRAN_timRpt" xil_pn:prop_ck="111903974446" xil_pn:start_ts="1675406907">
+      <status xil_pn:value="AbortedRun"/>
+      <status xil_pn:value="WarningsGenerated"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForInputs"/>
+      <status xil_pn:value="InputChanged"/>
+    </transform>
+  </transforms>
 
 </generated_project>
