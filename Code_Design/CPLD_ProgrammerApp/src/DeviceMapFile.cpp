@@ -8,14 +8,18 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <malloc.h>
-#include <string.h>
+#include <string>
 #include <assert.h>
 #include "DeviceMapFile.h"
 #include "DeviceInformation.h"
 
 #if (linux == 1)
 /** Path to read-only data files on Linux */
-static const char *LINUX_DATA_PATH = "/usr/share/digitallabboard/";
+static const char *XILINX_DATA1   = "/opt/Xilinx/14.7/ISE_DS/ISE/xbr/data/";
+static const char *XILINX_DATA2   = "/usr/share/digitallabboard/";
+#else
+static const char *XILINX_DATA1 = "C:/Apps/Xilinx/14.7/ISE_DS/ISE/xbr/data/";
+static const char *XILINX_DATA2 = "C:/Xilinx/14.7/ISE_DS/ISE/xbr/data/";
 #endif
 
 /**
@@ -25,6 +29,44 @@ static const char *LINUX_DATA_PATH = "/usr/share/digitallabboard/";
  * @param deviceName Name of device
  */
 DeviceMapFile::DeviceMapFile(const DeviceInformation &deviceInformation) : deviceInformation(deviceInformation) {
+}
+
+/**
+ * Looks in several locations for Xilinx data file
+ *
+ * @param mapFileName Name of file to open
+ *
+ * @return nullptr    => Error, file not found/opened
+ * @return != nullptr => File pointer
+ */
+FILE* locateMapFile(const char *mapFileName) {
+   FILE *fp = nullptr;
+   std::string path(mapFileName);
+
+   do {
+      // Try current directory
+      fp = fopen(path.c_str(), "rb");
+      if (fp != nullptr) {
+         break;
+      }
+      // Location 1
+      path = std::string(XILINX_DATA1).append(mapFileName);
+      fp = fopen(path.c_str(), "rb");
+      if (fp != nullptr) {
+         break;
+      }
+      // Location 2
+      path = std::string(XILINX_DATA2).append(mapFileName);
+      fp = fopen(path.c_str(), "rb");
+      if (fp != nullptr) {
+         break;
+      }
+   } while(false);
+
+   if (fp == nullptr) {
+      fprintf(stderr, "%s\n", path.append(" Failed to open").c_str());
+   }
+   return fp;
 }
 
 /**
@@ -39,15 +81,9 @@ const char *DeviceMapFile::loadFile(unsigned fuseLimit) {
    fuse_limit = fuseLimit;
    fuse_map = (unsigned*) malloc(fuse_limit);
 
-   FILE *fp = nullptr;
-#if (linux == 1)
-   std::string path = std::string(LINUX_DATA_PATH).append(deviceInformation.getMapfilename());
-   fp = fopen(path.c_str(), "rb");
-#else
-   fp = fopen(deviceInformation.getMapfilename(), "rb");
-#endif
+   FILE *fp = locateMapFile(deviceInformation.getMapfilename());
    if (fp == nullptr) {
-      return "Failed to open file";
+      return "Failed to open map file ";
    }
    const char *msg = loadFile(fp);
    fclose(fp);
