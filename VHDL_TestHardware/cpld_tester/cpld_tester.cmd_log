@@ -29,3 +29,17 @@ cpldfit -intstyle ise -p xc2c64a-5-VQ44 -ofmt vhdl -optimize density -htmlrpt -l
 XSLTProcess cpld_tester_build.xml 
 tsim -intstyle ise cpld_tester cpld_tester.nga 
 hprep6 -s IEEE1532 -i cpld_tester 
+xst -intstyle ise -ifn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.xst" -ofn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.syr" 
+ngdbuild -intstyle ise -dd _ngo -uc CPLD_Module.ucf -p xc2c64a-VQ44-5 cpld_tester.ngc cpld_tester.ngd  
+cpldfit -intstyle ise -p xc2c64a-5-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 cpld_tester.ngd 
+XSLTProcess cpld_tester_build.xml 
+tsim -intstyle ise cpld_tester cpld_tester.nga 
+hprep6 -s IEEE1532 -i cpld_tester 
+xst -intstyle ise -ifn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.xst" -ofn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.syr" 
+xst -intstyle ise -ifn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.xst" -ofn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.syr" 
+xst -intstyle ise -ifn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.xst" -ofn "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.syr" 
+ngdbuild -intstyle ise -dd _ngo -uc CPLD_Module.ucf -p xc2c64a-VQ44-5 cpld_tester.ngc cpld_tester.ngd  
+cpldfit -intstyle ise -p xc2c64a-5-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 cpld_tester.ngd 
+XSLTProcess cpld_tester_build.xml 
+tsim -intstyle ise cpld_tester cpld_tester.nga 
+hprep6 -s IEEE1532 -i cpld_tester 

@@ -5,14 +5,14 @@ Parameter TMPDIR set to xst/projnav.tmp
 
 
 Total REAL time to Xst completion: 0.00 secs
-Total CPU time to Xst completion: 0.03 secs
+Total CPU time to Xst completion: 0.02 secs
  
 --> 
 Parameter xsthdpdir set to xst
 
 
 Total REAL time to Xst completion: 0.00 secs
-Total CPU time to Xst completion: 0.03 secs
+Total CPU time to Xst completion: 0.02 secs
  
 --> 
 Reading design: cpld_tester.prj
@@ -103,44 +103,44 @@ Performing bidirectional port resolution...
 
 Synthesizing Unit <cpld_tester>.
     Related source file is "/home/peter/Documents/Development/DigitalLabBoard/VHDL_TestHardware/cpld_tester/cpld_tester.vhd".
-    Register <leds<10>> equivalent to <leds<0>> has been removed
-    Register <leds<11>> equivalent to <leds<0>> has been removed
-    Register <leds<12>> equivalent to <leds<0>> has been removed
-    Register <leds<13>> equivalent to <leds<0>> has been removed
-    Register <leds<14>> equivalent to <leds<0>> has been removed
-    Register <leds<15>> equivalent to <leds<0>> has been removed
-    Register <leds<16>> equivalent to <leds<0>> has been removed
-    Register <leds<17>> equivalent to <leds<0>> has been removed
-    Register <leds<18>> equivalent to <leds<0>> has been removed
-    Register <leds<19>> equivalent to <leds<0>> has been removed
     Register <leds<1>> equivalent to <leds<0>> has been removed
-    Register <leds<20>> equivalent to <leds<0>> has been removed
-    Register <leds<21>> equivalent to <leds<0>> has been removed
-    Register <leds<22>> equivalent to <leds<0>> has been removed
-    Register <leds<23>> equivalent to <leds<0>> has been removed
-    Register <leds<24>> equivalent to <leds<0>> has been removed
-    Register <leds<25>> equivalent to <leds<0>> has been removed
-    Register <leds<26>> equivalent to <leds<0>> has been removed
-    Register <leds<27>> equivalent to <leds<0>> has been removed
-    Register <leds<28>> equivalent to <leds<0>> has been removed
-    Register <leds<29>> equivalent to <leds<0>> has been removed
     Register <leds<2>> equivalent to <leds<0>> has been removed
-    Register <leds<30>> equivalent to <leds<0>> has been removed
-    Register <leds<31>> equivalent to <leds<0>> has been removed
     Register <leds<3>> equivalent to <leds<0>> has been removed
     Register <leds<4>> equivalent to <leds<0>> has been removed
     Register <leds<5>> equivalent to <leds<0>> has been removed
     Register <leds<6>> equivalent to <leds<0>> has been removed
     Register <leds<7>> equivalent to <leds<0>> has been removed
-    Register <leds<8>> equivalent to <leds<0>> has been removed
-    Register <leds<9>> equivalent to <leds<0>> has been removed
+    Register <leds<11>> equivalent to <leds<10>> has been removed
+    Register <leds<12>> equivalent to <leds<10>> has been removed
+    Register <leds<13>> equivalent to <leds<10>> has been removed
+    Register <leds<14>> equivalent to <leds<10>> has been removed
+    Register <leds<15>> equivalent to <leds<10>> has been removed
+    Register <leds<8>> equivalent to <leds<10>> has been removed
+    Register <leds<9>> equivalent to <leds<10>> has been removed
+    Register <leds<17>> equivalent to <leds<16>> has been removed
+    Register <leds<18>> equivalent to <leds<16>> has been removed
+    Register <leds<19>> equivalent to <leds<16>> has been removed
+    Register <leds<20>> equivalent to <leds<16>> has been removed
+    Register <leds<21>> equivalent to <leds<16>> has been removed
+    Register <leds<22>> equivalent to <leds<16>> has been removed
+    Register <leds<23>> equivalent to <leds<16>> has been removed
+    Register <leds<25>> equivalent to <leds<24>> has been removed
+    Register <leds<26>> equivalent to <leds<24>> has been removed
+    Register <leds<27>> equivalent to <leds<24>> has been removed
+    Register <leds<28>> equivalent to <leds<24>> has been removed
+    Register <leds<29>> equivalent to <leds<24>> has been removed
+    Register <leds<30>> equivalent to <leds<24>> has been removed
+    Register <leds<31>> equivalent to <leds<24>> has been removed
+    Found 1-bit register for signal <leds<24>>.
+    Found 1-bit register for signal <leds<16>>.
+    Found 1-bit register for signal <leds<10>>.
     Found 1-bit register for signal <leds<0>>.
     Found 7-bit up counter for signal <counter>.
     Found 1-bit register for signal <toggle>.
     Found 7-bit comparator less for signal <toggle$cmp_lt0000> created at line 22.
     Summary:
 	inferred   1 Counter(s).
-	inferred   2 D-type flip-flop(s).
+	inferred   5 D-type flip-flop(s).
 	inferred   1 Comparator(s).
 Unit <cpld_tester> synthesized.
 
@@ -151,8 +151,8 @@ HDL Synthesis Report
 Macro Statistics
 # Counters                                             : 1
  7-bit up counter                                      : 1
-# Registers                                            : 2
- 1-bit register                                        : 2
+# Registers                                            : 5
+ 1-bit register                                        : 5
 # Comparators                                          : 1
  7-bit comparator less                                 : 1
 
@@ -169,8 +169,8 @@ Advanced HDL Synthesis Report
 Macro Statistics
 # Counters                                             : 1
  7-bit up counter                                      : 1
-# Registers                                            : 2
- Flip-Flops                                            : 2
+# Registers                                            : 5
+ Flip-Flops                                            : 5
 
 =========================================================================
 
@@ -218,17 +218,18 @@ Design Statistics
 # IOs                              : 33
 
 Cell Usage :
-# BELS                             : 33
-#      AND2                        : 13
-#      AND3                        : 1
+# BELS                             : 63
+#      AND2                        : 15
+#      AND3                        : 3
+#      AND7                        : 3
 #      GND                         : 1
-#      INV                         : 10
+#      INV                         : 33
 #      OR2                         : 1
 #      OR3                         : 1
 #      XOR2                        : 6
-# FlipFlops/Latches                : 9
+# FlipFlops/Latches                : 12
 #      FD                          : 7
-#      FDCE                        : 2
+#      FDCE                        : 5
 # IO Buffers                       : 33
 #      IBUF                        : 1
 #      OBUF                        : 32
@@ -236,12 +237,12 @@ Cell Usage :
 
 
 Total REAL time to Xst completion: 2.00 secs
-Total CPU time to Xst completion: 1.88 secs
+Total CPU time to Xst completion: 1.84 secs
  
 --> 
 
 
-Total memory usage is 506728 kilobytes
+Total memory usage is 506800 kilobytes
 
 Number of errors   :    0 (   0 filtered)
 Number of warnings :    0 (   0 filtered)

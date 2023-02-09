@@ -18,9 +18,27 @@
 #include "DeviceMapFile.h"
 
 ProgrammerDialogue::ProgrammerDialogue() : ProgrammerDialogueSkeleton(nullptr) {
+
+   // Load settings
+   config = new wxConfig("cpld_programmer");
+
+   wxString str;
+   if ( config->Read("defaultFilename", &str) ) {
+      defaultFilename = str;
+   }
+   if ( config->Read("currentDirectory", &str) ) {
+      currentDirectory = str;
+   }
 }
 
 ProgrammerDialogue::~ProgrammerDialogue() {
+
+   // Save settings
+   config->Write("defaultFilename",  defaultFilename);
+   config->Write("currentDirectory", currentDirectory);
+
+   // the changes will be written back automatically
+   delete config;
 }
 
 bool isSuffix(const char *name, const char *suffix) {

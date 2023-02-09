@@ -1,6 +1,6 @@
 @echo off
 cls
-set VERSIONn=2.1.0
+set VERSIONn=2.2.0
 set APPNAME="EEE20001 Lab Software"
 set MSI_FILE=EEE20001-Lab-Software-2022-02
 

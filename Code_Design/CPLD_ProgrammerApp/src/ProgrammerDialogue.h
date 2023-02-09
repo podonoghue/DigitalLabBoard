@@ -13,7 +13,10 @@
 #include "Xsvf.h"
 #include "DeviceInformation.h"
 
+#include "wx/config.h"
+
 class ProgrammerDialogue : public ProgrammerDialogueSkeleton {
+
 private:
    ProgrammerDialogue(const ProgrammerDialogue &other) = delete;
    ProgrammerDialogue(ProgrammerDialogue &&other) = delete;
@@ -30,6 +33,9 @@ private:
 
    // Last directory used
    wxString currentDirectory;
+
+   wxConfig *config = nullptr;
+
 
    const DeviceInformation *deviceInformation = nullptr;
 

@@ -24,24 +24,21 @@ begin
       else
          counter <= 0;
          toggle  <= not toggle ;
-         leds(31 downto 24) <= (others=>toggle);
-         leds(23 downto 16) <= (others=>toggle);
-         leds(15 downto 8)  <= (others=>toggle);
-         leds(7 downto 0)   <= (others=>toggle);
       end if;
---      -- Stagger LED output changes to avoid noise problems (Vdd ?)
---      case counter is
---         when 1 =>
---            leds(31 downto 24) <= (others=>toggle);
---         when 2 =>
---            leds(23 downto 16) <= (others=>toggle);
---         when 3 =>
---            leds(15 downto 8)  <= (others=>toggle);
---         when 4 =>
---            leds(7 downto 0)   <= (others=>toggle);
---         when others =>
---            null;
---      end case; 
+      
+      -- Stagger LED output changes to avoid noise problems
+      case counter is
+         when 1 =>
+            leds(31 downto 24) <= (others=>toggle);
+         when 2 =>
+            leds(23 downto 16) <= (others=>toggle);
+         when 3 =>
+            leds(15 downto 8)  <= (others=>toggle);
+         when 4 =>
+            leds(7 downto 0)   <= (others=>toggle);
+         when others =>
+            null;
+      end case; 
     end if;
    end process;
    

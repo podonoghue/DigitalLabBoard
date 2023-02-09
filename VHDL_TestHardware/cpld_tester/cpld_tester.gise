@@ -59,6 +59,7 @@
     <file xil_pn:fileType="FILE_XRPT" xil_pn:name="cpld_tester_ngdbuild.xrpt"/>
     <file xil_pn:fileType="FILE_PAD_EXCEL_REPORT" xil_pn:name="cpld_tester_pad.csv"/>
     <file xil_pn:fileType="FILE_HTML" xil_pn:name="cpld_tester_summary.html"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="cpld_tester_vhdl.prj"/>
     <file xil_pn:fileType="FILE_XRPT" xil_pn:name="cpld_tester_xst.xrpt"/>
     <file xil_pn:fileType="FILE_LOG" xil_pn:name="fuse.log"/>
     <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="isim"/>
@@ -130,7 +131,7 @@
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1675425362" xil_pn:in_ck="2152261090076268169" xil_pn:name="TRANEXT_xstsynthesize_xbr" xil_pn:prop_ck="-3226761262782298185" xil_pn:start_ts="1675425359">
+    <transform xil_pn:end_ts="1675494685" xil_pn:in_ck="2152261090076268169" xil_pn:name="TRANEXT_xstsynthesize_xbr" xil_pn:prop_ck="-3226761262782298185" xil_pn:start_ts="1675494682">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <outfile xil_pn:name="_xmsgs/xst.xmsgs"/>
@@ -149,7 +150,7 @@
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1675425364" xil_pn:in_ck="3995618630519820915" xil_pn:name="TRAN_ngdbuild" xil_pn:prop_ck="2257924951880178845" xil_pn:start_ts="1675425362">
+    <transform xil_pn:end_ts="1675494687" xil_pn:in_ck="3995618630519820915" xil_pn:name="TRAN_ngdbuild" xil_pn:prop_ck="2257924951880178845" xil_pn:start_ts="1675494685">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <outfile xil_pn:name="_ngo"/>
@@ -158,7 +159,7 @@
       <outfile xil_pn:name="cpld_tester.ngd"/>
       <outfile xil_pn:name="cpld_tester_ngdbuild.xrpt"/>
     </transform>
-    <transform xil_pn:end_ts="1675425367" xil_pn:in_ck="2152261090076259424" xil_pn:name="TRANEXT_vm6File_xbr" xil_pn:prop_ck="5441916192402376701" xil_pn:start_ts="1675425364">
+    <transform xil_pn:end_ts="1675494691" xil_pn:in_ck="2152261090076259424" xil_pn:name="TRANEXT_vm6File_xbr" xil_pn:prop_ck="5441916192402376701" xil_pn:start_ts="1675494687">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="WarningsGenerated"/>
       <status xil_pn:value="ReadyToRun"/>
@@ -179,7 +180,7 @@
       <outfile xil_pn:name="cpld_tester_html"/>
       <outfile xil_pn:name="cpld_tester_pad.csv"/>
     </transform>
-    <transform xil_pn:end_ts="1675425368" xil_pn:in_ck="2152261090076268288" xil_pn:name="TRANEXT_crtProg_xbr" xil_pn:prop_ck="158950916588" xil_pn:start_ts="1675425367">
+    <transform xil_pn:end_ts="1675494691" xil_pn:in_ck="2152261090076268288" xil_pn:name="TRANEXT_crtProg_xbr" xil_pn:prop_ck="158950916588" xil_pn:start_ts="1675494691">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <outfile xil_pn:name="cpld_tester.jed"/>

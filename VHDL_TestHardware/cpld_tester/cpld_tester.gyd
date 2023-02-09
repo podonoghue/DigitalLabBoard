@@ -39,16 +39,16 @@ leds<31> S:PIN31
 ;The remaining section of the .gyd file is for documentation purposes only.
 ;It shows where your internal equations were placed in the last successful fit.
 
-PARTITION FB1_1 leds<25> leds<26> leds<27> counter<6>
-		 counter<3> N_PZ_137 counter<0> counter<1>
+PARTITION FB1_1 leds<25> leds<26> leds<27> N_PZ_165
+		 counter<2> counter<0> counter<3> counter<6>
 		 leds<28> leds<29> leds<30> leds<31>
-		 leds<13> counter<4> counter<5> toggle
+		 leds<13> counter<5> counter<1> counter<4>
 		
 PARTITION FB2_1 leds<24> leds<23>
 PARTITION FB2_5 leds<22> leds<21> leds<20> leds<19>
 		
 PARTITION FB2_12 leds<18> leds<17>
-PARTITION FB2_15 N_PZ_133 counter<2>
+PARTITION FB2_16 toggle
 PARTITION FB3_1 leds<12> leds<11> leds<10>
 PARTITION FB3_6 leds<9>
 PARTITION FB3_10 leds<8> leds<7> leds<6>
