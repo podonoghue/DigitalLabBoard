@@ -164,13 +164,6 @@ else
 endif
 
 ifneq ($(OS),Windows_NT)
-   # Executable will look here for libraries
-   LDFLAGS += -Wl,-rpath,${PKG_LIBDIR}
-   
-   # Linker will look here
-   LDFLAGS += -Wl,-rpath-link,${SHARED_LIBDIR}
-   LDFLAGS += -Wl,-rpath-link,${TARGET_LIBDIR}
-
    ifeq ($(UNAME_M),x86)
       CFLAGS  += -m32
       LDFLAGS += -m32
