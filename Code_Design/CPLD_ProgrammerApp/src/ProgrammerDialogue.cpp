@@ -281,6 +281,8 @@ void ProgrammerDialogue::onConfirmId( wxCommandEvent& event ) {
 
 void ProgrammerDialogue::onProgramDevice(wxCommandEvent &event) {
    programAction_static->SetLabel("Busy");
+   Refresh();
+   Update();
 
    if (!fileIsCurrent() && !loadProgrammingFile(xsvf_filePath, xsvf_fileName)) {
       // File reload failed
