@@ -12,9 +12,28 @@
 #include "MyException.h"
 
 BootloaderDialogue::BootloaderDialogue() : BootloaderDialogueSkeleton(nullptr) {
+
+   // Load settings
+   config = new wxConfig("kinetis_bootloader");
+
+   wxString str;
+   if ( config->Read("defaultFilename", &str) ) {
+      defaultFilename = str;
+   }
+   if ( config->Read("currentDirectory", &str) ) {
+      currentDirectory = str;
+   }
+
 }
 
 BootloaderDialogue::~BootloaderDialogue() {
+
+   // Save settings
+   config->Write("defaultFilename",  defaultFilename);
+   config->Write("currentDirectory", currentDirectory);
+
+   // the changes will be written back automatically
+   delete config;
 }
 
 void BootloaderDialogue::onLoadFile(wxCommandEvent &event) {

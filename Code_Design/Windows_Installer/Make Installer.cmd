@@ -2,7 +2,7 @@
 cls
 set VERSIONn=2.2.0
 set APPNAME="EEE20001 Lab Software"
-set MSI_FILE=EEE20001-Lab-Software-2022-02
+set MSI_FILE=EEE20001-Lab-Software-2023-02
 
 set SOURCE_BIN_DIR="..\PackageFiles\bin\x86_64-win-gnu"
 set BUILD_BIN_DIR="bin"

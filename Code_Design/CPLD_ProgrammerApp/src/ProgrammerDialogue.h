@@ -34,8 +34,8 @@ private:
    // Last directory used
    wxString currentDirectory;
 
+   // Application persistent settings
    wxConfig *config = nullptr;
-
 
    const DeviceInformation *deviceInformation = nullptr;
 

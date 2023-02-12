@@ -12,6 +12,8 @@
 #include "FlashImage.h"
 #include "Bootloader.h"
 
+#include "wx/config.h"
+
 class BootloaderDialogue : public BootloaderDialogueSkeleton {
 private:
    BootloaderDialogue(const BootloaderDialogue &other) = delete;
@@ -26,6 +28,9 @@ private:
 
    // Last directory used
    wxString currentDirectory;
+
+   // Application persistent settings
+   wxConfig *config = nullptr;
 
 public:
    BootloaderDialogue();
