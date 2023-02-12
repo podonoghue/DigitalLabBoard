@@ -265,10 +265,10 @@ public:
    }
 
 public:
-// Template _mapPinsOption.xml
+// Template _mapPinsOption.xml (/CMP0/classInfo)
 
    /**
-    * Configures all mapped pins associated with CMP
+    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/CMP0/_base_name, def=null, mod=null
     *
     * @note Locked pins will be unaffected
     */
@@ -281,7 +281,7 @@ public:
    }
 
    /**
-    * Disabled all mapped pins associated with CMP
+    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/CMP0/_base_name, def=null, mod=null
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -296,7 +296,7 @@ public:
    }
 
    /**
-    * Basic enable of CMP
+    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/CMP0/_base_name, def=null, mod=null
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -305,7 +305,7 @@ public:
    }
 
    /**
-    * Disables the clock to CMP and all mapped pins
+    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/CMP0/_base_name, def=null, mod=null and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();
@@ -478,7 +478,6 @@ public:
     * Converts time in seconds to time in ticks
     *
     * @param[in] seconds Time interval in seconds
-    * @param[in] scValue PDB SC register value for clock divider
     *
     * @return Time in ticks
     */
@@ -528,7 +527,7 @@ public:
     * 4b   Sampled, Filtered, internal         1      0      0     >=2            >=1    COUTA combinational, COUT filtered by busclk/PFR
     *
     * @param[in] cmpFilterSamples         Number samples that must agree before COUT changes (>=2)
-    * @param[in] CmpSampleEnable          Filter clock source
+    * @param[in] cmpSampleEnable          Filter clock source
     * @param[in] cmpFilterSamplePeriod    Period of internal sample filter (1..255). \n
     *                                     Only applicable if CmpSampleEnable_Internal
     */

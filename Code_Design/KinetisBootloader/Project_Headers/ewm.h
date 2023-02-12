@@ -219,23 +219,23 @@ public:
    }
 
 public:
-// Template _mapPinsOption.xml
+// Template _mapPinsOption.xml (/EWM/classInfo)
 
    /**
-    * Configures all mapped pins associated with EWM
+    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/EWM/_base_name, def=null, mod=null
     *
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::initPCRs();
       }
    }
 
    /**
-    * Disabled all mapped pins associated with EWM
+    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/EWM/_base_name, def=null, mod=null
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -244,13 +244,13 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::clearPCRs();
       }
    }
 
    /**
-    * Basic enable of EWM
+    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/EWM/_base_name, def=null, mod=null
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -259,7 +259,7 @@ public:
    }
 
    /**
-    * Disables the clock to EWM and all mapped pins
+    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/EWM/_base_name, def=null, mod=null and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();
@@ -402,9 +402,10 @@ public:
 
 template<class Info> EwmCallbackFunction EwmBase_T<Info>::sCallback = EwmBase_T<Info>::unhandledCallback;
 
-#if defined(USBDM_EWM_IS_DEFINED)
-class Ewm : public EwmBase_T<EwmInfo> {};
-#endif
+   /**
+    * Class representing EWM
+    */
+   class Ewm : public EwmBase_T<EwmInfo> {};
 
 /**
  * End EWM_Group

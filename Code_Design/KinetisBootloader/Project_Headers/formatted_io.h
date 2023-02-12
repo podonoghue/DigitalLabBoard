@@ -1139,8 +1139,8 @@ protected:
          value = -value;
       }
       int exponent=0;
-      double x = value*fFormat.fFloatPrecisionMultiplier;
-      if (x>4294967294) {
+      auto x = value*fFormat.fFloatPrecisionMultiplier;
+      if (x>4294967295) {
          // Change to scientific notation
          // Scale down mantissa within range (otherwise overflows long)
          while (x>=fFormat.fFloatPrecisionMultiplier*10) {
@@ -1150,18 +1150,17 @@ protected:
       }
       if ((x!=0) && (x<1)) {
          // Change to scientific notation
-         while (x<=(fFormat.fFloatPrecisionMultiplier)) {
+         while (x<=(fFormat.fFloatPrecisionMultiplier/10.0)) {
             exponent--;
             x *= 10;
          }
       }
-      double y = round(x);
-      // Rounding may push up a digit
-      if ((exponent != 0) && (y>(10*fFormat.fFloatPrecisionMultiplier))) {
-         y = round(y/10);
-         exponent++;
-      }
+      auto y = round(x);
       unsigned long scaledValue = static_cast<unsigned long>(y);
+      if (exponent != 0) {
+
+      }
+
       ultoa(buff, scaledValue/fFormat.fFloatPrecisionMultiplier, Radix_10, fFormat.fFloatPadding, fFormat.fFloatWidth, isNegative);
       if (fFormat.fFloatPrecision>0) {
          private_write(buff).private_write('.');

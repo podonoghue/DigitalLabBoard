@@ -31,36 +31,40 @@
    <item key="$signal$VSS2_descriptionSetting"             value="Vss" />
    <item key="$signal$VSSA_descriptionSetting"             value="Vss" />
    <item key="$signal$XTAL32_descriptionSetting"           value="Unused" />
+   <item key="/CMP0/cmp_fpr_filt_per"                      value="0" />
+   <item key="/CMP1/cmp_fpr_filt_per"                      value="0" />
    <item key="/Console/consoleEnable"                      value="false" />
-   <item key="/FTFL/peripheral_file"                       value="ftfl_32k_flexrom" />
-   <item key="/LINKER/linkerExtraRegions"                  value="Not initialised" />
-   <item key="/LINKER/linkerInformation"                   value="Not initialised" />
-   <item key="/LLWU/device_list"                           value="LPTMR0;CMP0;CMP1;;TSI;RTC_Alarm;;RTC_Seconds" />
-   <item key="/MCG/ClockConfig[0]"                         value="ClockConfig_PEE_48MHz" />
+   <item key="/LINKER/heapSize"                            value="2048" />
+   <item key="/LINKER/stackSize"                           value="2048" />
+   <item key="/LLWU/llwu_filt1_filtsel"                    value="3" />
+   <item key="/LLWU/llwu_filt2_filtsel"                    value="3" />
+   <item key="/MCG/ClockConfig[0]"                         value="ClockConfig_RUN_PEE_48MHz" />
    <item key="/MCG/ClockConfig[1]"                         value="ClockConfig_BLPE_4MHz" />
    <item key="/MCG/ClockConfig[2]"                         value="ClockConfig_FEE_40MHz" />
-   <item key="/MCG/DummyClockConfig[0]"                    value="ClockConfig_0" />
-   <item key="/MCG/DummyClockConfig[1]"                    value="ClockConfig_1" />
-   <item key="/MCG/DummyClockConfig[2]"                    value="ClockConfig_2" />
-   <item key="/MCG/clock_mode[0]"                          value="ClockMode_PEE" />
-   <item key="/MCG/clock_mode[1]"                          value="ClockMode_BLPE" />
-   <item key="/MCG/clock_mode[2]"                          value="ClockMode_FEE" />
+   <item key="/MCG/ClockConfig[3]"                         value="ClockConfig_3" />
+   <item key="/MCG/mcgClockMode[0]"                        value="7" />
+   <item key="/MCG/mcg_c1_frdiv[0]"                        value="4" />
+   <item key="/MCG/mcg_c2_range0[0]"                       value="2" />
+   <item key="/MCG/mcg_c2_range0[1]"                       value="2" />
+   <item key="/MCG/mcg_c2_range0[2]"                       value="2" />
+   <item key="/MCG/mcg_c2_range0[3]"                       value="2" />
    <item key="/MCG/pll0OutputFrequency[0]"                 value="96000000" />
-   <item key="/MCG/system_mcgfllclk_clock[1]"              value="80000000" />
-   <item key="/MCG/system_mcgfllclk_clock[2]"              value="80000000" />
+   <item key="/MCG/system_mcgfllclk_clock[0]"              value="83886080" />
+   <item key="/MCG/system_mcgfllclk_clock[1]"              value="83886080" />
+   <item key="/MCG/system_mcgfllclk_clock[2]"              value="83886080" />
    <item key="/OSC0/osc_input_freq"                        value="16000000" />
-   <item key="/RTC/configure_rtc"                          value="false" />
+   <item key="/PDB0/pdb_ch0_dly0"                          value="0" />
+   <item key="/PDB0/pdb_ch0_dly1"                          value="0" />
+   <item key="/PIT/pit_ldval_tsv[0]"                       value="0" />
+   <item key="/PIT/pit_ldval_tsv[1]"                       value="0" />
+   <item key="/PIT/pit_ldval_tsv[2]"                       value="0" />
+   <item key="/PIT/pit_ldval_tsv[3]"                       value="0" />
    <item key="/RTC/rtc_cr_osce"                            value="false" />
-   <item key="/SIM/ClockConfig[0]"                         value="" />
-   <item key="/SIM/ClockConfig[1]"                         value="" />
-   <item key="/SIM/ClockConfig[2]"                         value="" />
-   <item key="/SIM/sim_clkdiv2_usb"                        value="2" />
+   <item key="/SIM/sim_clkdiv1_outdiv4[0]"                 value="3" />
+   <item key="/SIM/sim_clkdiv1_outdiv4[1]"                 value="3" />
+   <item key="/SIM/sim_clkdiv1_outdiv4[2]"                 value="3" />
+   <item key="/SIM/sim_clkdiv2_usb[0]"                     value="2" />
    <item key="/SIM/sim_sopt2_pllfllsel[0]"                 value="1" />
-   <item key="/SIM/system_bus_clock[1]"                    value="4000000" />
-   <item key="/SIM/system_bus_clock[2]"                    value="40000000" />
-   <item key="/SIM/system_core_clock[1]"                   value="4000000" />
-   <item key="/SIM/system_core_clock[2]"                   value="40000000" />
-   <item key="/SIM/system_flash_clock[1]"                  value="1000000" />
-   <item key="/SIM/system_flash_clock[2]"                  value="20000000" />
+   <item key="/SIM/sim_sopt2_pllfllsel[1]"                 value="1" />
    <item key="/USB0/irqHandlingMethod"                     value="$ClassMethod" />
 </section>

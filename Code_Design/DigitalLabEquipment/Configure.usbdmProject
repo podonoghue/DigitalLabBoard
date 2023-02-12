@@ -5,7 +5,7 @@
 -->
 
 <section name="USBDM">
-   <item key="$$DeviceInfo_Device_Variant"                 value="MK20DX32VLF5" />
+   <item key="$$DeviceInfo_Device_Variant"                 value="MK20DX128VLF5" />
    <item key="$$DeviceInfo_SubFamily"                      value="MK20D5" />
    <item key="$$Hardware_Source_Filename"                  value="MK20D5.usbdmHardware" />
    <item key="$peripheral$ADC0_codeIdentifier"             value="MyAdc" />
@@ -13,7 +13,7 @@
    <item key="$peripheral$FTM0_userDescription"            value="Frequency generator" />
    <item key="$peripheral$GPIOA_polarity"                  value="16" />
    <item key="$peripheral$GPIOB_polarity"                  value="196608" />
-   <item key="$peripheral$GPIOD_polarity"                  value="15" />
+   <item key="$peripheral$GPIOD_polarity"                  value="79" />
    <item key="$peripheral$I2C0_codeIdentifier"             value="I2cInterface" />
    <item key="$peripheral$I2C0_userDescription"            value="I2C Interface for OLED, and GPIOs" />
    <item key="$pin$PTA0_pcrSetting_7"                      value="700" />
@@ -127,12 +127,10 @@
    <item key="/FTM0/check_minimums"                        value="false" />
    <item key="/FTM0/irqHandlingMethod"                     value="$ClassMethod" />
    <item key="/HARDWARE/mapAllPins"                        value="true" />
-   <item key="/I2C0/mapPinsOnEnable"                       value="false" />
    <item key="/I2S0/mapPinsOnEnable"                       value="false" />
    <item key="/LINKER/enableBootloader"                    value="true" />
    <item key="/LINKER/heapSize"                            value="0" />
    <item key="/LINKER/stackSize"                           value="2048" />
-   <item key="/LINKER/text_rom"                            value="flexNVM" />
    <item key="/LLWU/irqHandlingMethod"                     value="$ClassMethod" />
    <item key="/LLWU/llwu_filt1_filtsel"                    value="0" />
    <item key="/LLWU/llwu_filt2_filtsel"                    value="0" />
@@ -144,11 +142,13 @@
    <item key="/MCG/mcgClockMode[1]"                        value="3" />
    <item key="/MCG/mcgClockMode[2]"                        value="1" />
    <item key="/MCG/mcg_c1_frdiv[2]"                        value="4" />
-   <item key="/MCG/mcg_c2_range0[2]"                       value="1" />
+   <item key="/MCG/mcg_c2_range0[0]"                       value="2" />
+   <item key="/MCG/mcg_c2_range0[1]"                       value="2" />
+   <item key="/MCG/mcg_c2_range0[2]"                       value="2" />
+   <item key="/MCG/mcg_c2_range0[3]"                       value="2" />
    <item key="/MCG/mcg_c4_dmx32[3]"                        value="true" />
    <item key="/MCG/pll0OutputFrequency[0]"                 value="96000000" />
    <item key="/MCG/system_mcgfllclk_clock[3]"              value="95944704" />
-   <item key="/OSC0/EnableOsc"                             value="true" />
    <item key="/OSC0/mapPinsOnEnable"                       value="false" />
    <item key="/OSC0/osc_input_freq"                        value="16000000" />
    <item key="/PDB0/pdb_ch0_dly0"                          value="0" />

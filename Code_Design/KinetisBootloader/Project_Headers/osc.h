@@ -59,23 +59,23 @@ protected:
    static constexpr HardwarePtr<OSC_Type> osc = Info::baseAddress;
 
 public:
-   // Template _mapPinsOption_on.xml
+   // Template _mapPinsOption_on.xml (/OSC0/classInfo)
 
    /**
-    * Configures all mapped pins associated with OSC
+    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/OSC0/_base_name, def=null, mod=null
     *
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::initPCRs();
       }
    }
 
    /**
-    * Disabled all mapped pins associated with OSC
+    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/OSC0/_base_name, def=null, mod=null
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -84,13 +84,13 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::clearPCRs();
       }
    }
 
    /**
-    * Basic enable of OSC
+    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/OSC0/_base_name, def=null, mod=null
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -99,7 +99,7 @@ public:
    }
 
    /**
-    * Disables the clock to OSC and all mapped pins
+    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/OSC0/_base_name, def=null, mod=null and all mapped pins
     */
    static void disable() {
       
@@ -137,19 +137,10 @@ public:
 
 };
 
-#ifdef USBDM_OSC0_IS_DEFINED
-/**
- * Class providing interface to Oscillator
- */
-class Osc0 : public OscBase_T<Osc0Info> {};
-#endif
-
-#ifdef USBDM_OSC1_IS_DEFINED
-/**
- * Class providing interface to Oscillator 1
- */
-class Osc1 : public OscBase_T<Osc1Info> {};
-#endif
+   /**
+    * Class representing OSC0
+    */
+   class Osc0 : public OscBase_T<Osc0Info> {};
 
 /**
  * End OSC_Group

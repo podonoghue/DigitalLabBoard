@@ -150,7 +150,7 @@ void FrequencyGenerator::refreshFrequency() {
    // Updating OLED is time consuming and uses shared I2C so done on function queue
    static auto f = []() {
       const char *units     = "    ";
-      Hertz    frequency = This->currentFrequency;
+      unsigned    frequency = This->currentFrequency;
 
       This->oled.clearDisplay();
       This->oled.setFont(myFont);

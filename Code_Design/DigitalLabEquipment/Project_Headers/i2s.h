@@ -117,10 +117,10 @@ public:
    }
 
 public:
-   // Template _mapPinsOption_on.xml
+   // Template _mapPinsOption_on.xml (/I2S0/classInfo)
 
    /**
-    * Configures all mapped pins associated with I2S
+    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/I2S0/_base_name, def=null, mod=null
     *
     * @note Locked pins will be unaffected
     */
@@ -133,7 +133,7 @@ public:
    }
 
    /**
-    * Disabled all mapped pins associated with I2S
+    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/I2S0/_base_name, def=null, mod=null
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -148,7 +148,7 @@ public:
    }
 
    /**
-    * Basic enable of I2S
+    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/I2S0/_base_name, def=null, mod=null
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -157,7 +157,7 @@ public:
    }
 
    /**
-    * Disables the clock to I2S and all mapped pins
+    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/I2S0/_base_name, def=null, mod=null and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();

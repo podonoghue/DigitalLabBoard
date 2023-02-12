@@ -92,7 +92,7 @@ typedef GpioTable_T<GpioDInfo, 1, ActiveLow>                 CarEW;             
 typedef GpioTable_T<GpioDInfo, 2, ActiveLow>                 PedNS;                                        // PTD2(p43)
 
 /// Used to discharge TargetVdd (against leakage)
-typedef GpioTable_T<GpioDInfo, 6, ActiveHigh>                TargetVddDischarge;                           // PTD6(p47)
+typedef GpioTable_T<GpioDInfo, 6, ActiveLow>                 TargetVddDischarge;                           // PTD6(p47)
 
 /// Traffic Intersection (Bit Field)
 typedef GpioFieldTable_T<GpioDInfo, 3, 0, ActiveLow>         TrafficButtons;                               // PTD0(p41), PTD1(p42), PTD2(p43), PTD3(p44)

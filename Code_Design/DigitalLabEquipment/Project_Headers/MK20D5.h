@@ -5,7 +5,7 @@
  *           Equivalent: 
  *
  * @version  V1.6
- * @date     2023/01
+ * @date     2023/02
  *
  */
 
@@ -6531,6 +6531,7 @@ typedef struct SMC_Type {
 /**
  * @brief Serial Peripheral Interface
  */
+#define SPI_FIFO_SIZE        4          /**< Size of Tx/Rx FIFOs                                */
 /**
  * @struct SPI_Type
  * @brief  C Struct allowing access to SPI registers
@@ -6549,11 +6550,15 @@ typedef struct SPI_Type {
    union {                                      /**< 0034: (size=0004)                                                  */
       __IO uint32_t  PUSHR;                     /**< 0034: PUSH TX FIFO Register In Master Mode                         */
       __IO uint32_t  PUSHR_SLAVE;               /**< 0034: PUSH TX FIFO Register In Slave Mode                          */
+      struct {                                  /**< 0034: (size=0004)                                                  */
+         __IO uint16_t  PUSHR_DATA;             /**< 0034: PUSH TX FIFO Data Only Register In Master Mode, (Some devices only) */
+         __IO uint16_t  PUSHR_COMMAND;          /**< 0036: PUSH TX FIFO Command Register In Master Mode, (Some devices only) */
+      };
    };
    __I  uint32_t  POPR;                         /**< 0038: POP RX FIFO Register                                         */
-   __I  uint32_t  TXFR[4];                      /**< 003C: Transmit FIFO                                                */
-        uint8_t   RESERVED_2[48];               /**< 004C: 0x30 bytes                                                   */
-   __I  uint32_t  RXFR[4];                      /**< 007C: Receive FIFO                                                 */
+   __I  uint32_t  TXFR[SPI_FIFO_SIZE];          /**< 003C: Transmit FIFO                                                */
+        uint8_t   RESERVED_3[48];               /**< 004C: 0x30 bytes                                                   */
+   __I  uint32_t  RXFR[SPI_FIFO_SIZE];          /**< 007C: Receive FIFO                                                 */
 } SPI_Type;
 
 
@@ -6768,6 +6773,30 @@ typedef struct SPI_Type {
 #define SPI_PUSHR_SLAVE_TXDATA_MASK              (0xFFFFU)                                           /**< SPI0_PUSHR_SLAVE.TXDATA Mask            */
 #define SPI_PUSHR_SLAVE_TXDATA_SHIFT             (0U)                                                /**< SPI0_PUSHR_SLAVE.TXDATA Position        */
 #define SPI_PUSHR_SLAVE_TXDATA(x)                (((uint32_t)(((uint32_t)(x))<<SPI_PUSHR_SLAVE_TXDATA_SHIFT))&SPI_PUSHR_SLAVE_TXDATA_MASK) /**< SPI0_PUSHR_SLAVE.TXDATA Field           */
+/** @} */
+
+/** @name PUSHR_DATA - PUSH TX FIFO Data Only Register In Master Mode, (Some devices only) */ /** @{ */
+#define SPI_PUSHR_DATA_TXDATA_MASK               (0xFFFFU)                                           /**< SPI0_PUSHR_DATA.TXDATA Mask             */
+#define SPI_PUSHR_DATA_TXDATA_SHIFT              (0U)                                                /**< SPI0_PUSHR_DATA.TXDATA Position         */
+#define SPI_PUSHR_DATA_TXDATA(x)                 (((uint16_t)(((uint16_t)(x))<<SPI_PUSHR_DATA_TXDATA_SHIFT))&SPI_PUSHR_DATA_TXDATA_MASK) /**< SPI0_PUSHR_DATA.TXDATA Field            */
+/** @} */
+
+/** @name PUSHR_COMMAND - PUSH TX FIFO Command Register In Master Mode, (Some devices only) */ /** @{ */
+#define SPI_PUSHR_COMMAND_PCS_MASK               (0x3FU)                                             /**< SPI0_PUSHR_COMMAND.PCS Mask             */
+#define SPI_PUSHR_COMMAND_PCS_SHIFT              (0U)                                                /**< SPI0_PUSHR_COMMAND.PCS Position         */
+#define SPI_PUSHR_COMMAND_PCS(x)                 (((uint16_t)(((uint16_t)(x))<<SPI_PUSHR_COMMAND_PCS_SHIFT))&SPI_PUSHR_COMMAND_PCS_MASK) /**< SPI0_PUSHR_COMMAND.PCS Field            */
+#define SPI_PUSHR_COMMAND_CTCNT_MASK             (0x400U)                                            /**< SPI0_PUSHR_COMMAND.CTCNT Mask           */
+#define SPI_PUSHR_COMMAND_CTCNT_SHIFT            (10U)                                               /**< SPI0_PUSHR_COMMAND.CTCNT Position       */
+#define SPI_PUSHR_COMMAND_CTCNT(x)               (((uint16_t)(((uint16_t)(x))<<SPI_PUSHR_COMMAND_CTCNT_SHIFT))&SPI_PUSHR_COMMAND_CTCNT_MASK) /**< SPI0_PUSHR_COMMAND.CTCNT Field          */
+#define SPI_PUSHR_COMMAND_EOQ_MASK               (0x800U)                                            /**< SPI0_PUSHR_COMMAND.EOQ Mask             */
+#define SPI_PUSHR_COMMAND_EOQ_SHIFT              (11U)                                               /**< SPI0_PUSHR_COMMAND.EOQ Position         */
+#define SPI_PUSHR_COMMAND_EOQ(x)                 (((uint16_t)(((uint16_t)(x))<<SPI_PUSHR_COMMAND_EOQ_SHIFT))&SPI_PUSHR_COMMAND_EOQ_MASK) /**< SPI0_PUSHR_COMMAND.EOQ Field            */
+#define SPI_PUSHR_COMMAND_CTAS_MASK              (0x7000U)                                           /**< SPI0_PUSHR_COMMAND.CTAS Mask            */
+#define SPI_PUSHR_COMMAND_CTAS_SHIFT             (12U)                                               /**< SPI0_PUSHR_COMMAND.CTAS Position        */
+#define SPI_PUSHR_COMMAND_CTAS(x)                (((uint16_t)(((uint16_t)(x))<<SPI_PUSHR_COMMAND_CTAS_SHIFT))&SPI_PUSHR_COMMAND_CTAS_MASK) /**< SPI0_PUSHR_COMMAND.CTAS Field           */
+#define SPI_PUSHR_COMMAND_CONT_MASK              (0x8000U)                                           /**< SPI0_PUSHR_COMMAND.CONT Mask            */
+#define SPI_PUSHR_COMMAND_CONT_SHIFT             (15U)                                               /**< SPI0_PUSHR_COMMAND.CONT Position        */
+#define SPI_PUSHR_COMMAND_CONT(x)                (((uint16_t)(((uint16_t)(x))<<SPI_PUSHR_COMMAND_CONT_SHIFT))&SPI_PUSHR_COMMAND_CONT_MASK) /**< SPI0_PUSHR_COMMAND.CONT Field           */
 /** @} */
 
 /** @name POPR - POP RX FIFO Register */ /** @{ */

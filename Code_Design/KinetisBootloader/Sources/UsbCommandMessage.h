@@ -61,6 +61,7 @@ static inline const char *getCommandName(UsbCommand command) {
    }
    return name;
 }
+
 /**
  * General USB command message
  */

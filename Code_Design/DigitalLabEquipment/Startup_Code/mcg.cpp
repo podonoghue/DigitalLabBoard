@@ -61,48 +61,48 @@ const ClockInfo Mcg::clockInfo[] = {
       SmcRunMode_Normal,  // Run mode - Normal RUN
 
       /// Control Register 1 - Excluding CLKS, IREFS 
-      McgFllPrescale_LowDivBy1 | // FLL External Reference Divider - /1 (low)
+      McgFllPrescale_HighDivBy32 | // FLL External Reference Divider - /32 (high)
       McgIrClkEn_Enabled | // Internal Reference Clock [MCGIRCLK] - Enabled
-      MCG_C1_IREFSTEN(0),  // Internal Reference [MCGIRCLK] Stop Enable - IR disabled in STOP
+      McgIrefs_DisabledInStop,  // Internal Reference [MCGIRCLK] Stop Enable - IR disabled in STOP
 
       /// Control Register 2 - Excluding LP, FCTRIM 
-      MCG_C2_LOCRE0(0) | // OSC0 Action on Loss of Clock - Interrupt request
-      MCG_C2_RANGE0(0) | // Frequency Range Select - Low range
-      OscMode_LowPowerOscillator | // OSC0 source control - Low Power Oscillator
+      McgOsc0LossOfClockAction_Interrupt | // OSC0 Action on Loss of Clock - Interrupt request
+      McgRange0_VeryHigh | // Frequency Range Select - Very High range
+      OscMode_LowPowerOscillator | // OSC0 mode - Low Power Oscillator
       McgIrClkSrc_Fast,  // Internal Reference Clock [MCGIRCLK] Source - Fast internal reference clock
 
       /// Control Register 4 - Excluding FCTRIM, SCFTRIM 
-      MCG_C4_DMX32(0) | // DMX32 DCO lock range - Wide
-      MCG_C4_DRST_DRS(0),  // DCO Range Select - Low (x640/x732, 20-25/24 MHz)
+      McgFllLockRangeWidth_Wide | // DMX32 DCO lock range - Wide
+      McgFllLockRange_Low,  // DCO Range Select - Low (x640/x732, 20-25/24 MHz)
 
       /// Control Register 5 
-      MCG_C5_PLLCLKEN0(0) | // PLL0 Enable - PLL active as needed
-      MCG_C5_PLLSTEN0(0) | // PLL Stop Enable - PLL0 is disabled in any Stop mode
+      McgPllEnable_AsNeeded | // PLL0 Enable - PLL active as needed
+      McgPllStopEnable_DisabledInStop | // PLL Stop Enable - PLL0 is disabled in any Stop mode
       MCG_C5_PRDIV0(3),  // PLL0 External Reference Divider
 
       /// Control Register 6 
-      MCG_C6_LOLIE0(0) | // PLL Loss of Lock Interrupt Enable - No interrupt request
-      MCG_C6_PLLS(1) | // FLL/PLL Clock selection for MCGOUTCLK when CLKS=0 - PLL is selected
-      MCG_C6_CME0(0) | // OSC0 Clock Monitor Enable - Clock monitor disabled
+      PllLossOfClockInterrupt_Disabled | // PLL Loss of Lock Interrupt Enable - No interrupt request
+      McgPllFllSelect_PLL | // FLL/PLL Clock selection for MCGOUTCLK when CLKS=0 - PLL is selected
+      McgOsc0ClockMonitor_Disabled | // OSC0 Clock Monitor Enable - Clock monitor disabled
       MCG_C6_VDIV0(0),  // PLL0 VCO Divider (VDIV0)
 
       /// Status and Control Register 
-      MCG_SC_FCRDIV(0),  // Fast Internal Clock [FIRC] Reference Divider - /1
+      McgFastInternalClockDivider_DivBy1,  // Fast Internal Clock [FIRC] Reference Divider - /1
 
       /// Control Register 7 
       McgErcSelect_OscClk,  // MCG External reference clock - OSC0 Clock
 
       /// Control Register 8 
-      MCG_C8_LOCRE1(0) | // OSC1 (RTC) Loss of Clock Reset Enable - Interrupt request
-      MCG_C8_CME1(0) | // OSC1 (RTC) Clock Monitor Enable - Clock monitor disabled
-      MCG_C8_LOLRE(0),  // PLL Loss of Lock Reset Enable - Interrupt request
+      McgOsc1LossOfClockAction_Interrupt | // OSC1 (RTC) Loss of Clock Reset Enable - Interrupt request
+      McgOsc1ClockMonitor_Disabled | // OSC1 (RTC) Clock Monitor Enable - Clock monitor disabled
+      PllLossOfClockReset_Disabled,  // PLL Loss of Lock Reset Enable - Interrupt request
 
    },
 
 };
 
 /** MCGFFCLK - Fixed frequency clock (input to FLL) */
-volatile uint32_t SystemMcgffClock;
+volatile uint32_t SystemMcgFFClock;
 
 /** MCGOUTCLK - Primary output from MCG, various sources */
 volatile uint32_t SystemMcgOutClock;
@@ -473,7 +473,7 @@ void Mcg::SystemCoreClockUpdate(void) {
    // MCG external reference clock
    uint32_t mcg_erc_clock = McgInfo::getExternalReferenceClock();
 
-   // Calculate SystemMcgffClock
+   // Calculate SystemMcgFFClock
    if ((mcg->C1&MCG_C1_IREFS_MASK) == 0) {
       // External reference clock is selected with FRDIV divider
       unsigned divisor = 1;
@@ -485,11 +485,11 @@ void Mcg::SystemCoreClockUpdate(void) {
          }
       }
       divisor *= (1<<((mcg->C1&MCG_C1_FRDIV_MASK)>>MCG_C1_FRDIV_SHIFT));
-      SystemMcgffClock = mcg_erc_clock / divisor;
+      SystemMcgFFClock = mcg_erc_clock / divisor;
    }
    else {
       // Slow internal reference clock is selected
-      SystemMcgffClock = getSlowIrcFrequency();
+      SystemMcgFFClock = getSlowIrcFrequency();
    }
 
    uint32_t mcgFllClock = 0;
@@ -497,7 +497,7 @@ void Mcg::SystemCoreClockUpdate(void) {
 
    if ((mcg->C2&MCG_C2_LP_MASK) == 0) {
       // Calculate FLL clock if active
-      mcgFllClock = SystemMcgffClock *
+      mcgFllClock = SystemMcgFFClock *
       /**/                ((mcg->C4&MCG_C4_DMX32_MASK)?732:640) *
       /**/                (((mcg->C4&MCG_C4_DRST_DRS_MASK)>>MCG_C4_DRST_DRS_SHIFT)+1);
 

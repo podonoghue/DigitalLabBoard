@@ -103,24 +103,24 @@ const BootInformation bootloaderInformation = {
 /**
  * Reset system to bootloader mode
  */
-__attribute__((unused))
-static void resetToBootloader() {
-
-#ifndef SCB_AIRCR_VECTKEY
-#define SCB_AIRCR_VECTKEY(x) (((x)<<SCB_AIRCR_VECTKEY_Pos)&SCB_AIRCR_VECTKEY_Msk)
-#endif
-
-   // Set ICP on reboot
-   magicNumber = MAGIC_NUMBER;
-
-   // Request system reset
-   SCB->AIRCR = SCB_AIRCR_VECTKEY(0x5FA) | SCB_AIRCR_SYSRESETREQ_Msk;
-
-   // Wait until reset
-   for(;;) {
-      __asm__("nop");
-   }
-}
+//__attribute__((unused))
+//static void resetToBootloader() {
+//
+//#ifndef SCB_AIRCR_VECTKEY
+//#define SCB_AIRCR_VECTKEY(x) (((x)<<SCB_AIRCR_VECTKEY_Pos)&SCB_AIRCR_VECTKEY_Msk)
+//#endif
+//
+//   // Set ICP on reboot
+//   magicNumber = MAGIC_NUMBER;
+//
+//   // Request system reset
+//   SCB->AIRCR = SCB_AIRCR_VECTKEY(0x5FA) | SCB_AIRCR_SYSRESETREQ_Msk;
+//
+//   // Wait until reset
+//   for(;;) {
+//      __asm__("nop");
+//   }
+//}
 
 int main() {
 //   console.setBaudRate(defaultBaudRate);

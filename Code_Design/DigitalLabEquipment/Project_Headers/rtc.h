@@ -231,10 +231,10 @@ protected:
    static constexpr HardwarePtr<RTC_Type> rtc = Info::baseAddress;
 
 public:
-   // Template _mapPinsOption_on.xml
+   // Template _mapPinsOption_on.xml (/RTC/classInfo)
 
    /**
-    * Configures all mapped pins associated with RTC
+    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/RTC/_base_name, def=null, mod=null
     *
     * @note Locked pins will be unaffected
     */
@@ -247,7 +247,7 @@ public:
    }
 
    /**
-    * Disabled all mapped pins associated with RTC
+    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/RTC/_base_name, def=null, mod=null
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -262,7 +262,7 @@ public:
    }
 
    /**
-    * Basic enable of RTC
+    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/RTC/_base_name, def=null, mod=null
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -271,7 +271,7 @@ public:
    }
 
    /**
-    * Disables the clock to RTC and all mapped pins
+    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/RTC/_base_name, def=null, mod=null and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();
@@ -355,7 +355,7 @@ public:
     * Set up the RTC out of reset.
     */
    static void initialise() {
-      if (RtcInfo::EnableRtc) {
+      if (Info::ConfigureRtc) {
          defaultConfigure();
       }
    }

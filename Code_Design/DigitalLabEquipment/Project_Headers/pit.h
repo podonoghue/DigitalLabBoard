@@ -24,8 +24,6 @@
 
 namespace USBDM {
 
-enum DmaChannelNum : unsigned;
-
 /**
  * @addtogroup PIT_Group PIT, Programmable Interrupt Timer
  * @brief Abstraction for Programmable Interrupt Timer
@@ -1210,7 +1208,7 @@ public:
     * @param init Class containing initialisation values
     */
    static void configure(const typename Info::Init &init) {
-      
+   
       // Enable peripheral clock and map pins
       enable();
    

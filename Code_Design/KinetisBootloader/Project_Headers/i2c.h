@@ -213,6 +213,8 @@ public:
     * Transmit message.
     * Note: 0th byte of Tx is often register address.
     *
+    * @tparam txSize number of bytes to transmit
+    *
     * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
     * @param[in]  data     Data to transmit (size of transmission is inferred from array size).
     *
@@ -221,6 +223,38 @@ public:
    template<unsigned txSize>
    ErrorCode transmit(uint8_t address, const uint8_t (&data)[txSize]) {
       return transmit(address, txSize, data);
+   }
+
+   /**
+    * Transmit message.
+    * Note: 0th byte of Tx is often register address.
+    *
+    * @tparam N number of bytes to transmit (inferred)
+    *
+    * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
+    * @param[in]  data     Data to transmit (size of transmission is inferred from array size).
+    *
+    * @return E_NO_ERROR on success
+    */
+   template<unsigned N>
+   ErrorCode transmit(uint8_t address, const std::array<uint8_t, N> &data) {
+      return transmit(address, N, data.data());
+   }
+
+   /**
+    * Transmit message.
+    * Note: 0th byte of Tx is often register address.
+    *
+    * @tparam N number of bytes to transmit (inferred)
+    *
+    * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
+    * @param[in]  data     Data to transmit (size of transmission is inferred from array size).
+    *
+    * @return E_NO_ERROR on success
+    */
+   template<unsigned N>
+   ErrorCode transmit(uint8_t address, const std::array<const uint8_t, N> &data) {
+      return transmit(address, N, data.data());
    }
 
    /**
@@ -237,6 +271,8 @@ public:
    /**
     * Receive message
     *
+    * @tparam rxSize number of bytes to receive (inferred)
+    *
     * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
     * @param[out] data     Data buffer for reception (size of reception is inferred from array size)
     *
@@ -245,6 +281,21 @@ public:
    template<unsigned rxSize>
    ErrorCode receive(uint8_t address, uint8_t (&data)[rxSize]) {
       return receive(address, rxSize, data);
+   }
+
+   /**
+    * Receive message
+    *
+    * @tparam rxSize number of bytes to receive (inferred)
+    *
+    * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
+    * @param[out] data     Data buffer for reception (size of reception is inferred from array size)
+    *
+    * @return E_NO_ERROR on success
+    */
+   template<unsigned rxSize>
+   ErrorCode receive(uint8_t address, std::array<uint8_t, rxSize> &data) {
+      return receive(address, rxSize, data.data());
    }
 
    /**
@@ -269,6 +320,9 @@ public:
     *
     * Uses repeated-start.
     *
+    * @tparam TxSize Number of bytes to transmit (inferred)
+    * @tparam RxSize Number of bytes to receive (inferred)
+    *
     * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
     * @param[in]  txData   Data for transmission (Tx size inferred from array size)
     * @param[out] rxData   Date buffer for reception (Rx size inferred from array size)
@@ -285,6 +339,48 @@ public:
     * Note: 0th byte of Tx is often register address.
     *
     * Uses repeated-start.
+    *
+    * @tparam TxSize Number of bytes to transmit (inferred)
+    * @tparam RxSize Number of bytes to receive (inferred)
+    *
+    * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
+    * @param[in]  txData   Data for transmission (Tx size inferred from array size)
+    * @param[out] rxData   Date buffer for reception (Rx size inferred from array size)
+    *
+    * @return E_NO_ERROR on success
+    */
+   template<unsigned TxSize, unsigned RxSize>
+   ErrorCode txRx(uint8_t address, const std::array<uint8_t, TxSize> &txData, std::array<uint8_t, RxSize> &rxData) {
+      return txRx(address, TxSize, txData.data(), RxSize, rxData.data());
+   }
+
+   /**
+    * Transmit message followed by receive message.
+    * Note: 0th byte of Tx is often register address.
+    *
+    * Uses repeated-start.
+    *
+    * @tparam TxSize Number of bytes to transmit (inferred)
+    * @tparam RxSize Number of bytes to receive (inferred)
+    *
+    * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
+    * @param[in]  txData   Data for transmission (Tx size inferred from array size)
+    * @param[out] rxData   Date buffer for reception (Rx size inferred from array size)
+    *
+    * @return E_NO_ERROR on success
+    */
+   template<unsigned TxSize, unsigned RxSize>
+   ErrorCode txRx(uint8_t address, const std::array<const uint8_t, TxSize> &txData, std::array<uint8_t, RxSize> &rxData) {
+      return txRx(address, TxSize, txData.data(), RxSize, rxData.data());
+   }
+
+   /**
+    * Transmit message followed by receive message.
+    * Note: 0th byte of Tx is often register address.
+    *
+    * Uses repeated-start.
+    *
+    * @tparam RxSize Number of bytes to receive (inferred)
     *
     * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
     * @param[in]  txSize   Size of transmission data
@@ -303,6 +399,8 @@ public:
     * Note: 0th byte of Tx is often register address.
     *
     * Uses repeated-start.
+    *
+    * @tparam TxSize Number of bytes to transmit (inferred)
     *
     * @param[in]  address  Address of slave to communicate with (should include LSB = R/W bit = 0)
     * @param[in]  txData   Data for transmission (Tx size inferred from array size)
@@ -440,23 +538,23 @@ public:
 #endif
 
 public:
-   // Template _mapPinsOption_on.xml
+   // Template _mapPinsOption_on.xml (/I2C0/classInfo)
 
    /**
-    * Configures all mapped pins associated with I2C
+    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/I2C0/_base_name, def=null, mod=null
     *
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::initPCRs();
       }
    }
 
    /**
-    * Disabled all mapped pins associated with I2C
+    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/I2C0/_base_name, def=null, mod=null
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -465,13 +563,13 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::clearPCRs();
       }
    }
 
    /**
-    * Basic enable of I2C
+    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/I2C0/_base_name, def=null, mod=null
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -480,7 +578,7 @@ public:
    }
 
    /**
-    * Disables the clock to I2C and all mapped pins
+    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/I2C0/_base_name, def=null, mod=null and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();
@@ -632,55 +730,11 @@ template<class Info> I2cCallbackFunction I2cBase_T<Info>::sCallback = I2c::unhan
 /** Used by ISR to obtain handle of object */
 template<class Info> I2c *I2cBase_T<Info>::thisPtr = 0;
 
-#if defined(USBDM_I2C0_IS_DEFINED)
-/**
- * @brief Class representing the I2C0 interface
- *
- * <b>Example</b>\n
- * Refer @ref I2cBase_T
- */
-using I2c0 = I2cBase_T<I2c0Info>;
-#endif
+   /**
+    * Class representing I2C0
+    */
+   using I2c0 = I2cBase_T<I2c0Info>;
 
-#if defined(USBDM_I2C1_IS_DEFINED)
-/**
- * @brief Class representing the I2C1 interface
- *
- * <b>Example</b>
- * Refer @ref I2cBase_T
- */
-using I2c1 = I2cBase_T<I2c1Info>;
-#endif
-
-#if defined(USBDM_I2C2_IS_DEFINED)
-/**
- * @brief Class representing the I2C2 interface
- *
- * <b>Example</b>
- * Refer @ref I2cBase_T
- */
-using I2c2 = I2cBase_T<I2c2Info>;
-#endif
-
-#if defined(USBDM_I2C3_IS_DEFINED)
-/**
- * @brief Class representing the I2C2 interface
- *
- * <b>Example</b>
- * Refer @ref I2cBase_T
- */
-using I2c3 = I2cBase_T<I2c3Info>;
-#endif
-
-#if defined(USBDM_I2C4_IS_DEFINED)
-/**
- * @brief Class representing the I2C4 interface
- *
- * <b>Example</b>
- * Refer @ref I2cBase_T
- */
-using I2c4 = I2cBase_T<I2c4Info>;
-#endif
 /**
  * End I2C_Group
  * @}

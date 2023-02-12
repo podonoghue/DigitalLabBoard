@@ -117,23 +117,23 @@ public:
    }
 
 public:
-   // Template _mapPinsOption_on.xml
+   // Template _mapPinsOption_on.xml (/I2S0/classInfo)
 
    /**
-    * Configures all mapped pins associated with I2S
+    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/I2S0/_base_name, def=null, mod=null
     *
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::initPCRs();
       }
    }
 
    /**
-    * Disabled all mapped pins associated with I2S
+    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/I2S0/_base_name, def=null, mod=null
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -142,13 +142,13 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup && (ForceLockedPins == PinLock_Locked))) {
+      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::clearPCRs();
       }
    }
 
    /**
-    * Basic enable of I2S
+    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/I2S0/_base_name, def=null, mod=null
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -157,7 +157,7 @@ public:
    }
 
    /**
-    * Disables the clock to I2S and all mapped pins
+    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/I2S0/_base_name, def=null, mod=null and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();
@@ -215,35 +215,10 @@ template<class Info> I2sCallbackFunction I2sBase_T<Info>::sCallback = I2s::unhan
 /** Used by ISR to obtain handle of object */
 template<class Info> I2S_Type *I2sBase_T<Info>::thisPtr = 0;
 
-#if defined(USBDM_I2S0_IS_DEFINED)
-/**
- * @brief Class representing the I2S0 interface
- *
- * <b>Example</b>\n
- * Refer @ref I2sBase_T
- */
-using I2s0 = I2sBase_T<I2s0Info>;
-#endif
-
-#if defined(USBDM_I2S1_IS_DEFINED)
-/**
- * @brief Class representing the I2S1 interface
- *
- * <b>Example</b>
- * Refer @ref I2sBase_T
- */
-using I2s1 = I2sBase_T<I2s1Info>;
-#endif
-
-#if defined(USBDM_I2S2_IS_DEFINED)
-/**
- * @brief Class representing the I2S2 interface
- *
- * <b>Example</b>
- * Refer @ref I2SBase_T
- */
-using I2s2 = I2sBase_T<I2s2Info>;
-#endif
+   /**
+    * Class representing I2S0
+    */
+   using I2s0 = I2sBase_T<I2s0Info>;
 
 /**
  * End I2S_Group

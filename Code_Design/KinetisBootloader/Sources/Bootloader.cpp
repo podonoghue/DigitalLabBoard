@@ -413,6 +413,9 @@ int main() {
 //   console.writeln("icpButton  = ", icpButton);
 //   console.writeln("flashValid = ", flashValid);
 
+   // Check for error in start-up
+   checkError();
+
    for(;;) {
       pollUsb();
    }

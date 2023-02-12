@@ -1515,10 +1515,10 @@ public:
    }
 
 public:
-// Template _mapPinsOption.xml
+// Template _mapPinsOption.xml (/FTM0/classInfo)
 
    /**
-    * Configures all mapped pins associated with FTM
+    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/FTM0/_base_name, def=null, mod=null
     *
     * @note Locked pins will be unaffected
     */
@@ -1531,7 +1531,7 @@ public:
    }
 
    /**
-    * Disabled all mapped pins associated with FTM
+    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/FTM0/_base_name, def=null, mod=null
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -1546,7 +1546,7 @@ public:
    }
 
    /**
-    * Basic enable of FTM
+    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/FTM0/_base_name, def=null, mod=null
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -1555,7 +1555,7 @@ public:
    }
 
    /**
-    * Disables the clock to FTM and all mapped pins
+    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/FTM0/_base_name, def=null, mod=null and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();
