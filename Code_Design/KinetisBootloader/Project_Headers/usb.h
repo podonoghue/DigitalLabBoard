@@ -340,7 +340,7 @@ protected:
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
-   
+
       // Configure pins if selected and not already locked
       if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::initPCRs();
@@ -355,7 +355,7 @@ protected:
     * @note Locked pins will be unaffected
     */
    static void disableAllPins() {
-   
+
       // Disable pins if selected and not already locked
       if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
          Info::clearPCRs();
@@ -376,7 +376,7 @@ protected:
     */
    static void disable() {
       disableNvicInterrupts();
-      
+
       disableAllPins();
       Info::disableClock();
    }
@@ -1268,6 +1268,9 @@ void UsbBase_T<Info, EP0_SIZE>::handleGetStatus() {
    uint8_t epNum;
 
    switch(fEp0SetupBuffer.bmRequestType) {
+      default:
+         break;
+
       case REQUEST_TYPE(UsbRequestDirection_IN, UsbRequestType_STANDARD, UsbRequestRecipient_DEVICE) : // Device Status
       dataPtr = (uint8_t *) &fDeviceStatus;
       size    = sizeof(fDeviceStatus);

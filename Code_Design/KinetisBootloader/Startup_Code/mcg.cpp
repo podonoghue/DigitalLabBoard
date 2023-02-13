@@ -46,53 +46,53 @@ ClockChangeCallback *Mcg::clockChangeCallbackQueue = nullptr;
  */
 const ClockInfo Mcg::clockInfo[] = {
    {  // ClockConfig_RUN_PEE_48MHz (McgClockMode_PEE)
-   
-      /// SIM CLKDIV1 System Clock Divider Register 1 
+
+      /// SIM CLKDIV1 System Clock Divider Register 1
       SIM_CLKDIV1_OUTDIV4(3) | // Flash Clock Divider (OUTDIV4) - Divide by [1-16] - /4
       SIM_CLKDIV1_OUTDIV2(1) | // Bus Clock Divider (OUTDIV2) - Divide by [1-16] - /2
       SIM_CLKDIV1_OUTDIV1(1),  // Core & System Clock Divider (OUTDIV1) - Divide by [1-16] - /2
 
       Sim::DefaultSopt2Values[ClockConfig_RUN_PEE_48MHz].sopt2,
 
-      /// Clock Mode 
+      /// Clock Mode
       McgClockMode_PEE,  // Default Clock Mode - PLL Engaged External (PEE)
 
-      /// Run Mode 
+      /// Run Mode
       SmcRunMode_Normal,  // Run mode - Normal RUN
 
-      /// Control Register 1 - Excluding CLKS, IREFS 
+      /// Control Register 1 - Excluding CLKS, IREFS
       McgFllPrescale_HighDivBy512 | // FLL External Reference Divider - /512 (high)
       McgIrClkEn_Enabled | // Internal Reference Clock [MCGIRCLK] - Enabled
       McgIrefs_DisabledInStop,  // Internal Reference [MCGIRCLK] Stop Enable - IR disabled in STOP
 
-      /// Control Register 2 - Excluding LP, FCTRIM 
+      /// Control Register 2 - Excluding LP, FCTRIM
       McgOsc0LossOfClockAction_Interrupt | // OSC0 Action on Loss of Clock - Interrupt request
       McgRange0_VeryHigh | // Frequency Range Select - Very High range
       OscMode_LowPowerOscillator | // OSC0 mode - Low Power Oscillator
       McgIrClkSrc_Fast,  // Internal Reference Clock [MCGIRCLK] Source - Fast internal reference clock
 
-      /// Control Register 4 - Excluding FCTRIM, SCFTRIM 
+      /// Control Register 4 - Excluding FCTRIM, SCFTRIM
       McgFllLockRangeWidth_Wide | // DMX32 DCO lock range - Wide
       McgFllLockRange_High,  // DCO Range Select - High (x2560/x2929, 80-100/96 MHz)
 
-      /// Control Register 5 
+      /// Control Register 5
       McgPllEnable_AsNeeded | // PLL0 Enable - PLL active as needed
       McgPllStopEnable_DisabledInStop | // PLL Stop Enable - PLL0 is disabled in any Stop mode
       MCG_C5_PRDIV0(3),  // PLL0 External Reference Divider
 
-      /// Control Register 6 
+      /// Control Register 6
       PllLossOfClockInterrupt_Disabled | // PLL Loss of Lock Interrupt Enable - No interrupt request
       McgPllFllSelect_PLL | // FLL/PLL Clock selection for MCGOUTCLK when CLKS=0 - PLL is selected
       McgOsc0ClockMonitor_Disabled | // OSC0 Clock Monitor Enable - Clock monitor disabled
       MCG_C6_VDIV0(0),  // PLL0 VCO Divider (VDIV0)
 
-      /// Status and Control Register 
+      /// Status and Control Register
       McgFastInternalClockDivider_DivBy1,  // Fast Internal Clock [FIRC] Reference Divider - /1
 
-      /// Control Register 7 
+      /// Control Register 7
       McgErcSelect_OscClk,  // MCG External reference clock - OSC0 Clock
 
-      /// Control Register 8 
+      /// Control Register 8
       McgOsc1LossOfClockAction_Interrupt | // OSC1 (RTC) Loss of Clock Reset Enable - Interrupt request
       McgOsc1ClockMonitor_Disabled | // OSC1 (RTC) Clock Monitor Enable - Clock monitor disabled
       PllLossOfClockReset_Disabled,  // PLL Loss of Lock Reset Enable - Interrupt request
@@ -520,6 +520,8 @@ void Mcg::SystemCoreClockUpdate(void) {
    SystemMcgPllClock = 0;
 
    switch (mcg->S&MCG_S_CLKST_MASK) {
+      default:
+         break;
       case MCG_S_CLKST(0) : // FLL
          SystemMcgOutClock = mcgFllClock;
          SystemMcgFllClock = mcgFllClock;

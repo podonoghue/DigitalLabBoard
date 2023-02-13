@@ -212,7 +212,7 @@ static void resetSystem() {
    }
 }
 
-volatile bool icpButton;
+volatile bool icpButtonNotPressed;
 volatile bool flashValid;
 
 /**
@@ -233,10 +233,10 @@ void checkICP() {
       __asm__("nop");
    }
 
-   icpButton  = IcpButton::isReleased();
-   flashValid = isFlashValid();
+   icpButtonNotPressed = IcpButton::isReleased();
+   flashValid          = isFlashValid();
 
-   if (icpButton && flashValid) {
+   if (icpButtonNotPressed && flashValid) {
       callFlashImage();
    }
 }
@@ -410,7 +410,7 @@ void pollUsb() {
 }
 
 int main() {
-//   console.writeln("icpButton  = ", icpButton);
+//   console.writeln("icpButtonNotPressed  = ", icpButtonNotPressed);
 //   console.writeln("flashValid = ", flashValid);
 
    // Check for error in start-up

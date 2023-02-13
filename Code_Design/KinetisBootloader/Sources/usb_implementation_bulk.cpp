@@ -195,6 +195,8 @@ void Usb0::handleTokenComplete(UsbStat usbStat) {
 
    fEndPoints[endPoint]->flipOddEven(usbStat);
    switch (endPoint) {
+      default:
+         break;
       case BULK_OUT_ENDPOINT: // Accept OUT token
          setActive();
          epBulkOut.handleOutToken();
