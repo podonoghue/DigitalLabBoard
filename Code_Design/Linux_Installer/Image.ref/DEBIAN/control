@@ -6,7 +6,7 @@ Priority: optional
 Maintainer: P O'Donoghue <1848579+podonoghue@users.noreply.github.com>
 Homepage: https://github.com/podonoghue/DigitalLabBoard
 Package: eee20001-lab-software
-Depends: libwxbase3.0-0v5,libwxgtk3.0-gtk3-0v5,libc6
+Depends: libusb-1.0-0,libwxbase3.0-0v5,libwxgtk3.0-gtk3-0v5,libc6
 Description: Software for Digital Lab board 
  Bootloader application for updating board firmware in flash.
  .
