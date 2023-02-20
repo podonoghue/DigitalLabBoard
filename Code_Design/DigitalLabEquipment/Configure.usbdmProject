@@ -5,7 +5,7 @@
 -->
 
 <section name="USBDM">
-   <item key="$$DeviceInfo_Device_Variant"                 value="MK20DX32VLF5" />
+   <item key="$$DeviceInfo_Device_Variant"                 value="MK20DX128VLF5" />
    <item key="$$DeviceInfo_SubFamily"                      value="MK20D5" />
    <item key="$$Hardware_Source_Filename"                  value="MK20D5.usbdmHardware" />
    <item key="$peripheral$ADC0_codeIdentifier"             value="MyAdc" />
@@ -128,10 +128,8 @@
    <item key="/FTM0/irqHandlingMethod"                     value="$ClassMethod" />
    <item key="/HARDWARE/mapAllPins"                        value="true" />
    <item key="/I2S0/mapPinsOnEnable"                       value="false" />
-   <item key="/LINKER/enableBootloader"                    value="true" />
    <item key="/LINKER/heapSize"                            value="0" />
    <item key="/LINKER/stackSize"                           value="2048" />
-   <item key="/LINKER/text_rom"                            value="flexNVM" />
    <item key="/LLWU/irqHandlingMethod"                     value="$ClassMethod" />
    <item key="/LLWU/llwu_filt1_filtsel"                    value="0" />
    <item key="/LLWU/llwu_filt2_filtsel"                    value="0" />
