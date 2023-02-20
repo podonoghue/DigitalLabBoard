@@ -332,23 +332,23 @@ protected:
 
 protected:
 
-// Template _mapPinsOption_on.xml (/USB0/classInfo)
+// Template _mapPinsOption_on.xml
 
    /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/USB0/_base_name, def=null, mod=null
+    * Configures all mapped pins associated with USB
     *
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
+      if constexpr (Info::mapPinsOnEnable) {
          Info::initPCRs();
       }
    }
 
    /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/USB0/_base_name, def=null, mod=null
+    * Disabled all mapped pins associated with USB
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -357,13 +357,13 @@ protected:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
+      if constexpr (Info::mapPinsOnEnable) {
          Info::clearPCRs();
       }
    }
 
    /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/USB0/_base_name, def=null, mod=null
+    * Basic enable of USB
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -372,7 +372,7 @@ protected:
    }
 
    /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/USB0/_base_name, def=null, mod=null and all mapped pins
+    * Disables the clock to USB and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();

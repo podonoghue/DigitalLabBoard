@@ -588,23 +588,23 @@ public:
    /** @return Base address of ADC.R[index] registers as uint32_t */
    static constexpr uint32_t adcR(unsigned index) { return adcBase() + offsetof(ADC_Type, R) + index*sizeof(ADC_Type::R[0]); }
 
-// Template _mapPinsOption.xml (/ADC0/classInfo)
+// Template _mapPinsOption.xml
 
    /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/ADC0/_base_name, def=null, mod=null
+    * Configures all mapped pins associated with ADC
     *
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
+      if constexpr (Info::mapPinsOnEnable) {
          Info::initPCRs();
       }
    }
 
    /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/ADC0/_base_name, def=null, mod=null
+    * Disabled all mapped pins associated with ADC
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -613,13 +613,13 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
+      if constexpr (Info::mapPinsOnEnable) {
          Info::clearPCRs();
       }
    }
 
    /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/ADC0/_base_name, def=null, mod=null
+    * Basic enable of ADC
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -628,7 +628,7 @@ public:
    }
 
    /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/ADC0/_base_name, def=null, mod=null and all mapped pins
+    * Disables the clock to ADC and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();

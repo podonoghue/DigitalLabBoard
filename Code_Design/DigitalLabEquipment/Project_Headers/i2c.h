@@ -55,7 +55,7 @@ public:
    I2C_State           state;               //!< State of current transaction
 
 protected:
-   static constexpr unsigned TIMEOUT_LIMIT = 1000000;
+   static constexpr unsigned TIMEOUT_LIMIT = 100000;
 
    /** Callback to catch unhandled interrupt */
    static void unhandledCallback() {
@@ -187,8 +187,8 @@ public:
       }
       if (state != i2c_idle) {
          errorCode = E_TIMEOUT;
+         busHangReset();
       }
-      busHangReset();
    }
 
    /**
@@ -538,23 +538,23 @@ public:
 #endif
 
 public:
-   // Template _mapPinsOption_on.xml (/I2C0/classInfo)
+   // Template _mapPinsOption_on.xml
 
    /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/I2C0/_base_name, def=null, mod=null
+    * Configures all mapped pins associated with I2C
     *
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
    
       // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
+      if constexpr (Info::mapPinsOnEnable) {
          Info::initPCRs();
       }
    }
 
    /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/I2C0/_base_name, def=null, mod=null
+    * Disabled all mapped pins associated with I2C
     *
     * @note Only the lower 16-bits of the PCR registers are modified
     *
@@ -563,13 +563,13 @@ public:
    static void disableAllPins() {
    
       // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
+      if constexpr (Info::mapPinsOnEnable) {
          Info::clearPCRs();
       }
    }
 
    /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/I2C0/_base_name, def=null, mod=null
+    * Basic enable of I2C
     * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
     */
    static void enable() {
@@ -578,7 +578,7 @@ public:
    }
 
    /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/I2C0/_base_name, def=null, mod=null and all mapped pins
+    * Disables the clock to I2C and all mapped pins
     */
    static void disable() {
       disableNvicInterrupts();
@@ -601,7 +601,7 @@ public:
       static_assert(Info::info[Info::sclPin].gpioBit >= 0, "I2Cx_SCL has not been assigned to a pin - Modify Configure.usbdm");
       static_assert(Info::info[Info::sdaPin].gpioBit >= 0, "I2Cx_SDA has not been assigned to a pin - Modify Configure.usbdm");
 
-      busHangReset();
+//      busHangReset();
 
       init(myAddress);
       setBPS(bps);
@@ -656,11 +656,17 @@ public:
       if (i2cMode&I2C_C1_IICIE_MASK) {
          NVIC_EnableIRQ(Info::irqNums[0]);
       }
+
+      // Set slave address
+      i2c->C2  = I2C_C2_AD(myAddress>>8);
+
+      // Clear status
+      i2c->S  = I2C_S_ARBL_MASK|I2C_S_IICIF_MASK;
+
       // Enable I2C peripheral
       i2c->C1 = I2C_C1_IICEN_MASK|i2cMode;
 
       // Default options
-      i2c->C2  = I2C_C2_AD(myAddress>>8);
       i2c->A1  = myAddress&~1;
       i2c->FLT = I2C_FLT_FLT(2);
    }
@@ -672,6 +678,9 @@ public:
     * This is useful if a slave is part-way through a transaction when the master goes away!
     */
    virtual void busHangReset() {
+
+      // Disable I2C to clear some status flags
+      i2c->C1 = i2c->C1 & ~I2C_C1_IICEN_MASK;
 
       static auto delay = [] {
          for(int j=0; j<20; j++) {
@@ -712,6 +721,9 @@ public:
       delay();
       sdaGpio::setIn();  // SCL=T, SDA=T
       delay();
+
+      // Enable I2C
+      i2c->C1 = i2c->C1 | ~I2C_C1_IICEN_MASK;
 
       // Restore pin mapping
       Info::initPCRs();
