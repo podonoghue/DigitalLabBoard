@@ -24,7 +24,7 @@ using IcpButton = GpioA<4,  USBDM::ActiveLow>;
 using DebugPin  = GpioD<4,  USBDM::ActiveLow>;
 
 /// What hardware this boot loader is built for
-static constexpr HardwareType BOOT_HARDWARE_VERSION  = HW_LOGIC_BOARD_V4a;
+static constexpr HardwareType BOOT_HARDWARE_VERSION  = HW_LOGIC_BOARD_V4;
 
 /// What the version of the bootloader is
 static constexpr uint32_t     BOOT_SOFTWARE_VERSION  = BOOTLOADER_V4;
