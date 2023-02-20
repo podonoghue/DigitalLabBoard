@@ -110,6 +110,11 @@ void mapAllPins() {
    }
 
    /**
+    * Callback function for Channel Fault and timer overflow for Ftm0
+    */
+   Ftm0Info::CallbackFunction Ftm0Info::callback = unhandledCallback;
+   
+   /**
     * Callback table for programmatically set handlers for Ftm0
     */
    Ftm0Info::ChannelCallbackFunction Ftm0Info::channelCallbacks[] = {

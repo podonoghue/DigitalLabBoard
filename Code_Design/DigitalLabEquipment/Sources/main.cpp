@@ -62,10 +62,11 @@ public:
 // Must be first object created
 static Initialise           initialise;
 
-static Power                powerControl{};
-static I2cInterface         i2c{};
-static Oled                 oled(i2c);
 static FunctionQueue        functionQueue{};
+
+static I2cInterface         i2c{};
+static Power                powerControl(i2c, functionQueue);
+static Oled                 oled(i2c);
 static MotorSimulator       motorSimulator(functionQueue, powerControl);
 static FrequencyGenerator   frequencyGenerator(oled, functionQueue, powerControl);
 static Switches             switches(i2c, functionQueue, powerControl);
@@ -82,7 +83,7 @@ void Initialise::buttonPollTimerCallback() {
    traffic.pollButtons();
 }
 
-static constexpr unsigned HARDWARE_VERSION = HW_LOGIC_BOARD_V4a;
+static constexpr unsigned HARDWARE_VERSION = HW_LOGIC_BOARD_V4;
 
 __attribute__ ((section(".noinit")))
 static uint32_t magicNumber;
@@ -151,6 +152,10 @@ int main() {
          auto f = functionQueue.deQueue();
          if (f != nullptr) {
             f();
+//            ErrorCode errorCode = f();
+//            if (errorCode == E_TIMEOUT) {
+//               i2c.init(0);
+//            }
          }
       }
    }

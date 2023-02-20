@@ -87,6 +87,7 @@ private:
       // Updating OLED is time consuming and uses shared I2C so done on function queue
       static auto f = []() {
          This->oled.refreshImage();
+         return USBDM::E_NO_ERROR;
       };
       functionQueue.enQueue(f);
    }
@@ -95,6 +96,7 @@ private:
       // Initialising OLED is time consuming and uses shared I2C so done on function queue
       static auto f = []() {
          This->oled.initialise();
+         return USBDM::E_NO_ERROR;
       };
       functionQueue.enQueue(f);
    }
@@ -138,6 +140,7 @@ public:
     * @param msg Message to display
     *
     * @note This can only be done BEFORE the signal generator is enabled.
+    * @note The message is not copied - it must persist until actually displayed.
     */
    void setStartupMessage(const char *msg) {
       startupMessage = msg;

@@ -8,9 +8,10 @@
 #ifndef SOURCES_FUNCTIONQUEUE_H_
 #define SOURCES_FUNCTIONQUEUE_H_
 
+#include "errno.h"
 #include "queue.h"
 
-using FunctionPtr   = void (*)();
+using FunctionPtr   = USBDM::ErrorCode ((*)());
 using FunctionQueue = USBDM::Queue<FunctionPtr, 10>;
 
 #endif /* SOURCES_FUNCTIONQUEUE_H_ */

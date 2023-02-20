@@ -47,8 +47,16 @@ void Power::pollPower() {
             powerOnRecoveryCount = POWER_ON_DELAY_COUNT;
          }
          else {
-            disableTargetVdd();
             powerOffNotify();
+
+            static auto f = []() {
+               // Disable I2C pins as power cycle can upset SCL/SDA
+               I2cInterface::disableAllPins();
+               disableTargetVdd();
+               return USBDM::E_NO_ERROR;
+            };
+            // Schedule power off (after pending transfers)
+            functionQueue.enQueueDiscardOnFull(f);
          }
       }
    }
@@ -57,6 +65,8 @@ void Power::pollPower() {
       TargetVddSample::startConversion(AdcInterrupt_Enabled);
    }
    if (powerOnRecoveryCount == 1) {
+      // Enable I2C pins after power stable
+      I2cInterface::configureAllPins();
       powerOnNotify();
    }
 }

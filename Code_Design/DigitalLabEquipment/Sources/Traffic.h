@@ -70,6 +70,7 @@ public:
    void pollButtons() {
       static auto f = []() {
          This->updateSwitches();
+         return USBDM::E_NO_ERROR;
       };
       functionQueue.enQueueDiscardOnFull(f);
    }

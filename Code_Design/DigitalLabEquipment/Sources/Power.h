@@ -8,7 +8,9 @@
 #ifndef SOURCES_POWER_H_
 #define SOURCES_POWER_H_
 
+#include "i2c.h"
 #include "Configure.h"
+#include "FunctionQueue.h"
 
 class Power;
 
@@ -35,6 +37,11 @@ public:
 
 class Power {
 private:
+   USBDM::I2c &i2c;
+
+   /// Queue for serialised function execution
+   FunctionQueue  &functionQueue;
+
    bool     powerOn              = false;
    bool     lastButtonValue      = false;
    unsigned stableCount          = 0;
@@ -108,14 +115,14 @@ private:
       PowerEnableControl::on();
    }
 
-   /** 
+   /**
     * Disable target Vdd
     *
     * Disables 3.3V regulator
     * Connects TargetVddDischarge to target Vdd and makes active
     * Disconnects TargetVddSample
     */
-   void disableTargetVdd() {
+   static void disableTargetVdd() {
       using namespace USBDM;
 
       PowerEnableControl::off();
@@ -124,7 +131,7 @@ private:
    }
 
 public:
-   Power() {
+   Power(USBDM::I2c &i2c, FunctionQueue &functionQueue) : i2c(i2c), functionQueue(functionQueue) {
 
       usbdm_assert((This == nullptr), "Only one instance of Power object is allowed");
 

@@ -175,6 +175,7 @@ void FrequencyGenerator::refreshFrequency() {
       }
       This->oled.resetFormat();
       This->oled.refreshImage();
+      return E_NO_ERROR;
    };
 
    functionQueue.enQueue(f);
@@ -269,6 +270,7 @@ void FrequencyGenerator::softPowerOn() {
          This->oled.write(This->startupMessage);
          This->oled.refreshImage();
          This->startupMessage = nullptr;
+         return E_NO_ERROR;
       };
       functionQueue.enQueue(f);
       return;
