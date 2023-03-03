@@ -49,6 +49,13 @@ void Switches::runTests() {
  * Serialised call-back function
  * - Polls switches
  * - Updates LEDs and user outputs
+ *
+ * Switches and LEDs share the same pin of the GPIO expander.
+ * The port is 3-stated to read the switches (using internal GPIO pull-ups).
+ * Polled switches are active-low.
+ *
+ * After polling the GPIO is driven low or left 3-state to control the LEDs,
+ * i.e. data value is always 0 and direction is controlled based on switch value.
  */
 void Switches::updateSwitches() {
    static uint8_t  lastButtonValue      = 0;
@@ -83,7 +90,7 @@ void Switches::updateSwitches() {
       }
       if (stableCount == LATCHED_INTERVAL_COUNT) {
          // Latch active buttons
-         latchedOutputValues ^= currentButtonValue;
+         latchedOutputValues |= currentButtonValue;
       }
    }
    // Restore LEDs (either 3-state or low)

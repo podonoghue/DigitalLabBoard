@@ -207,6 +207,7 @@ void FrequencyGenerator::pollButtons() {
    /// Frequency generator - Mask for DOWN button (see FrequencyButtons)
    static constexpr unsigned FREQUENCY_DOWN_BUTTON = 1<<(USBDM::FrequencyDownButton::BITNUM - USBDM::FrequencyButtons::RIGHT);
 
+   static bool autoRepeat = false;
 
    static unsigned lastButtonValue     = 0;
    static unsigned stableCount         = 0;
@@ -221,11 +222,10 @@ void FrequencyGenerator::pollButtons() {
    if (lastButtonValue != currentButtonValue) {
       stableCount     = 0;
       lastButtonValue = currentButtonValue;
+      autoRepeat      = false;
       return;
    }
-   if (stableCount < DEBOUNCE_INTERVAL_COUNT+1) {
-      stableCount++;
-   }
+   stableCount++;
    if (stableCount == DEBOUNCE_INTERVAL_COUNT) {
       switch(currentButtonValue) {
          case FREQUENCY_UP_BUTTON:
@@ -249,6 +249,15 @@ void FrequencyGenerator::pollButtons() {
          default:
             break;
       }
+   }
+   else if (autoRepeat && (stableCount >= AUTO_REPEAT_RATE)) {
+      // Repeat at this rate
+      stableCount = 0;
+   }
+   else if (stableCount >= AUTO_REPEAT_COUNT) {
+      // Initial repeat delay reached.
+      stableCount = 0;
+      autoRepeat  = true;
    }
 }
 

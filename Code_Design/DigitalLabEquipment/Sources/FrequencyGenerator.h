@@ -45,8 +45,8 @@ private:
 //   static const USBDM::Hertz freqs[];
 
    /**
- * Display current Frequency on LCD
- * This is done on the function queue
+    * Display current Frequency on LCD
+    * This is done on the function queue
     */
    void refreshFrequency();
 

@@ -19,6 +19,12 @@ static constexpr unsigned DEBOUNCE_INTERVAL_COUNT = 20/5;
 /// Interval x5ms for switch latching
 static constexpr unsigned LATCHED_INTERVAL_COUNT = 2000/5;
 
+/// Interval x5ms for switch initial auto-repeat for frequency
+static constexpr unsigned AUTO_REPEAT_COUNT = 1000/5;
+
+/// Interval x5ms for switch auto-repeat for frequency
+static constexpr unsigned AUTO_REPEAT_RATE = 500/5;
+
 /// Interval x5ms for power switch delay
 static constexpr unsigned POWER_BUTTON_DELAY_COUNT = 200/5;
 
