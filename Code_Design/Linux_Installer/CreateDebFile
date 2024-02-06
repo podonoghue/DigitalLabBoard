@@ -3,7 +3,7 @@
 # Version Information
 MAJOR=2
 MINOR=3
-MICRO=0
+MICRO=1
 NANO=0
 DEBIAN_VERSION=1
 VERSION=${MAJOR}.${MINOR}.${MICRO}.${NANO}
@@ -28,7 +28,7 @@ makeDebFile() {
 
    echo "Working in " `pwd`
 
-   CP="cp -p"
+   CP="cp -pv"
    MKDIR="mkdir -p"
    RM="rm -f"
    MV="mv"
@@ -54,10 +54,10 @@ makeDebFile() {
 
 #  ${MKDIR} ${LIB_PKG_DIR}
 
-#   echo ${CP} -r "${SOURCE_DIRECTORY}/../PackageFiles/bin/${ARCH}-linux-gnu/." "${BIN_DIR}" 
+   #~ echo ${CP} -r "${SOURCE_DIRECTORY}/../PackageFiles/bin/${ARCH}-linux-gnu/." "${BIN_DIR}" 
    ${CP} -r "${SOURCE_DIRECTORY}/../PackageFiles/bin/${ARCH}-linux-gnu/." "${BIN_DIR}" 
 #   ${CP} -rp "${SOURCE_DIRECTORY}/../Shared/${ARCH}-linux-gnu/." "${LIB_PKG_DIR}"   
-#   echo ${GZIP} -n -9 -k -c "${SOURCE_DIRECTORY}/../PackageFiles"/changelog >${SHARED_DOC_DIR}/changelog.gz
+   #~ echo ${GZIP} -n -9 -k -c "${SOURCE_DIRECTORY}/../PackageFiles"/changelog >${SHARED_DOC_DIR}/changelog.gz
    ${GZIP} -n -9 -k -c "${SOURCE_DIRECTORY}/../PackageFiles"/changelog >${SHARED_DOC_DIR}/changelog.gz
    ${CP}    "${SOURCE_DIRECTORY}/../PackageFiles"/copyright             ${SHARED_DOC_DIR}
 
@@ -77,7 +77,7 @@ makeDebFile() {
    echo lintian ${DUMMY_ROOT}.deb   
    lintian ${DUMMY_ROOT}.deb 
 
-   ${RM} -R ${DUMMY_ROOT}
+   #~ ${RM} -R ${DUMMY_ROOT}
 
 }
 
