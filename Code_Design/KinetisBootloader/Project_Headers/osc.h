@@ -38,14 +38,14 @@ namespace USBDM {
  * @endcode
  */
 template <class Info>
-class OscBase_T {
+class OscBase_T :public Info {
 
 private:
    /** Class to static check OSC signal is mapped to a pin - Assumes existence */
    template<int xtalPin> class CheckPinMapped {
    private:
       // Check mapping - no need to check existence
-      static constexpr bool Test1 = (Info::info[xtalPin].gpioBit >= 0);
+      static constexpr bool Test1 = (Info::info[xtalPin].pinIndex >= PinIndex::MIN_PIN_INDEX);
 
       static_assert(Test1, "OSC XTAL/EXTAL signal is not mapped to a pin - Modify Configure.usbdm");
 
@@ -59,88 +59,37 @@ protected:
    static constexpr HardwarePtr<OSC_Type> osc = Info::baseAddress;
 
 public:
-   // Template _mapPinsOption_on.xml (/OSC0/classInfo)
+   // No class Info found
 
    /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/OSC0/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
+    * Configure with default settings.
+    * Configuration determined from Configure.usbdmProject
     */
-   static void configureAllPins() {
+   static inline void defaultConfigure() {
    
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
+      // Update settings
+      configure(Info::DefaultInitValue);
    }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/OSC0/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
    
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
    /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/OSC0/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
+    * Configure OSC from values specified in init
+    *
+    * @param init Class containing initialisation values
     */
-   static void enable() {
-      
-      configureAllPins();
+   static void configure(const typename Info::Init &init) {
+   
+      osc->CR    = init.cr;
    }
+   
 
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/OSC0/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      
-      
-      disableAllPins();
-      
-   }
-// End Template _mapPinsOption_on.xml
-
-
-   /**
-    * Initialise OSC to default settings.
-    * Configures all OSC pins
-    */
-   static void defaultConfigure() {
-
-      if constexpr (Osc0Info::cr & OSC_CR_ERCLKEN_MASK) {
-         (void)CheckPinMapped<0>::checker;
-         (void)CheckPinMapped<1>::checker;
-      }
-
-      if (Info::mapPinsOnEnable) {
-         configureAllPins();
-      }
-      // Configure OSC
-      Info::osc->CR  = Info::cr;
-   }
-
-   /**
-    * Set up the OSC out of reset.
-    */
-   static void initialise() {
-      defaultConfigure();
-   }
 
 };
 
-   /**
-    * Class representing OSC0
-    */
-   class Osc0 : public OscBase_T<Osc0Info> {};
+/**
+* Class representing OSC0
+*/
+class Osc0 : public OscBase_T<Osc0Info> {};
+   
 
 /**
  * End OSC_Group

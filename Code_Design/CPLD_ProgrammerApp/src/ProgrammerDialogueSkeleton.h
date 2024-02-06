@@ -49,7 +49,7 @@ class ProgrammerDialogueSkeleton : public wxDialog
 
 	public:
 
-		ProgrammerDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("CPLD Programmer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 534,287 ), long style = wxDEFAULT_DIALOG_STYLE );
+		ProgrammerDialogueSkeleton( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("CPLD Programmer"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 534,287 ), long style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER );
 		~ProgrammerDialogueSkeleton();
 
 };

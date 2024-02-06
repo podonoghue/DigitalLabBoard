@@ -15,6 +15,7 @@
  * This file is generated automatically.
  * Any manual changes will be lost.
  */
+#include <array>
 #include "pin_mapping.h"
 
 #ifdef __CMSIS_RTOS
@@ -546,7 +547,7 @@ public:
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
-   
+
       // Configure pins if selected and not already locked
       if constexpr (Info::mapPinsOnEnable) {
          Info::initPCRs();
@@ -561,7 +562,7 @@ public:
     * @note Locked pins will be unaffected
     */
    static void disableAllPins() {
-   
+
       // Disable pins if selected and not already locked
       if constexpr (Info::mapPinsOnEnable) {
          Info::clearPCRs();
@@ -582,7 +583,7 @@ public:
     */
    static void disable() {
       disableNvicInterrupts();
-      
+
       disableAllPins();
       Info::disableClock();
    }

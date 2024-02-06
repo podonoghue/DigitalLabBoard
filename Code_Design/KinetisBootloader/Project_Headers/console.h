@@ -17,11 +17,11 @@
 #define INCLUDE_USBDM_CONSOLE_H_
 #include <derivative.h>
 
-#if 0// No Lpuarts
-#include "lpuart.h"
-#endif
-#if 0 || 1 || 1 || 1
+#if true // /UART/enablePeripheralSupport
 #include "uart.h"
+#endif
+#if false // /LPUART/enablePeripheralSupport
+#include "lpuart.h"
 #endif
 
 // The following macros allow the selective use of the console routines
@@ -87,7 +87,7 @@ namespace USBDM {
  */
 
 //! Default baud rate for console
-constexpr int defaultBaudRate = 115200;
+constexpr UartBaudRate defaultBaudRate = UartBaudRate(115200);
 
 //! Maps console to UART used
 using  Console = USBDM::Uart0;

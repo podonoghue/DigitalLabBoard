@@ -17,6 +17,7 @@
  * This file is generated automatically.
  * Any manual changes will be lost.
  */
+#include <array>
 #include "pin_mapping.h"
 
 #include "dma.h"
@@ -323,46 +324,6 @@ protected:
    virtual void disable() = 0;
 
    /**
-    * Calculate communication speed from SPI clock frequency and speed factors
-    *
-    * @param[in]  clockFrequency  Clock frequency of SPI in Hz
-    * @param[in]  spiCtarValue    Configuration providing SPI_CTAR_BR, SPI_CTAR_PBR fields
-    *
-    * @return Clock frequency of SPI in Hz for these factors
-    */
-   static uint32_t calculateSpeed(uint32_t clockFrequency, uint32_t spiCtarValue);
-
-   /**
-    * Calculate CTAR timing related values \n
-    * Uses default delays
-    *
-    * @param[in]  clockFrequency Clock frequency of SPI in Hz
-    * @param[in]  frequency      Communication frequency in Hz
-    *
-    * @return Combined masks for CTAR (BR, PBR, PCSSCK, CSSCK, PDT, DT, PCSSCK and CSSCK)
-    */
-   static uint32_t calculateCtarTiming(uint32_t clockFrequency, Hertz frequency) {
-
-      int bestPrescale, bestDivider;
-      uint32_t ctarValue;
-
-      float SPI_PADDING2 = 1/(5.0*clockFrequency);
-
-      ctarValue = calculateDividers(clockFrequency, frequency);
-
-      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PCSSCK(bestPrescale)|SPI_CTAR_CSSCK(bestDivider);
-
-      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PASC(bestPrescale)|SPI_CTAR_ASC(bestDivider);
-
-      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PDT(bestPrescale)|SPI_CTAR_DT(bestDivider);
-
-      return ctarValue;
-   }
-
-   /**
     * Sets communication speed for SPI
     *
     * @param[in]  frequency      Communication frequency in Hz
@@ -386,9 +347,9 @@ protected:
    uint32_t getSpeed(SpiCtarSelect spiCtarSelect=SpiCtarSelect_0) {
       return calculateSpeed(getSpiInputClockFrequency(), spiCtarSelect);
    }
-   
+
 /* Template /SPI/methods - start */
-   
+
    /**
     * Set Continuous SCK Enable
     *
@@ -429,8 +390,48 @@ protected:
 
 
 public:
+   /**
+    * Calculate communication speed from SPI clock frequency and speed factors
+    *
+    * @param[in]  clockFrequency  Clock frequency of SPI in Hz
+    * @param[in]  spiCtarValue    Configuration providing SPI_CTAR_BR, SPI_CTAR_PBR fields
+    *
+    * @return Clock frequency of SPI in Hz for these factors
+    */
+   static uint32_t calculateSpeed(uint32_t clockFrequency, uint32_t spiCtarValue);
+
+   /**
+    * Calculate CTAR timing related values \n
+    * Uses default delays
+    *
+    * @param[in]  clockFrequency Clock frequency of SPI in Hz
+    * @param[in]  frequency      Communication frequency in Hz
+    *
+    * @return Combined masks for CTAR (BR, PBR, PCSSCK, CSSCK, PDT, DT, PCSSCK and CSSCK)
+    */
+   static uint32_t calculateCtarTiming(uint32_t clockFrequency, Hertz frequency) {
+
+      int bestPrescale, bestDivider;
+      uint32_t ctarValue;
+
+      float SPI_PADDING2 = 1/(5.0*clockFrequency);
+
+      ctarValue = calculateDividers(clockFrequency, frequency);
+
+      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
+      ctarValue |= SPI_CTAR_PCSSCK(bestPrescale)|SPI_CTAR_CSSCK(bestDivider);
+
+      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
+      ctarValue |= SPI_CTAR_PASC(bestPrescale)|SPI_CTAR_ASC(bestDivider);
+
+      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
+      ctarValue |= SPI_CTAR_PDT(bestPrescale)|SPI_CTAR_DT(bestDivider);
+
+      return ctarValue;
+   }
+
 /* Template /SPI/InitMethod - start */
-   
+
    /**
     * Configure SPI from values specified in init
     *
@@ -445,26 +446,26 @@ public:
       }
    */
       enable();
-   
+
       spi->MCR =
             init.config.mcr |
             SpiClearFifo_Both|         // Clear FIFOs
             SPI_MCR_HALT(1)|           // Halt transfers initially
             SPI_MCR_MSTR(1);           // Master mode
-   
+
       const uint32_t spiFrequency = getSpiInputClockFrequency();
-   
+
       // CTAR 0
       spi->CTAR[0] = init.ctars[0].ctar|calculateCtarTiming(spiFrequency, init.ctars[0].speed);
-   
+
       // CTAR 1
       spi->CTAR[1] = init.ctars[1].ctar|calculateCtarTiming(spiFrequency, init.ctars[1].speed);
-   
+
       // PUSHR values for intermediate and last transfer in transaction
       pushrMask      = init.config.pushr;
       pushrMaskFinal = init.config.pushrFinal;
    }
-   
+
 
 #ifdef __CMSIS_RTOS
    /**
@@ -1547,7 +1548,7 @@ public:
     * @note Locked pins will be unaffected
     */
    static void configureAllPins() {
-   
+
       // Configure pins if selected and not already locked
       if constexpr (Info::mapPinsOnEnable) {
          Info::initPCRs();
@@ -1562,7 +1563,7 @@ public:
     * @note Locked pins will be unaffected
     */
    static void disableAllPins() {
-   
+
       // Disable pins if selected and not already locked
       if constexpr (Info::mapPinsOnEnable) {
          Info::clearPCRs();
@@ -1583,7 +1584,7 @@ public:
     */
    static void disable() {
       disableNvicInterrupts();
-      
+
       disableAllPins();
       Info::disableClock();
    }
@@ -1877,7 +1878,7 @@ uint32_t SpiBase_T<Info>::dmaErrorCode = 0;
     * @endcode
     */
    using Spi0 = SpiBase_T<Spi0Info>;
-   
+
 
 /**
  * End SPI_Group

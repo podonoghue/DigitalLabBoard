@@ -2,7 +2,7 @@
 
 # Version Information
 MAJOR=2
-MINOR=2
+MINOR=3
 MICRO=0
 NANO=0
 DEBIAN_VERSION=1

@@ -32,56 +32,6 @@ namespace USBDM {
  */
 class Sim : public SimInfo {
 public:
-   /**
-    * Default value for Sim::ClockInit
-    * This value is created from Configure.usbdmProject settings
-    */
-   static constexpr ClockInit DefaultSopt2Values[] = {
-   { // ClockConfig_RUN_PEE_48MHz (McgClockMode_PEE)
-      SimPeripheralClockSource_McgPllClk , // Peripheral Clock - MCGPLLCLK clock
-      SimUsbFullSpeedClockSource_PeripheralClk , // USB Clock - Peripheral Clock/SIM_CLKDIV2
-      SimClkoutSel_FlashClk , // CLKOUT pin clock - Flash clock
-      SimRtcClkoutSel_32kHz , // RTC clock out source - RTC 32kHz clock
-      SimTraceClockoutSel_McgOutClk , // Debug trace clock select - MCGOUTCLK
-      SimPortDPad_Single,  // PTD7 pad drive strength - Single-pad drive strength
-   },
-};
-
-   /**
-    * Default value for Sim::DefaultInit
-    * This value is created from Configure.usbdmProject settings (Peripheral Parameters->SIM)
-    */
-   static constexpr Init DefaultInitValue {
-      SimPeripheralClockSource_McgPllClk , // Peripheral Clock - MCGPLLCLK clock
-      SimUsbFullSpeedClockSource_PeripheralClk , // USB Clock - Peripheral Clock/SIM_CLKDIV2
-      SimClkoutSel_FlashClk , // CLKOUT pin clock - Flash clock
-      SimRtcClkoutSel_32kHz , // RTC clock out source - RTC 32kHz clock
-      SimTraceClockoutSel_McgOutClk , // Debug trace clock select - MCGOUTCLK
-      SimErc32kSel_LpoClk , // ERCLK32K clock source - LPO 1kHz clock
-      SimUsbPower_EnabledInAll , // USB voltage regulator power control - Enabled in all modes
-      SimPortDPad_Single,  // PTD7 pad drive strength - Single-pad drive strength
-      SimFtm0Flt0_Ftm0Fault0,  // FTM0 Fault 0 Select - FTM0_FLT0 pin
-      SimFtm0Trg0Src_Cmp0,  // FTM0 Hardware Trigger 0 Source - CMP0 output
-      SimFtm0Flt1_Ftm0Fault1,  // FTM0 Fault 1 Select - FTM0_FLT1 pin
-      SimFtm0ClkSel_FtmClkin0,  // FTM0 External Clock Pin - FTM_CLKIN0 pin
-      SimFtm1Flt0_Ftm1Fault0,  // FTM1 Fault 0 Select - FTM1_FLT0 pin
-      SimFtm1Ch0Src_IcPin,  // FTM 1 channel 0 input capture source - FTM1_CH0 signal
-      SimFtm1ClkSel_FtmClkin0,  // FTM1 External Clock Pin - FTM_CLKIN0 pin
-      SimUart0RxSrc_RxPin,  // UART0 receive data source - Rx pin
-      SimUart0TxSrc_Direct,  // UART0 transmit data source - Tx pin
-      SimUart1RxSrc_RxPin,  // UART1 receive data source - Rx pin
-      SimUart1TxSrc_Direct,  // UART1 transmit data source - Tx pin
-      SimAdc0TriggerMode_Pdb , // ADC0 trigger mode - Triggered by PDB
-      SimAdc0TriggerSrc_External,  // ADC0 trigger source - External trigger pin input (PDB0_EXTRG)
-   };
-
-   static void initRegs() {
-   
-      DefaultInitValue.configure();
-   };
-
-
-
 };
 
 /**

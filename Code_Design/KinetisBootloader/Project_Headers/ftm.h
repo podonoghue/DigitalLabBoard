@@ -20,6 +20,9 @@
 #include <stddef.h>
 #include <cmath>
 #include "pin_mapping.h"
+#include "gpio.h"
+
+#if false // /FTM/enablePeripheralSupport
 
 /*
  * Default port information
@@ -32,29 +35,6 @@ namespace USBDM {
  * @{
  */
 
-/**
- * Enables External trigger on a channel comparison or initialisation event
- */
-enum FtmExternalTrigger {
-   FtmExternalTrigger_ch0   = FTM_EXTTRIG_CH0TRIG_MASK,    ///< External trigger on channel 0 event
-   FtmExternalTrigger_ch1   = FTM_EXTTRIG_CH1TRIG_MASK,    ///< External trigger on channel 1 event
-   FtmExternalTrigger_ch2   = FTM_EXTTRIG_CH2TRIG_MASK,    ///< External trigger on channel 2 event
-   FtmExternalTrigger_ch3   = FTM_EXTTRIG_CH3TRIG_MASK,    ///< External trigger on channel 3 event
-   FtmExternalTrigger_ch4   = FTM_EXTTRIG_CH4TRIG_MASK,    ///< External trigger on channel 4 event
-   FtmExternalTrigger_ch5   = FTM_EXTTRIG_CH5TRIG_MASK,    ///< External trigger on channel 5 event
-   FtmExternalTrigger_init  = FTM_EXTTRIG_INITTRIGEN_MASK, ///< External trigger on initialisation
-   FtmExternalTrigger_all   = 0x7F,                        ///< All triggers
-};
-
-/**
- * Selects pairs of channels for some operations
- */
-enum FtmChannelPair {
-   FtmChannelPair_0_1 = (1<<0), ///< Channel Pair select for channels 0 and 1
-   FtmChannelPair_2_3 = (1<<1), ///< Channel Pair select for channels 2 and 3
-   FtmChannelPair_4_5 = (1<<2), ///< Channel Pair select for channels 4 and 5
-   FtmChannelPair_6_7 = (1<<3), ///< Channel Pair select for channels 6 and 6
-};
 
 /**
  * Controls value forced to pin by forceChannelOutputs()
@@ -75,58 +55,9 @@ private:
    FtmBase(FtmBase&&) = delete;
 
 public:
-
-   /** Class to static check channel exists - it does not check that it is mapped to a pin */
-   template<class Info, int channel> class CheckChannel {
-      // Tests are chained so only a single assertion can fail so as to reduce noise
-
-      // Out of bounds value for function index
-      static constexpr bool Test1 = (channel>=0) && (channel<(Info::numSignals));
-      // Non-existent function
-      static constexpr bool Test2 = !Test1 || (Info::info[channel].gpioBit != INVALID_PCR);
-
-      static_assert(Test1, "Illegal FTM channel - Check Configure.usbdm for available channels");
-      static_assert(Test2, "FTM channel doesn't exist in this device/package - Check Configure.usbdm for available channels");
-
-   public:
-      /** Dummy function to allow convenient in-line checking */
-      static constexpr void check() {}
-   };
-
-   /** Class to static check channel exists and is mapped to a pin */
-   template<class Info, int channel> class CheckChannelExistsAndMapped {
-      // Tests are chained so only a single assertion can fail so as to reduce noise
-
-      // Out of bounds value for function index
-      static constexpr bool Test1 = (channel>=0) && (channel<(Info::numSignals));
-      // Function is not currently mapped to a pin
-      static constexpr bool Test2 = !Test1 || (Info::info[channel].gpioBit != UNMAPPED_PCR);
-      // Non-existent function and catch-all. (should be INVALID_PCR)
-      static constexpr bool Test3 = !Test1 || !Test2 || (Info::info[channel].gpioBit >= 0);
-
-      static_assert(Test1, "Illegal FTM channel - Check Configure.usbdm for available inputs");
-      static_assert(Test2, "FTM input is not mapped to a pin - Modify Configure.usbdm");
-      static_assert(Test3, "FTM channel doesn't exist in this device/package - Check Configure.usbdm for available input pins");
-
-   public:
-      /** Dummy function to allow convenient in-line checking */
-      static constexpr void check() {}
-   };
-
-   /** Class to static check channel is mapped to a pin - Ignores non-existence etc. */
-   template<class Info, int channel> class CheckChannelIsMappedToPinOnly {
-
-      // Out of bounds value for function index
-      static constexpr bool Test1 = (channel>=0) && (channel<(Info::numSignals));
-      // Function is not currently mapped to a pin
-      static constexpr bool Test2 = !Test1 || (Info::info[channel].gpioBit != UNMAPPED_PCR);
-
-      static_assert(Test2, "FTM channel is not mapped to a pin - Modify Configure.usbdm");
-
-   public:
-      /** Dummy function to allow convenient in-line checking */
-      static constexpr void check() {}
-   };
+#if true // /PCR/_present
+   CreatePeripheralPinChecker("FTM");
+#endif
 
 protected:
    // Constructor
@@ -194,11 +125,11 @@ public:
     * @note A illegal access trap will occur if the timer has not been enabled
     */
    void stopCounter() const {
-     ftm->SC = (ftm->SC&~FTM_SC_PS_MASK);
+     ftm->SC = (ftm->SC&~FTM_SC_CLKS_MASK);
    }
    
    /**
-    * Set Clock Source and Clock prescaler
+    * Set Clock Source and Counter clock prescaler
     *
     * @param ftmClockSource Selects the clock source for the module
     * @param ftmPrescale    Selects the prescaler for the module
@@ -221,40 +152,36 @@ public:
    }
 
    /**
-    * Set Alignment and whether interval or free-running mode
+    * Set Counting mode
     *
-    * @param ftmMode Left-aligned   (cntin...mod) or
-    *        Centre-aligned (cntin...mod...cntin) or
-    *        Free-running   (0...maximum_value)
+    * @param ftmCountMode Counting Mode
     *
     * @note This function will affect all channels of the timer.
     * @note The timer will be disabled while making changes.
     */
-   void setMode(FtmMode ftmMode) const {
+   void setCountMode(FtmCountMode ftmCountMode) const {
    
       // Calculate new SC value
-      uint32_t sc = (ftm->SC&~(FTM_SC_TOF_MASK|FTM_SC_CPWMS_MASK))|(ftmMode);
-
+      uint32_t sc = (ftm->SC&~FTM_SC_CPWMS_MASK)|(ftmCountMode);
+   
       // Disable timer to change clock (unable to switch directly between clock sources)
       ftm->SC=0;
-
+   
       // Make sure write has completed (disabled)
       (void)(ftm->SC);
-
+   
       // Write new value
       ftm->SC = sc;
    }
    
    /**
-    * Get Alignment and whether interval or free-running mode
+    * Get Counting mode
     *
-    * @param ftmMode Left-aligned   (cntin...mod) or
-    *        Centre-aligned (cntin...mod...cntin) or
-    *        Free-running   (0...maximum_value)
+    * @param ftmCountMode Counting Mode
     */
-   FtmMode getMode() const {
+   FtmCountMode getCountMode() const {
    
-      return (FtmMode)(ftm->SC&~(FTM_SC_TOF_MASK|FTM_SC_CPWMS_MASK));
+      return (FtmCountMode)(ftm->SC&~FTM_SC_CPWMS_MASK);
    }
 
    /**
@@ -269,13 +196,13 @@ public:
    
       // Calculate new SC value
       uint32_t sc = (ftm->SC&~FTM_SC_CLKS_MASK)|(ftmClockSource);
-
+   
       // Disable timer to change clock (unable to switch directly between clock sources)
       ftm->SC=0;
-
+   
       // Make sure write has completed (disabled)
       (void)(ftm->SC);
-
+   
       // Write new value
       ftm->SC = sc;
    }
@@ -291,7 +218,7 @@ public:
    }
 
    /**
-    * Set Clock prescaler
+    * Set Counter clock prescaler
     *
     * @param ftmPrescale Selects the prescaler for the module
     *
@@ -302,19 +229,19 @@ public:
    
       // Calculate new SC value
       uint32_t sc = (ftm->SC&~FTM_SC_PS_MASK)|(ftmPrescale);
-
+   
       // Disable timer to change clock (unable to switch directly between clock sources)
       ftm->SC=0;
-
+   
       // Make sure write has completed (disabled)
       (void)(ftm->SC);
-
+   
       // Write new value
       ftm->SC = sc;
    }
    
    /**
-    * Get Clock prescaler
+    * Get Counter clock prescaler
     *
     * @param ftmPrescale Selects the prescaler for the module
     */
@@ -324,38 +251,14 @@ public:
    }
 
    /**
-    * Set Start value for counter
-    * This value is write-buffered and updated by CNTIN synchronisation
-    *
-    * @param ticks   The timer counts from this value to ftm_mod
-    *
-    * @note This function will affect all channels of the timer.
-    */
-   void setCounterStartValue(Ticks   ticks) const {
-   
-      // Write new value
-      ftm->CNTIN = ticks;
-   }
-   
-   /**
-    * Get Start value for counter
-    *
-    * @param ticks   The timer counts from this value to ftm_mod
-    */
-   Ticks getCounterStartValue() const {
-   
-      return (Ticks)ftm->CNTIN;
-   }
-
-   /**
     * Set End value for counter
     * This value is write-buffered and updated by CNTIN synchronisation
     *
-    * @param ticks   The timer counts from ftm_cntin to this value
+    * @param ticks The timer counts from 0 to this value
     *
     * @note This function will affect all channels of the timer.
     */
-   void setCounterMaximumValue(Ticks   ticks) const {
+   void setCounterMaximumValue(const Ticks& ticks) const {
    
       // Write new value
       ftm->MOD = ticks;
@@ -364,61 +267,13 @@ public:
    /**
     * Get End value for counter
     *
-    * @param ticks   The timer counts from ftm_cntin to this value
+    * @param ticks The timer counts from 0 to this value
     */
    Ticks getCounterMaximumValue() const {
    
-      return (Ticks)ftm->MOD;
+      return Ticks(ftm->MOD);
    }
 
-   /**
-    * Calculate FTM timing parameters to achieve a given period
-    *
-    * @param[in]    period  Period in seconds
-    * @param[inout] sc      Proposed FTM.SC value (must include CLKS, CPWMS fields)
-    *                       PS field is updated
-    * @param[out]   mod     Calculated FTM.MOD values
-    *
-    * @return E_NO_ERROR   Success!!
-    * @return E_TOO_SMALL  Requested period is too small for resolution (required resolution check to be enabled)
-    * @return E_TOO_LARGE  Requested period is too large
-    */
-   ErrorCode calculateTimingParameters(Seconds period, uint8_t &sc, uint16_t &mod) const {
-   
-      float inputClock = getInputClockFrequencyVirtual((FtmClockSource)(sc&FTM_SC_CLKS_MASK));
-      unsigned prescaleFactor=1;
-      unsigned prescalerValue=0;
-   
-      // Check if CPWMS is set (affects period calculation)
-      bool centreAligned = (sc&FTM_SC_CPWMS_MASK);
-   
-      constexpr uint32_t maxModValue = FTM_MOD_MOD_MASK;
-   
-      while (prescalerValue<=7) {
-         float clock    = inputClock/prescaleFactor;
-         float modValueF = period*clock;
-         if (centreAligned) {
-            // PeriodInTicks = 2*MOD
-            modValueF = modValueF/2;
-         }
-         else {
-            // PeriodInTicks = MOD+1
-            modValueF = modValueF - 1;
-         }
-         unsigned modValue = round(modValueF);
-         if (modValue <= maxModValue) {
-            sc   = (sc&~FTM_SC_PS_MASK)|FTM_SC_PS(prescalerValue);
-            mod  = modValue;
-            return E_NO_ERROR;
-         }
-         prescalerValue++;
-         prescaleFactor <<= 1;
-      }
-      // Too long a period
-      usbdm_assert(false, "Interval is too long");
-      return setErrorCode(E_TOO_LARGE);
-   }
-   
    /**
     * Set period
     *
@@ -441,20 +296,19 @@ public:
    
       uint8_t sc = ftm->SC;
    
-      ErrorCode rc = calculateTimingParameters(period, sc, modValue);
-   
+      float inputClock = getInputClockFrequencyVirtual((FtmClockSource)(sc&FTM_SC_CLKS_MASK));
+      ErrorCode rc = FtmCommonInfo::calculateTimingParameters(inputClock, period, sc, modValue);
       if (rc != E_NO_ERROR) {
          return rc;
       }
       // Disable timer to change prescaler and period
-      ftm->SC = 0;
+      ftm->SC  = 0;
    
       // Configure for modulo operation
-      ftm->MOD   = modValue;
-      ftm->CNTIN = 0_ticks;
+      ftm->MOD = modValue;
    
       // Clear counter
-      ftm->CNT   = 0;
+      ftm->CNT = 0;
    
       // Set prescale and enable timer
       ftm->SC  = sc;
@@ -475,7 +329,7 @@ public:
     *
     * @note This function will affect all channels of the timer.
     * @note Adjusts Timer pre-scaler to appropriate value.
-    * @note FTM counter is configured for free-running mode i.e. 0-65535
+    * @note Counter is configured for free-running mode i.e. 0-65535
     * @note The Timer is stopped while being modified.
     * @note The Timer counter is restarted from zero
     */
@@ -485,27 +339,28 @@ public:
    
       uint8_t sc = ftm->SC;
    
-      ErrorCode rc = calculateTimingParameters(interval, sc, modValue);
+      float inputClock = getInputClockFrequencyVirtual((FtmClockSource)(sc&FTM_SC_CLKS_MASK));
+      ErrorCode rc = FtmCommonInfo::calculateTimingParameters(inputClock, interval, sc, modValue);
       if (rc != E_NO_ERROR) {
          return rc;
       }
    
       // Disable timer to change prescaler and period
-      ftm->SC = 0;
+      ftm->SC  = 0;
    
       // Configure for free-running mode
       // This is the usual value for IC or OC set-up
-      ftm->MOD   = 0_ticks;
-      ftm->CNTIN = 0_ticks;
+      ftm->MOD = 0_ticks;
    
       // Clear counter
-      ftm->CNT   = 0;
+      ftm->CNT = 0;
    
       // Set prescale and enable timer
       ftm->SC  = sc;
    
       return E_NO_ERROR;
    }
+
    /**
     * Get frequency of timer tick
     *
@@ -531,7 +386,7 @@ public:
    
       return getInputClockFrequencyVirtual((FtmClockSource)(ftm->SC&FTM_SC_CLKS_MASK))/prescaleFactor;
    }
-   
+
    /**
     * Convert time in microseconds to time in ticks
     *
@@ -552,7 +407,7 @@ public:
          // Attempt to set too long a period
          setErrorCode(E_TOO_LARGE);
       }
-      return (unsigned)rv;
+      return Ticks(uint32_t(rv));
    }
    
    /**
@@ -576,7 +431,7 @@ public:
          // Attempt to set too long a period
          setErrorCode(E_TOO_LARGE);
       }
-      return (unsigned)rv;
+      return Ticks(uint32_t(rv));
    }
    
    /**
@@ -682,6 +537,14 @@ public:
    }
    
    /**
+    * Clear timer overflow event flag
+    */
+   void clearOverflowInterruptFlag() const {
+      // Clear TOI flag (read & w0c)
+      ftm->SC = ftm->SC & ~FTM_SC_TOF_MASK;
+   }
+   
+   /**
     * Get and clear timer event flags
     *
     * @return Flags indicating if an event has occurred on a channel
@@ -699,34 +562,7 @@ public:
    }
    
    /**
-    * Enables/disable the external trigger on a channel comparison or initialisation event
-    *
-    * @param[in] ftmExternalTrigger Indicates the event to cause the external trigger
-    * @param[in] enable             Whether to enable/disable the specified trigger
-    */
-   void enableExternalTrigger(FtmExternalTrigger ftmExternalTrigger, bool enable=true) const {
-      if (enable) {
-         ftm->EXTTRIG = ftm->EXTTRIG | ftmExternalTrigger;
-      }
-      else {
-         ftm->EXTTRIG = ftm->EXTTRIG & ~ftmExternalTrigger;
-      }
-   }
-   
-   /**
-    * Enables multiple external triggers on a channel comparison or initialisation event
-    *
-    * @param[in] externalTriggers Indicates the events to cause the external trigger. 
-
-    *                             Construct from ORed FtmExternalTrigger flags e.g. FtmExternalTrigger_ch0|FtmExternalTrigger_ch3
-    * @param[in] enable           Whether to enable/disable the specified triggers
-    */
-   void enableExternalTriggers(int externalTriggers, bool enable=true) const {
-      enableExternalTrigger((FtmExternalTrigger)externalTriggers, enable);
-   }
-   
-   /**
-    * Enable/disable Timer Overflow interrupts
+    * Enable Timer Overflow interrupts
     */
    void enableTimerOverflowInterrupts() const {
       ftm->SC = ftm->SC | FTM_SC_TOIE_MASK;
@@ -784,7 +620,6 @@ public:
          bool     filterEnable = false,
          uint32_t filterDelay  = FTM_FLTCTRL_FFVAL_MASK>>(FTM_FLTCTRL_FFVAL_SHIFT+1)) const {
    
-   
       if (polarity) {
          // Set active high
          ftm->FLTPOL = ftm->FLTPOL & ~(1<<inputNum);
@@ -811,24 +646,19 @@ public:
     * Set polarity of all channels
     *
     * @param channelMask   Bit mask 0 => active-high, 1 => active-low
+    *                      This can be created by ORing together FtmPolarity_ChN_ActiveLow values
     */
-    void setPolarity(uint32_t channelMask) const {
+   void setPolarity(uint32_t channelMask) const {
       ftm->POL = channelMask;
    }
    
    /**
-    * Set polarity of selected channels
+    * Set polarity of selected channel
     *
-    * @param polarity      Polarity to set
-    * @param channelMask   Bit mask indicating channels to affect
+    * @param ftmPolarity  Channel polarity to set
     */
-   void setPolarity(Polarity polarity, uint32_t channelMask) const {
-      if (polarity) {
-         ftm->POL = ftm->POL & ~channelMask;
-      }
-      else {
-         ftm->POL = ftm->POL | channelMask;
-      }
+   void setPolarity(FtmPolarity ftmPolarity) const {
+         ftm->POL= (ftm->POL&(ftmPolarity>>8))|ftmPolarity;
    }
 
    /*
@@ -836,6 +666,22 @@ public:
     *          Channel functions
     * *****************************************************************
     */
+   
+   /**
+    * Set action on event
+    * (/FTM0/ftm_cnsc_action_independent[0])
+    *
+    * @param ftmChannelAction Enable interrupt or DMA on channel event
+    * @param ftmChannelNum    Selects a channel
+    */
+   void setAction(
+         FtmChannelAction ftmChannelAction,
+         FtmChannelNum    ftmChannelNum)  const {
+   
+      ftm->CONTROLS[ftmChannelNum].CnSC =
+         (ftm->CONTROLS[ftmChannelNum].CnSC&~(FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK)) | ftmChannelAction;
+   }
+   
    /**
     * Set PWM duty cycle.
     * Higher precision float version
@@ -843,7 +689,7 @@ public:
     * @param[in] dutyCycle  Duty-cycle as percentage (float)
     * @param[in] channel    Timer channel
     *
-    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the Register Synchronisation mechanism
     */
    void setDutyCycle(float dutyCycle, int channel) const {
       if (ftm->SC&FTM_SC_CPWMS_MASK) {
@@ -860,7 +706,7 @@ public:
     * @param[in] dutyCycle  Duty-cycle as percentage
     * @param[in] channel    Timer channel
     *
-    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the Register Synchronisation mechanism
     */
    void setDutyCycle(int dutyCycle, int channel) const {
       if (ftm->SC&FTM_SC_CPWMS_MASK) {
@@ -881,13 +727,13 @@ public:
     * @return E_NO_ERROR on success
     * @return E_TOO_LARGE on success
     *
-    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the Register Synchronisation mechanism
     */
    ErrorCode setHighTime(Ticks highTime, int channel) const {
    
       if (ftm->SC&FTM_SC_CPWMS_MASK) {
          // In CPWM the pulse width is doubled
-         highTime = (highTime+1_ticks)/2U;
+         highTime = Ticks((highTime+1_ticks)/2U);
       }
 #ifdef DEBUG_BUILD
       if ((unsigned)highTime > ftm->MOD) {
@@ -906,7 +752,7 @@ public:
     * @return Absolute time of last event in ticks i.e. value from timer event register
     */
    Ticks getEventTime(int channel) const {
-      return (unsigned)(ftm->CONTROLS[channel].CnV);
+      return Ticks(ftm->CONTROLS[channel].CnV);
    }
    
    /**
@@ -953,7 +799,7 @@ public:
     *
     * @return E_NO_ERROR on success
     *
-    * @note The actual CnV register update may be delayed by the FTM register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the FTM Register Synchronisation mechanism
     */
    ErrorCode setHighTime(Seconds highTime, int channel) const {
       return setHighTime(convertSecondsToTicks(highTime), channel);
@@ -991,7 +837,7 @@ public:
     * @param enableMask  Bit mask for channels (combination of FtmChannelPair)
     */
    void setInvertedChannelPairs(uint32_t enableMask) const {
-      ftm->OUTINIT = enableMask;
+      ftm->INVCTRL = enableMask;
    }
    
    /**
@@ -1059,7 +905,6 @@ public:
       ftm->MODE    = ftm->MODE | FTM_MODE_INIT_MASK;
    }
 
-
 };
 
 class FtmChannel : public FtmBase {
@@ -1070,7 +915,7 @@ private:
 
 protected:
    // Empty constructor
-   constexpr FtmChannel(uint32_t baseAddress, unsigned channelNum) :
+   constexpr FtmChannel(uint32_t baseAddress, FtmChannelNum channelNum) :
    FtmBase(baseAddress),
    channelRegs((uint32_t)(ftm->CONTROLS+channelNum)),
    CHANNEL(channelNum),
@@ -1083,32 +928,50 @@ public:
    const HardwarePtr<FtmBase::FtmChannelRegs> channelRegs;
 
    /** Timer channel number */
-   const unsigned CHANNEL;
+   const FtmChannelNum CHANNEL;
 
    /** Mask for Timer channel */
    const uint32_t CHANNEL_MASK;
 
+   
       /**
-       * Configure channel.
-       * No affect on shared settings of owning Timer
+       * Set Action on Channel Event
+       * (/FTM0/ftm_cnsc_action_independent[0])
        *
-       * @param[in] ftmChannelMode    Mode of operation for channel
-       * @param[in] ftmChannelAction  Whether to enable the interrupt or DMA function on this channel
+       * @param ftmChannelAction Enable interrupt or DMA on channel event
        *
        * @note This method has the side-effect of clearing the register update synchronisation i.e.
        *       pending CnV register updates are discarded.
        */
-       void configure(
-            FtmChannelMode    ftmChannelMode,
-            FtmChannelAction  ftmChannelAction = FtmChannelAction_None) const {
+      void setAction(FtmChannelAction ftmChannelAction) const {
    
-         ftm->CONTROLS[CHANNEL].CnSC = ftmChannelMode|ftmChannelAction;
+         ftm->CONTROLS[CHANNEL].CnSC =
+              (ftm->CONTROLS[CHANNEL].CnSC & ~(FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK)) | ftmChannelAction;
+      }
+   
+   
+      /**
+       * Set Channel Mode and Action on Channel Event
+       * (/FTM0/ftm_cnsc_mode_independent[0])
+       *
+       * @param ftmChannelMode   Determines channel operation (PWM/Input capture/Output compare)
+       * @param ftmChannelAction Enable interrupt or DMA on channel event
+   
+       * @note This method has the side-effect of clearing the register update synchronisation i.e.
+       *       pending CnV register updates are discarded.
+       */
+      void configure(
+            FtmChannelMode   ftmChannelMode,
+            FtmChannelAction ftmChannelAction) const {
+   
+         ftm->CONTROLS[CHANNEL].CnSC =
+              (ftm->CONTROLS[CHANNEL].CnSC & ~(FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK|FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK)) | ftmChannelMode|ftmChannelAction;
       }
    
       /**
        * Disables timer channel (sets mode to FtmChannelMode_Disabled)
        */
-       void disable() const {
+      void disable() const {
          setMode(FtmChannelMode_Disabled);
       }
    
@@ -1118,37 +981,36 @@ public:
        * @return Current mode of operation for the channel
        */
        FtmChannelMode getMode() const {
-         return static_cast<FtmChannelMode>(ftm->CONTROLS[CHANNEL].CnSC &
-               (FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK));
+         return FtmChannelMode(ftm->CONTROLS[CHANNEL].CnSC & (FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK));
       }
    
       /**
        * Set channel mode
        *
-       * @param[in] ftmChannelMode      Mode of operation for channel
+       * @param ftmChannelMode Determines channel operation (PWM/Input capture/Output compare)
        *
        * @note This method has the side-effect of clearing the register update synchronisation i.e.
        *       pending CnV register updates are discarded.
        */
-       void setMode(FtmChannelMode ftmChannelMode) const {
+      void setMode(FtmChannelMode ftmChannelMode) const {
          ftm->CONTROLS[CHANNEL].CnSC =
                (ftm->CONTROLS[CHANNEL].CnSC & ~(FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK))|ftmChannelMode;
       }
    
       /**
-       * Set channel action on event.
+       * Set polarity of channels.
        *
-       * @param[in] ftmChannelAction      Action to take on channel event (DMA or Interrupt)
-       *
-       * @note This method has the side-effect of clearing the register update synchronisation i.e.
-       *       pending CnV register updates are discarded.
+       * @param active Polarity to set
        */
-       void setAction(FtmChannelAction ftmChannelAction) const {
-         ftm->CONTROLS[CHANNEL].CnSC =
-               (ftm->CONTROLS[CHANNEL].CnSC & ~(FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK))|
-               ftmChannelAction;
+      void setPolarity(Polarity active) const {
+         if (active == ActiveHigh) {
+            ftm->POL = ftm->POL & ~CHANNEL_MASK;
+         }
+         else {
+            ftm->POL = ftm->POL | CHANNEL_MASK;
+         }
       }
-   
+
       /**
        * Set PWM high time in ticks.
        * Assumes value is less than period
@@ -1157,7 +1019,7 @@ public:
        *
        * @return E_NO_ERROR on success
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
        ErrorCode setHighTime(Ticks highTime) const {
          return FtmBase::setHighTime(highTime, CHANNEL);
@@ -1171,19 +1033,20 @@ public:
        *
        * @return E_NO_ERROR on success
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
        ErrorCode setHighTime(Seconds highTime) const {
          return FtmBase::setHighTime(highTime, CHANNEL);
       }
+   
       /**
        * Set PWM duty cycle.
        *
        * @param[in] dutyCycle  Duty-cycle as percentage
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-       void setDutyCycle(int dutyCycle) const {
+      void setDutyCycle(int dutyCycle) const {
          FtmBase::setDutyCycle(dutyCycle, CHANNEL);
       }
    
@@ -1192,9 +1055,9 @@ public:
        *
        * @param[in] dutyCycle  Duty-cycle as percentage
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-       void setDutyCycle(float dutyCycle) const {
+      void setDutyCycle(float dutyCycle) const {
          FtmBase::setDutyCycle(dutyCycle, CHANNEL);
       }
    
@@ -1203,9 +1066,9 @@ public:
        *
        * @param[in] offset  Event time in ticks relative to current event time (i.e. Timer channel CnV value)
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-       void setDeltaEventTime(Ticks offset) const {
+      void setDeltaEventTime(Ticks offset) const {
          FtmBase::setDeltaEventTime(offset, CHANNEL);
       }
    
@@ -1214,9 +1077,9 @@ public:
        *
        * @param[in] offset  Event time in ticks relative to current time (i.e. Timer CNT value)
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-       void setRelativeEventTime(Ticks offset) const {
+      void setRelativeEventTime(Ticks offset) const {
          FtmBase::setRelativeEventTime(offset, CHANNEL);
       }
    
@@ -1225,9 +1088,9 @@ public:
        *
        * @param[in] eventTime  Absolute event time in ticks i.e. value to use as timer comparison value
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-       void setEventTime(Ticks eventTime) const {
+      void setEventTime(Ticks eventTime) const {
          FtmBase::setEventTime(eventTime, CHANNEL);
       }
    
@@ -1247,7 +1110,7 @@ public:
        * @return false Indicates no event has occurred on a channel since last polled
        */
        bool getInterruptFlag() const {
-         return (ftm->STATUS&CHANNEL_MASK) != 0;
+         return (ftm->CONTROLS[CHANNEL].CnSC&FTM_CnSC_CHF_MASK) != 0;
       }
    
       /**
@@ -1260,16 +1123,15 @@ public:
        */
        bool getAndClearInterruptFlag() const {
          // Note - requires read and write zero to clear flags
-         // so only flags captured in status are cleared
-         bool status = (ftm->STATUS&CHANNEL_MASK) != 0;
-         ftm->STATUS = ~CHANNEL_MASK;
-         return status;
+         uint8_t cnsc = ftm->CONTROLS[CHANNEL].CnSC;
+         ftm->CONTROLS[CHANNEL].CnSC = cnsc&~CHANNEL_MASK;
+         return (cnsc&CHANNEL_MASK) != 0;
       }
    
       /**
        * Clear interrupt flag on channel.
        */
-       void clearInterruptFlag() const {
+      void clearInterruptFlag() const {
          // Note - requires read and write zero to clear flag
          ftm->CONTROLS[CHANNEL].CnSC = ftm->CONTROLS[CHANNEL].CnSC & ~FTM_CnSC_CHF_MASK;
       }
@@ -1283,18 +1145,9 @@ public:
        *
        * @param ftmChannelForce  Select control of pin. One of FtmChannelForce_Low/High/Release
        */
-       void forceChannelOutput(FtmChannelForce ftmChannelForce) const {
+      void forceChannelOutput(FtmChannelForce ftmChannelForce) const {
          static const uint32_t MASK = ((1<<CHANNEL)|(1<<(CHANNEL+8)));
          ftm->SWOCTRL = ((ftm->SWOCTRL & ~MASK)) | (ftmChannelForce & MASK);
-      }
-
-      /**
-       * Set polarity of channels.
-       *
-       * @param polarity Polarity to set
-       */
-       void setPolarity(Polarity polarity) const {
-         FtmBase::setPolarity(polarity, CHANNEL_MASK);
       }
 
 
@@ -1316,7 +1169,9 @@ private:
    FtmBase_T(const FtmBase_T&) = delete;
    FtmBase_T(FtmBase_T&&) = delete;
 
+#if false // /FTM/irqHandlingMethod
    typedef typename Info::ChannelCallbackFunction ChannelCallbackFunction;
+#endif
 
 public:
 
@@ -1325,7 +1180,7 @@ public:
    virtual ~FtmBase_T() = default;
 
    /** Maximum counter value in ticks */
-   static constexpr Ticks MaximumPeriodInTicks = FTM_MOD_MOD_MASK;
+   static constexpr Ticks MaximumPeriodInTicks = Ticks(FTM_MOD_MOD_MASK);
 
    /** Hardware instance pointer */
    static constexpr HardwarePtr<FTM_Type> ftm = Info::baseAddress;
@@ -1346,9 +1201,6 @@ public:
    static constexpr uint32_t ftmCnV(int index) { return ftmBase() + offsetof(FTM_Type, CONTROLS) + index*sizeof(FTM_Type::CONTROLS[0])+sizeof(uint32_t); }
 
 private:
-   /** Callback function for Channel Fault and timer overflow */
-   static typename Info::CallbackFunction sCallback;
-
    /** Number of channels mapped to a channel event vector */
    static constexpr unsigned ChannelVectorRatio = Info::NumChannels/Info::NumChannelVectors;
 
@@ -1363,63 +1215,8 @@ protected:
    }
 
 public:
-   /**
-    * Channel IRQ handler
-    *
-    * @tparam instance Indicates a pair of channels e.g. 2 => channel 2 & 3.
-    */
-   template<int instance>
-   static void chIrqHandler() {
-      // Get status for pair of channels
-      uint32_t status = ftm->STATUS & (0x3<<(instance));
-      if (status) {
-         // Clear flags for channel events being handled (w0c register if read first)
-         ftm->STATUS = ~status;
-         Info::channelCallbacks[instance/ChannelVectorRatio](status);
-      }
-   }
 
-   /**
-    * Fault IRQ handler (if individually available)
-    */
-   static void faultIrqHandler() {
-      ftm->FMS = ftm->FMS & ~FTM_FMS_FAULTF_MASK;
-      sCallback();
-   }
-
-   /**
-    * Overflow IRQ handler (if individually available)
-    */
-   static void overflowIrqHandler() {
-      // Clear TOI flag
-      ftm->SC = ftm->SC & ~FTM_SC_TOF_MASK;
-      sCallback();
-   }
-
-   /**
-    * Common IRQ handler
-    */
-   static void irqHandler() {
-      if ((ftm->MODE&FTM_MODE_FAULTIE_MASK) && (ftm->FMS&FTM_FMS_FAULTF_MASK)) {
-         ftm->FMS = ftm->FMS & ~FTM_FMS_FAULTF_MASK;
-         sCallback();
-      }
-      else if ((ftm->SC&(FTM_SC_TOF_MASK|FTM_SC_TOIE_MASK)) == (FTM_SC_TOF_MASK|FTM_SC_TOIE_MASK)) {
-         // Clear TOI flag
-         ftm->SC = ftm->SC & ~FTM_SC_TOF_MASK;
-         sCallback();
-      }
-      else {
-         // Get status for channels
-         uint32_t status = ftm->STATUS;
-         if (status) {
-            // Clear flags for channel events being handled (w0c register if read first)
-            ftm->STATUS = ~status;
-            Info::channelCallbacks[0](status);
-         }
-      }
-   }
-
+#if false // /FTM/irqHandlingMethod
    /**
     * Wrapper to allow the use of a class member as a callback function
     * @note Only usable with static objects.
@@ -1498,152 +1295,16 @@ public:
       };
       return fn;
    }
-
-   /**
-    * Set common fault and Timer Overflow Callback function\n
-    *
-    * @param[in] theCallback Callback function to execute when timer overflows. \n
-    *                        nullptr to indicate none
-    */
-   static void setCallback(typename Info::CallbackFunction theCallback) {
-      static_assert(Info::irqHandlerInstalled, "FTM not configured for interrupts - Modify Configure.usbdm");
-      if (theCallback == nullptr) {
-         sCallback = unhandledCallback;
-         return;
-      }
-      sCallback = theCallback;
-   }
+#endif // /FTM/irqHandlingMethod
 
 public:
-// Template _mapPinsOption.xml (/FTM0/classInfo)
+   // Make visible
+   using Info::configure;
 
-   /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/FTM0/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void configureAllPins() {
-   
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
-   }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/FTM0/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
-   
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
-   /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/FTM0/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
-    */
-   static void enable() {
-      Info::enableClock();
-      configureAllPins();
-   }
-
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/FTM0/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      disableNvicInterrupts();
-      ftm->SC = FTM_SC_CLKS(0);
-      disableAllPins();
-      Info::disableClock();
-   }
-// End Template _mapPinsOption.xml
-
-   /**
-    * Configure FTM from values specified in init
-   
-    * @param init Class containing initialisation values
-    */
-   static ErrorCode configure(const typename Info::Init &init) {
-   
-      // Enable peripheral clock and map pins
-      enable();
-   
-      if constexpr (Info::irqHandlerInstalled) {
-         // Only set call-back if feature enabled and non-null
-         if (init.callbackFunction != nullptr) {
-            setCallback(init.callbackFunction);
-         }
-         enableNvicInterrupts(init.irqlevel);
-      }
-      uint8_t  sc    = init.sc;
-      uint16_t cntin = init.cntin;
-      uint16_t mod   = init.mod;
-   
-      if (init.modperiod != 0) {
-   
-         // Calculate sc.ps, mod (assumes cntin=0)
-         ErrorCode rc = calculateTimingParameters(init.modperiod, sc, mod);
-         if (rc != E_NO_ERROR) {
-            return rc;
-         }
-         // Configure for modulo operation
-         cntin = 0;
-      }
-      if (init.sc&FtmMode_FreeRunning) {
-         // Make free-running
-         cntin = 0;
-         mod   = FTM_MOD_MOD_MASK;
-      }
-      // Disable timer to change clock (unable to switch directly between clock sources)
-      ftm->SC  = 0;
-   
-      // Start value for counter
-      ftm->CNTIN = cntin;
-   
-      // End value for counter
-      ftm->MOD = mod;
-   
-      // Restart counter
-      ftm->CNT = 0;
-   
-      // Configure timer
-      ftm->SC  = sc;
-   
-      return E_NO_ERROR;
-   }
-
-
-   /**
-    * Configure Channel from values specified in channelInit
-   
-    * @param channelInit Class containing initialisation values
-    */
-   static ErrorCode configureChannel(const typename Info::ChannelInit &channelInit) {
-   
-      // Enable peripheral clock
-      Info::enableClock();
-   
-      // Configure timer combine mode
-      if ((channelInit.channel&0b1) == 0) {
-         // Even channel value controls paired channels n,n+1
-         const unsigned offset = 4*channelInit.channel;
-         const uint32_t mask = 0xFF<<offset;
-         ftm->COMBINE = (ftm->COMBINE & ~mask) | (((channelInit.cnsc>>8)<<offset)&mask);
-      }
-      // Configure timer channel
-      ftm->CONTROLS[channelInit.channel].CnV  = channelInit.cnv;
-      ftm->CONTROLS[channelInit.channel].CnSC = channelInit.cnsc;
-   
-      return E_NO_ERROR;
-   }
-
+// No class Info found
+// /FTM/InitMethod not found
+// /FTM/ChannelInitMethod not found
+// /FTM/FaultInitMethod not found
 
 /*
  *   // Static functions (mirrored)
@@ -1652,28 +1313,26 @@ public:
     * Enables clock to peripheral and configures all pins.
     * Configures main operating settings for timer.
     *
-    * @param ftmMode        Left-aligned   (cntin...mod) or
-    *        Centre-aligned (cntin...mod...cntin) or
-    *        Free-running   (0...maximum_value)
+    * @param ftmCountMode   Counting Mode
     * @param ftmClockSource Selects the clock source for the module
     * @param ftmPrescale    Selects the prescaler for the module
     */
    static void configure(
-         FtmMode        ftmMode,
+         FtmCountMode   ftmCountMode,
          FtmClockSource ftmClockSource,
          FtmPrescale    ftmPrescale    = FtmPrescale_DivBy1) {
    
       // Enable clock to peripheral
-      enable();
+      Info::enable();
    
       // Disable timer to change settings
-      ftm->SC=0;
+      ftm->SC = 0;
    
       // Make sure write has completed (disabled)
       (void)(ftm->SC);
    
       // Write new value
-      ftm->SC = ftmMode|ftmClockSource|ftmPrescale;
+      ftm->SC = ftmCountMode|ftmClockSource|ftmPrescale;
    }
 
    /**
@@ -1686,11 +1345,11 @@ public:
     * @note A illegal access trap will occur if the timer has not been enabled
     */
    static void stopCounter() {
-     ftm->SC = (ftm->SC&~FTM_SC_PS_MASK);
+     ftm->SC = (ftm->SC&~FTM_SC_CLKS_MASK);
    }
    
    /**
-    * Set Clock Source and Clock prescaler
+    * Set Clock Source and Counter clock prescaler
     *
     * @param ftmClockSource Selects the clock source for the module
     * @param ftmPrescale    Selects the prescaler for the module
@@ -1713,40 +1372,36 @@ public:
    }
 
    /**
-    * Set Alignment and whether interval or free-running mode
+    * Set Counting mode
     *
-    * @param ftmMode Left-aligned   (cntin...mod) or
-    *        Centre-aligned (cntin...mod...cntin) or
-    *        Free-running   (0...maximum_value)
+    * @param ftmCountMode Counting Mode
     *
     * @note This function will affect all channels of the timer.
     * @note The timer will be disabled while making changes.
     */
-   static void setMode(FtmMode ftmMode) {
+   static void setCountMode(FtmCountMode ftmCountMode) {
    
       // Calculate new SC value
-      uint32_t sc = (ftm->SC&~(FTM_SC_TOF_MASK|FTM_SC_CPWMS_MASK))|(ftmMode);
-
+      uint32_t sc = (ftm->SC&~FTM_SC_CPWMS_MASK)|(ftmCountMode);
+   
       // Disable timer to change clock (unable to switch directly between clock sources)
       ftm->SC=0;
-
+   
       // Make sure write has completed (disabled)
       (void)(ftm->SC);
-
+   
       // Write new value
       ftm->SC = sc;
    }
    
    /**
-    * Get Alignment and whether interval or free-running mode
+    * Get Counting mode
     *
-    * @param ftmMode Left-aligned   (cntin...mod) or
-    *        Centre-aligned (cntin...mod...cntin) or
-    *        Free-running   (0...maximum_value)
+    * @param ftmCountMode Counting Mode
     */
-   static FtmMode getMode() {
+   static FtmCountMode getCountMode() {
    
-      return (FtmMode)(ftm->SC&~(FTM_SC_TOF_MASK|FTM_SC_CPWMS_MASK));
+      return (FtmCountMode)(ftm->SC&~FTM_SC_CPWMS_MASK);
    }
 
    /**
@@ -1761,13 +1416,13 @@ public:
    
       // Calculate new SC value
       uint32_t sc = (ftm->SC&~FTM_SC_CLKS_MASK)|(ftmClockSource);
-
+   
       // Disable timer to change clock (unable to switch directly between clock sources)
       ftm->SC=0;
-
+   
       // Make sure write has completed (disabled)
       (void)(ftm->SC);
-
+   
       // Write new value
       ftm->SC = sc;
    }
@@ -1783,7 +1438,7 @@ public:
    }
 
    /**
-    * Set Clock prescaler
+    * Set Counter clock prescaler
     *
     * @param ftmPrescale Selects the prescaler for the module
     *
@@ -1794,19 +1449,19 @@ public:
    
       // Calculate new SC value
       uint32_t sc = (ftm->SC&~FTM_SC_PS_MASK)|(ftmPrescale);
-
+   
       // Disable timer to change clock (unable to switch directly between clock sources)
       ftm->SC=0;
-
+   
       // Make sure write has completed (disabled)
       (void)(ftm->SC);
-
+   
       // Write new value
       ftm->SC = sc;
    }
    
    /**
-    * Get Clock prescaler
+    * Get Counter clock prescaler
     *
     * @param ftmPrescale Selects the prescaler for the module
     */
@@ -1816,38 +1471,14 @@ public:
    }
 
    /**
-    * Set Start value for counter
-    * This value is write-buffered and updated by CNTIN synchronisation
-    *
-    * @param ticks   The timer counts from this value to ftm_mod
-    *
-    * @note This function will affect all channels of the timer.
-    */
-   static void setCounterStartValue(Ticks   ticks) {
-   
-      // Write new value
-      ftm->CNTIN = ticks;
-   }
-   
-   /**
-    * Get Start value for counter
-    *
-    * @param ticks   The timer counts from this value to ftm_mod
-    */
-   static Ticks getCounterStartValue() {
-   
-      return (Ticks)ftm->CNTIN;
-   }
-
-   /**
     * Set End value for counter
     * This value is write-buffered and updated by CNTIN synchronisation
     *
-    * @param ticks   The timer counts from ftm_cntin to this value
+    * @param ticks The timer counts from 0 to this value
     *
     * @note This function will affect all channels of the timer.
     */
-   static void setCounterMaximumValue(Ticks   ticks) {
+   static void setCounterMaximumValue(const Ticks& ticks) {
    
       // Write new value
       ftm->MOD = ticks;
@@ -1856,66 +1487,13 @@ public:
    /**
     * Get End value for counter
     *
-    * @param ticks   The timer counts from ftm_cntin to this value
+    * @param ticks The timer counts from 0 to this value
     */
    static Ticks getCounterMaximumValue() {
    
-      return (Ticks)ftm->MOD;
+      return Ticks(ftm->MOD);
    }
 
-   /**
-    * Calculate FTM timing parameters to achieve a given period
-    *
-    * @param[in]    period  Period in seconds
-    * @param[inout] sc      Proposed FTM.SC value (must include CLKS, CPWMS fields)
-    *                       PS field is updated
-    * @param[out]   mod     Calculated FTM.MOD values
-    *
-    * @return E_NO_ERROR   Success!!
-    * @return E_TOO_SMALL  Requested period is too small for resolution (required resolution check to be enabled)
-    * @return E_TOO_LARGE  Requested period is too large
-    */
-   static ErrorCode calculateTimingParameters(Seconds period, uint8_t &sc, uint16_t &mod) {
-   
-      float inputClock = Info::getInputClockFrequency((FtmClockSource)(sc&FTM_SC_CLKS_MASK));
-      unsigned prescaleFactor=1;
-      unsigned prescalerValue=0;
-   
-      // Check if CPWMS is set (affects period calculation)
-      bool centreAligned = (sc&FTM_SC_CPWMS_MASK);
-   
-      constexpr uint32_t maxModValue = FTM_MOD_MOD_MASK;
-   
-      while (prescalerValue<=7) {
-         float clock    = inputClock/prescaleFactor;
-         float modValueF = period*clock;
-         if (centreAligned) {
-            // PeriodInTicks = 2*MOD
-            modValueF = modValueF/2;
-         }
-         else {
-            // PeriodInTicks = MOD+1
-            modValueF = modValueF - 1;
-         }
-         unsigned modValue = round(modValueF);
-         if (modValue < Info::minimumResolution) {
-            usbdm_assert(false, "Interval is too short");
-            // Too short a period for minimum resolution
-            return setErrorCode(E_TOO_SMALL);
-         }
-         if (modValue <= maxModValue) {
-            sc   = (sc&~FTM_SC_PS_MASK)|FTM_SC_PS(prescalerValue);
-            mod  = modValue;
-            return E_NO_ERROR;
-         }
-         prescalerValue++;
-         prescaleFactor <<= 1;
-      }
-      // Too long a period
-      usbdm_assert(false, "Interval is too long");
-      return setErrorCode(E_TOO_LARGE);
-   }
-   
    /**
     * Set period
     *
@@ -1938,20 +1516,19 @@ public:
    
       uint8_t sc = ftm->SC;
    
-      ErrorCode rc = calculateTimingParameters(period, sc, modValue);
-   
+      float inputClock = Info::getInputClockFrequency((FtmClockSource)(sc&FTM_SC_CLKS_MASK));
+      ErrorCode rc = FtmCommonInfo::calculateTimingParameters(inputClock, period, sc, modValue);
       if (rc != E_NO_ERROR) {
          return rc;
       }
       // Disable timer to change prescaler and period
-      ftm->SC = 0;
+      ftm->SC  = 0;
    
       // Configure for modulo operation
-      ftm->MOD   = modValue;
-      ftm->CNTIN = 0_ticks;
+      ftm->MOD = modValue;
    
       // Clear counter
-      ftm->CNT   = 0;
+      ftm->CNT = 0;
    
       // Set prescale and enable timer
       ftm->SC  = sc;
@@ -1972,7 +1549,7 @@ public:
     *
     * @note This function will affect all channels of the timer.
     * @note Adjusts Timer pre-scaler to appropriate value.
-    * @note FTM counter is configured for free-running mode i.e. 0-65535
+    * @note Counter is configured for free-running mode i.e. 0-65535
     * @note The Timer is stopped while being modified.
     * @note The Timer counter is restarted from zero
     */
@@ -1982,27 +1559,28 @@ public:
    
       uint8_t sc = ftm->SC;
    
-      ErrorCode rc = calculateTimingParameters(interval, sc, modValue);
+      float inputClock = Info::getInputClockFrequency((FtmClockSource)(sc&FTM_SC_CLKS_MASK));
+      ErrorCode rc = FtmCommonInfo::calculateTimingParameters(inputClock, interval, sc, modValue);
       if (rc != E_NO_ERROR) {
          return rc;
       }
    
       // Disable timer to change prescaler and period
-      ftm->SC = 0;
+      ftm->SC  = 0;
    
       // Configure for free-running mode
       // This is the usual value for IC or OC set-up
-      ftm->MOD   = 0_ticks;
-      ftm->CNTIN = 0_ticks;
+      ftm->MOD = 0_ticks;
    
       // Clear counter
-      ftm->CNT   = 0;
+      ftm->CNT = 0;
    
       // Set prescale and enable timer
       ftm->SC  = sc;
    
       return E_NO_ERROR;
    }
+
    /**
     * Get frequency of timer tick
     *
@@ -2028,7 +1606,7 @@ public:
    
       return Info::getInputClockFrequency((FtmClockSource)(ftm->SC&FTM_SC_CLKS_MASK))/prescaleFactor;
    }
-   
+
    /**
     * Convert time in microseconds to time in ticks
     *
@@ -2049,11 +1627,13 @@ public:
          // Attempt to set too long a period
          setErrorCode(E_TOO_LARGE);
       }
-      if (rv < Info::minimumInterval) {
-         // Attempt to set too short a period
-         setErrorCode(E_TOO_SMALL);
+      if constexpr (Info::minimumInterval>0) {
+         if (rv < Info::minimumInterval) {
+            // Attempt to set too short a period
+            setErrorCode(E_TOO_SMALL);
+         }
       }
-      return (unsigned)rv;
+      return Ticks(uint32_t(rv));
    }
    
    /**
@@ -2081,7 +1661,7 @@ public:
          // Attempt to set too short a period
          setErrorCode(E_TOO_SMALL);
       }
-      return (unsigned)rv;
+      return Ticks(uint32_t(rv));
    }
    
    /**
@@ -2187,6 +1767,14 @@ public:
    }
    
    /**
+    * Clear timer overflow event flag
+    */
+   static void clearOverflowInterruptFlag() {
+      // Clear TOI flag (read & w0c)
+      ftm->SC = ftm->SC & ~FTM_SC_TOF_MASK;
+   }
+   
+   /**
     * Get and clear timer event flags
     *
     * @return Flags indicating if an event has occurred on a channel
@@ -2204,34 +1792,7 @@ public:
    }
    
    /**
-    * Enables/disable the external trigger on a channel comparison or initialisation event
-    *
-    * @param[in] ftmExternalTrigger Indicates the event to cause the external trigger
-    * @param[in] enable             Whether to enable/disable the specified trigger
-    */
-   static void enableExternalTrigger(FtmExternalTrigger ftmExternalTrigger, bool enable=true) {
-      if (enable) {
-         ftm->EXTTRIG = ftm->EXTTRIG | ftmExternalTrigger;
-      }
-      else {
-         ftm->EXTTRIG = ftm->EXTTRIG & ~ftmExternalTrigger;
-      }
-   }
-   
-   /**
-    * Enables multiple external triggers on a channel comparison or initialisation event
-    *
-    * @param[in] externalTriggers Indicates the events to cause the external trigger. 
-
-    *                             Construct from ORed FtmExternalTrigger flags e.g. FtmExternalTrigger_ch0|FtmExternalTrigger_ch3
-    * @param[in] enable           Whether to enable/disable the specified triggers
-    */
-   static void enableExternalTriggers(int externalTriggers, bool enable=true) {
-      enableExternalTrigger((FtmExternalTrigger)externalTriggers, enable);
-   }
-   
-   /**
-    * Enable/disable Timer Overflow interrupts
+    * Enable Timer Overflow interrupts
     */
    static void enableTimerOverflowInterrupts() {
       ftm->SC = ftm->SC | FTM_SC_TOIE_MASK;
@@ -2244,111 +1805,27 @@ public:
       ftm->SC = ftm->SC & ~FTM_SC_TOIE_MASK;
    }
    
-   /**
-    * Enable fault interrupts
-    */
-   static void enableFaultInterrupt() {
-      ftm->MODE = ftm->MODE | FTM_MODE_FAULTIE_MASK;
-   }
-   
-   /**
-    * Disable fault interrupts
-    */
-   static void disableFaultInterrupt() {
-      ftm->MODE = ftm->MODE & ~FTM_MODE_FAULTIE_MASK;
-   }
-   
-   /**
-    *  Disables fault detection input
-    *
-    *  @tparam inputNum        Number of fault input to enable (0..3)
-    */
-   template<int inputNum>
-   static void disableFault() {
-      static_assert(inputNum<=4, "Illegal fault channel");
-   
-      // Enable fault on channel
-      ftm->FLTCTRL = ftm->FLTCTRL & ~(1<<inputNum);
-   }
-   
-   /**
-    *  Enables fault detection input
-    *
-    *  @tparam inputNum           Number of fault input to enable (0..3)
-    *
-    *  @param[in]  polarity       Polarity of fault input
-    *  @param[in]  filterEnable   Whether to enable filtering on the fault input
-    *  @param[in]  filterDelay    Delay used by the filter (1..15) - Applies to all channels
-    *
-    *  NOTE - the filter delay is shared by all inputs
-    */
-public:
-   template<uint8_t inputNum>
-   static void enableFault(
-         Polarity polarity     = ActiveHigh,
-         bool     filterEnable = false,
-         uint32_t filterDelay  = FTM_FLTCTRL_FFVAL_MASK>>(FTM_FLTCTRL_FFVAL_SHIFT+1)) {
-   
-#ifdef DEBUG_BUILD
-      static_assert((inputNum<Info::InfoFAULT::numSignals), "FtmBase_T: Illegal fault channel");
-      static_assert((inputNum>=Info::InfoFAULT::numSignals)||(Info::InfoFAULT::info[inputNum].gpioBit != UNMAPPED_PCR), "FtmBase_T: Fault signal is not mapped to a pin - Modify Configure.usbdm");
-      static_assert((inputNum>=Info::InfoFAULT::numSignals)||(Info::InfoFAULT::info[inputNum].gpioBit != INVALID_PCR),  "FtmBase_T: Non-existent signal used for fault input");
-      static_assert((inputNum>=Info::InfoFAULT::numSignals)||(Info::InfoFAULT::info[inputNum].gpioBit == UNMAPPED_PCR)||(Info::InfoFAULT::info[inputNum].gpioBit == INVALID_PCR)||(Info::InfoFAULT::info[inputNum].gpioBit >= 0), "Pcr_T: Illegal signal used for fault");
-#endif
-   
-      PcrTable_T<typename Info::InfoFAULT, inputNum>::setPCR();
-   
-      if (polarity) {
-         // Set active high
-         ftm->FLTPOL = ftm->FLTPOL & ~(1<<inputNum);
-      }
-      else {
-         // Set active low
-         ftm->FLTPOL = ftm->FLTPOL | (1<<inputNum);
-      }
-      if (filterEnable) {
-         // Enable filter & set filter delay
-         ftm->FLTCTRL = ((ftm->FLTCTRL) & ~(FTM_FLTCTRL_FFVAL_MASK)) | (1<<(inputNum+FTM_FLTCTRL_FFLTR0EN_SHIFT)) | FTM_FLTCTRL_FFVAL(filterDelay);
-      }
-      else {
-         // Disable filter
-         ftm->FLTCTRL = ftm->FLTCTRL & ~(1<<(inputNum+FTM_FLTCTRL_FFLTR0EN_SHIFT));
-      }
-      // Enable fault input
-      ftm->FLTCTRL = ftm->FLTCTRL | (1<<inputNum);
-      // Enable fault mode (All channels, manual)
-      ftm->MODE    = ftm->MODE | FTM_MODE_FAULTM(2);
-   }
-
-   /**
-    * Set polarity of all channels
-    *
-    * @param channelMask   Bit mask 0 => active-high, 1 => active-low
-    */
-   static  void setPolarity(uint32_t channelMask) {
-      ftm->POL = channelMask;
-   }
-   
-   /**
-    * Set polarity of selected channels
-    *
-    * @param polarity      Polarity to set
-    * @param channelMask   Bit mask indicating channels to affect
-    */
-   static void setPolarity(Polarity polarity, uint32_t channelMask) {
-      if (polarity) {
-         ftm->POL = ftm->POL & ~channelMask;
-      }
-      else {
-         ftm->POL = ftm->POL | channelMask;
-      }
-   }
-
    /*
     * *****************************************************************
     *          Channel functions
     * *****************************************************************
     */
+   
+   /**
+    * Set action on event
+    * (/FTM0/ftm_cnsc_action_independent[0])
+    *
+    * @param ftmChannelAction Enable interrupt or DMA on channel event
+    * @param ftmChannelNum    Selects a channel
+    */
+   static void setAction(
+         FtmChannelAction ftmChannelAction,
+         FtmChannelNum    ftmChannelNum)  {
+   
+      ftm->CONTROLS[ftmChannelNum].CnSC =
+         (ftm->CONTROLS[ftmChannelNum].CnSC&~(FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK)) | ftmChannelAction;
+   }
+   
    /**
     * Set PWM duty cycle.
     * Higher precision float version
@@ -2356,7 +1833,7 @@ public:
     * @param[in] dutyCycle  Duty-cycle as percentage (float)
     * @param[in] channel    Timer channel
     *
-    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the Register Synchronisation mechanism
     */
    static void setDutyCycle(float dutyCycle, int channel) {
       if (ftm->SC&FTM_SC_CPWMS_MASK) {
@@ -2373,7 +1850,7 @@ public:
     * @param[in] dutyCycle  Duty-cycle as percentage
     * @param[in] channel    Timer channel
     *
-    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the Register Synchronisation mechanism
     */
    static void setDutyCycle(int dutyCycle, int channel) {
       if (ftm->SC&FTM_SC_CPWMS_MASK) {
@@ -2394,13 +1871,13 @@ public:
     * @return E_NO_ERROR on success
     * @return E_TOO_LARGE on success
     *
-    * @note The actual CnV register update may be delayed by the register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the Register Synchronisation mechanism
     */
    static ErrorCode setHighTime(Ticks highTime, int channel) {
    
       if (ftm->SC&FTM_SC_CPWMS_MASK) {
          // In CPWM the pulse width is doubled
-         highTime = (highTime+1_ticks)/2U;
+         highTime = Ticks((highTime+1_ticks)/2U);
       }
 #ifdef DEBUG_BUILD
       if ((unsigned)highTime > ftm->MOD) {
@@ -2419,7 +1896,7 @@ public:
     * @return Absolute time of last event in ticks i.e. value from timer event register
     */
    static Ticks getEventTime(int channel) {
-      return (unsigned)(ftm->CONTROLS[channel].CnV);
+      return Ticks(ftm->CONTROLS[channel].CnV);
    }
    
    /**
@@ -2466,7 +1943,7 @@ public:
     *
     * @return E_NO_ERROR on success
     *
-    * @note The actual CnV register update may be delayed by the FTM register synchronisation mechanism
+    * @note The actual CnV register update may be delayed by the FTM Register Synchronisation mechanism
     */
    static ErrorCode setHighTime(Seconds highTime, int channel) {
       return setHighTime(convertSecondsToTicks(highTime), channel);
@@ -2504,7 +1981,7 @@ public:
     * @param enableMask  Bit mask for channels (combination of FtmChannelPair)
     */
    static void setInvertedChannelPairs(uint32_t enableMask) {
-      ftm->OUTINIT = enableMask;
+      ftm->INVCTRL = enableMask;
    }
    
    /**
@@ -2573,31 +2050,6 @@ public:
    }
 
 
-   /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(Info::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    *
-    * @note Any pending interrupts are cleared before enabling.
-    */
-   static void enableNvicInterrupts(NvicPriority nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(Info::irqNums[0]);
-   }
-
 public:
    /**
     * Template class representing a timer channel
@@ -2624,12 +2076,17 @@ public:
     * @tparam channel FTM timer channel
     */
    template <int channel>
-   class Channel : public PcrTable_T<Info, limitIndex<Info>(channel)>, public FtmChannel {
+   class Channel :
+#if true // /PCR/_present
+   public PcrTable_T<Info, limitIndex<Info>(channel)>,
+#endif
+   public FtmChannel, public Info {
 
    private:
-      FtmBase::CheckChannel<Info, channel> check;
+#if true // /PCR/_present
+      FtmBase::CheckPinExistsAndIsMapped<Info, channel> check;
+#endif
 
-   private:
       /**
        * This class is not intended to be instantiated
        */
@@ -2637,9 +2094,9 @@ public:
       Channel(Channel&&) = delete;
 
    public:
-      typedef typename Info::ChannelInit ChannelInit;
+//      typedef typename Info::ChannelInit ChannelInit;
 
-      constexpr Channel() : FtmChannel(Info::baseAddress, channel) {}
+      constexpr Channel() : FtmChannel(Info::baseAddress, (FtmChannelNum)channel) {}
       virtual ~Channel() = default;
 
    protected:
@@ -2653,12 +2110,14 @@ public:
       }
 
    public:
+#if true // /PCR/_present
       // GPIO associated with this channel
       template<Polarity polarity>
       using Gpio = GpioTable_T<Info, limitIndex<Info>(channel), polarity>; // Inactive is high
 
       /** Allow access to PCR of associated pin */
       using Pcr = PcrTable_T<Info, limitIndex<Info>(channel)>;
+#endif
 
       /** Allow access owning FTM */
       using OwningFtm = FtmBase_T<Info>;
@@ -2693,7 +2152,7 @@ public:
       }
 
       /** Timer channel number */
-      static constexpr unsigned CHANNEL      = channel;
+      static constexpr FtmChannelNum CHANNEL = (FtmChannelNum) channel;
 
       /** Mask for Timer channel */
       static constexpr uint32_t CHANNEL_MASK = 1<<channel;
@@ -2705,40 +2164,60 @@ public:
        *       pending CnV register updates are discarded.
        */
       static void defaultConfigure() {
-         OwningFtm::configureChannel(OwningFtm::DefaultChannelInitValues[channel]);
+         Info::configure(OwningFtm::DefaultChannelInitValues[channel]);
       }
 
       /**
-       * Configure channel
+       * Configure channel from Init data
        *
        * @note This method has the side-effect of clearing the register update synchronisation i.e.
        *       pending CnV register updates are discarded.
+       *
+       * @param channelInit (channel number is ignored)
        */
-      static void configure(const ChannelInit &channelInit) {
-         OwningFtm::configureChannel(channelInit);
+      static void configure(const typename Info::ChannelInit &channelInit) {
+         Info::configure(FtmChannelNum(channel), channelInit);
       }
       
+   
       /**
-       * Configure channel.
-       * No affect on shared settings of owning Timer
+       * Set Action on Channel Event
+       * (/FTM0/ftm_cnsc_action_independent[0])
        *
-       * @param[in] ftmChannelMode    Mode of operation for channel
-       * @param[in] ftmChannelAction  Whether to enable the interrupt or DMA function on this channel
+       * @param ftmChannelAction Enable interrupt or DMA on channel event
        *
        * @note This method has the side-effect of clearing the register update synchronisation i.e.
        *       pending CnV register updates are discarded.
        */
-      static  void configure(
-            FtmChannelMode    ftmChannelMode,
-            FtmChannelAction  ftmChannelAction = FtmChannelAction_None) {
+      static void setAction(FtmChannelAction ftmChannelAction) {
    
-         ftm->CONTROLS[channel].CnSC = ftmChannelMode|ftmChannelAction;
+         ftm->CONTROLS[channel].CnSC =
+              (ftm->CONTROLS[channel].CnSC & ~(FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK)) | ftmChannelAction;
+      }
+   
+   
+      /**
+       * Set Channel Mode and Action on Channel Event
+       * (/FTM0/ftm_cnsc_mode_independent[0])
+       *
+       * @param ftmChannelMode   Determines channel operation (PWM/Input capture/Output compare)
+       * @param ftmChannelAction Enable interrupt or DMA on channel event
+   
+       * @note This method has the side-effect of clearing the register update synchronisation i.e.
+       *       pending CnV register updates are discarded.
+       */
+      static void configure(
+            FtmChannelMode   ftmChannelMode,
+            FtmChannelAction ftmChannelAction) {
+   
+         ftm->CONTROLS[channel].CnSC =
+              (ftm->CONTROLS[channel].CnSC & ~(FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK|FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK)) | ftmChannelMode|ftmChannelAction;
       }
    
       /**
        * Disables timer channel (sets mode to FtmChannelMode_Disabled)
        */
-      static  void disable() {
+      static void disable() {
          setMode(FtmChannelMode_Disabled);
       }
    
@@ -2748,37 +2227,36 @@ public:
        * @return Current mode of operation for the channel
        */
       static  FtmChannelMode getMode() {
-         return static_cast<FtmChannelMode>(ftm->CONTROLS[channel].CnSC &
-               (FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK));
+         return FtmChannelMode(ftm->CONTROLS[channel].CnSC & (FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK));
       }
    
       /**
        * Set channel mode
        *
-       * @param[in] ftmChannelMode      Mode of operation for channel
+       * @param ftmChannelMode Determines channel operation (PWM/Input capture/Output compare)
        *
        * @note This method has the side-effect of clearing the register update synchronisation i.e.
        *       pending CnV register updates are discarded.
        */
-      static  void setMode(FtmChannelMode ftmChannelMode) {
+      static void setMode(FtmChannelMode ftmChannelMode) {
          ftm->CONTROLS[channel].CnSC =
                (ftm->CONTROLS[channel].CnSC & ~(FTM_CnSC_MS_MASK|FTM_CnSC_ELS_MASK))|ftmChannelMode;
       }
    
       /**
-       * Set channel action on event.
+       * Set polarity of channels.
        *
-       * @param[in] ftmChannelAction      Action to take on channel event (DMA or Interrupt)
-       *
-       * @note This method has the side-effect of clearing the register update synchronisation i.e.
-       *       pending CnV register updates are discarded.
+       * @param active Polarity to set
        */
-      static  void setAction(FtmChannelAction ftmChannelAction) {
-         ftm->CONTROLS[channel].CnSC =
-               (ftm->CONTROLS[channel].CnSC & ~(FTM_CnSC_CHIE_MASK|FTM_CnSC_DMA_MASK))|
-               ftmChannelAction;
+      static void setPolarity(Polarity active) {
+         if (active == ActiveHigh) {
+            ftm->POL = ftm->POL & ~CHANNEL_MASK;
+         }
+         else {
+            ftm->POL = ftm->POL | CHANNEL_MASK;
+         }
       }
-   
+
       /**
        * Set PWM high time in ticks.
        * Assumes value is less than period
@@ -2787,7 +2265,7 @@ public:
        *
        * @return E_NO_ERROR on success
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
       static  ErrorCode setHighTime(Ticks highTime) {
          return OwningFtm::setHighTime(highTime, channel);
@@ -2801,19 +2279,20 @@ public:
        *
        * @return E_NO_ERROR on success
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
       static  ErrorCode setHighTime(Seconds highTime) {
          return OwningFtm::setHighTime(highTime, channel);
       }
+   
       /**
        * Set PWM duty cycle.
        *
        * @param[in] dutyCycle  Duty-cycle as percentage
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-      static  void setDutyCycle(int dutyCycle) {
+      static void setDutyCycle(int dutyCycle) {
          OwningFtm::setDutyCycle(dutyCycle, channel);
       }
    
@@ -2822,9 +2301,9 @@ public:
        *
        * @param[in] dutyCycle  Duty-cycle as percentage
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-      static  void setDutyCycle(float dutyCycle) {
+      static void setDutyCycle(float dutyCycle) {
          OwningFtm::setDutyCycle(dutyCycle, channel);
       }
    
@@ -2833,9 +2312,9 @@ public:
        *
        * @param[in] offset  Event time in ticks relative to current event time (i.e. Timer channel CnV value)
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-      static  void setDeltaEventTime(Ticks offset) {
+      static void setDeltaEventTime(Ticks offset) {
          OwningFtm::setDeltaEventTime(offset, channel);
       }
    
@@ -2844,9 +2323,9 @@ public:
        *
        * @param[in] offset  Event time in ticks relative to current time (i.e. Timer CNT value)
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-      static  void setRelativeEventTime(Ticks offset) {
+      static void setRelativeEventTime(Ticks offset) {
          OwningFtm::setRelativeEventTime(offset, channel);
       }
    
@@ -2855,9 +2334,9 @@ public:
        *
        * @param[in] eventTime  Absolute event time in ticks i.e. value to use as timer comparison value
        *
-       * @note The actual CnV register update will be delayed by the register synchronisation mechanism
+       * @note The actual CnV register update will be delayed by the Register Synchronisation mechanism
        */
-      static  void setEventTime(Ticks eventTime) {
+      static void setEventTime(Ticks eventTime) {
          OwningFtm::setEventTime(eventTime, channel);
       }
    
@@ -2877,7 +2356,7 @@ public:
        * @return false Indicates no event has occurred on a channel since last polled
        */
       static  bool getInterruptFlag() {
-         return (ftm->STATUS&CHANNEL_MASK) != 0;
+         return (ftm->CONTROLS[channel].CnSC&FTM_CnSC_CHF_MASK) != 0;
       }
    
       /**
@@ -2890,16 +2369,15 @@ public:
        */
       static  bool getAndClearInterruptFlag() {
          // Note - requires read and write zero to clear flags
-         // so only flags captured in status are cleared
-         bool status = (ftm->STATUS&CHANNEL_MASK) != 0;
-         ftm->STATUS = ~CHANNEL_MASK;
-         return status;
+         uint8_t cnsc = ftm->CONTROLS[channel].CnSC;
+         ftm->CONTROLS[channel].CnSC = cnsc&~CHANNEL_MASK;
+         return (cnsc&CHANNEL_MASK) != 0;
       }
    
       /**
        * Clear interrupt flag on channel.
        */
-      static  void clearInterruptFlag() {
+      static void clearInterruptFlag() {
          // Note - requires read and write zero to clear flag
          ftm->CONTROLS[CHANNEL].CnSC = ftm->CONTROLS[CHANNEL].CnSC & ~FTM_CnSC_CHF_MASK;
       }
@@ -2913,21 +2391,13 @@ public:
        *
        * @param ftmChannelForce  Select control of pin. One of FtmChannelForce_Low/High/Release
        */
-      static  void forceChannelOutput(FtmChannelForce ftmChannelForce) {
+      static void forceChannelOutput(FtmChannelForce ftmChannelForce) {
          static const uint32_t MASK = ((1<<channel)|(1<<(channel+8)));
          ftm->SWOCTRL = ((ftm->SWOCTRL & ~MASK)) | (ftmChannelForce & MASK);
       }
 
-      /**
-       * Set polarity of channels.
-       *
-       * @param polarity Polarity to set
-       */
-      static  void setPolarity(Polarity polarity) {
-         OwningFtm::setPolarity(polarity, CHANNEL_MASK);
-      }
 
-
+#if false // /FTM/irqHandlingMethod
    /**
     * Set channel event callback function
     *
@@ -2941,14 +2411,15 @@ public:
     *       It is necessary to identify the originating channel in the callback
     */
    static ErrorCode setChannelCallback(ChannelCallbackFunction callback) {
-      if constexpr (Info::NumChannelVectors > 1) {
-         return OwningFtm::setChannelCallback(callback, channel);
+      if constexpr (Info::individualChannelCallbacks) {
+         return OwningFtm::setChannelCallback(channel, callback);
       }
       else {
          return OwningFtm::setChannelCallback(callback);
       }
    }
-
+#endif // /FTM/irqHandlingMethod
+#if true // /PCR/_present
    /*******************************
     *  PIN Functions
     *******************************/
@@ -2961,11 +2432,11 @@ public:
     * @note There is a single callback function for all pins on the related port.
     */
    static __attribute__((always_inline)) void setPinCallback(PinCallbackFunction callback) {
-      FtmBase::CheckChannelIsMappedToPinOnly<Info, channel>::check();
+      FtmBase::CheckPinExistsAndIsMapped<Info, channel> check;
       static_assert(Pcr::HANDLER_INSTALLED, "Gpio associated with FTM channel not configured for PIN interrupts - Modify Configure.usbdm");
       Pcr::setPinCallback(callback);
    }
-       
+
 #if defined(PORT_PCR_ODE_MASK) and defined (PORT_PCR_SRE_MASK)
    /**
     * @brief
@@ -2982,7 +2453,7 @@ public:
          PinDriveMode      pinDriveMode      = Pcr::defaultPcrValue,
          PinSlewRate       pinSlewRate       = Pcr::defaultPcrValue) {
 
-      FtmBase::CheckChannelIsMappedToPinOnly<Info, channel>::check();
+      FtmBase::CheckPinExistsAndIsMapped<Info, channel>::check();
 
 #ifdef FTM_SC_PWMEN0_SHIFT
       // Enable output pin in FTM
@@ -3074,8 +2545,7 @@ public:
             PinAction         pinAction         = Pcr::defaultPcrValue,
             PinFilter         pinFilter         = Pcr::defaultPcrValue) {
 
-         FtmBase::CheckChannelIsMappedToPinOnly<Info, channel>::check();
-//         FtmBase::CheckChannelExistsAndMapped<Info, channel>::check(); // More noisy errors
+         FtmBase::CheckPinExistsAndIsMapped<Info, channel> check;
 
 #ifdef FTM_SC_PWMEN0_SHIFT
          // Disable output pin in FTM
@@ -3084,26 +2554,11 @@ public:
 
          Pcr::setInput(pinPull,pinAction,pinFilter);
       }
+#endif
 
    };
 
-   /**
-    * Default configuration using settings from Configure.usbdmProject
-    */
-   static void defaultConfigure() {
-
-     configure(Info::DefaultInitValue);
-
-     ftm->EXTTRIG = Info::exttrig;
-     ftm->CONF    = FTM_CONF_BDMMODE(1);
-     ftm->COMBINE = FTM_COMBINE_FAULTEN0_MASK|FTM_COMBINE_FAULTEN1_MASK|FTM_COMBINE_FAULTEN2_MASK|FTM_COMBINE_FAULTEN3_MASK;
-
-     NVIC_SetPriority(Info::irqNums[0], Info::irqLevel);
-   }
-
 };
-
-template<class Info> typename Info::CallbackFunction FtmBase_T<Info>::sCallback           = FtmBase_T<Info>::unhandledCallback;
 
 #ifdef FTM_QDCTRL_QUADEN_MASK
 
@@ -3131,16 +2586,20 @@ template<class Info> typename Info::CallbackFunction FtmBase_T<Info>::sCallback 
  * @endcode
  */
 template <class Info>
-class FtmQuadDecoder_T : protected FtmBase_T<Info> {
+class FtmQuadDecoder_T : public Info {
 
 private:
    FtmQuadDecoder_T(const FtmQuadDecoder_T&) = delete;
    FtmQuadDecoder_T(FtmQuadDecoder_T&&) = delete;
 
-   FtmBase::CheckChannel<typename Info::InfoQUAD, 0> checkQ0;
-   FtmBase::CheckChannel<typename Info::InfoQUAD, 1> checkQ1;
+   FtmBase::CheckPinExistsAndIsMapped<typename Info::InfoQUAD, 0> check0;
+   FtmBase::CheckPinExistsAndIsMapped<typename Info::InfoQUAD, 1> check1;
 
 public:
+
+   // Make visible
+   using Info::configure;
+
    // Default constructor
    FtmQuadDecoder_T() = default;
 
@@ -3154,9 +2613,9 @@ public:
       FtmBase_T<Info>::setCallback(theCallback);
    }
 
-   using QuadInit = typename Info::QuadInit;
-
-   static constexpr QuadInit DefaultInitValue = Info::DefaultQuadInitValue;
+   // Make these visible
+   using Info::QuadInit;
+   using Info::DefaultQuadInitValue;
 
    /** Hardware instance pointer */
    static constexpr HardwarePtr<FTMQUAD_Type> ftm = Info::baseAddress;
@@ -3242,31 +2701,6 @@ public:
    }
 
    /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(Info::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    *
-    * @note Any pending interrupts are cleared before enabling.
-    */
-   static void enableNvicInterrupts(NvicPriority nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(Info::irqNums[0]);
-   }
-
-   /**
     * Configures all mapped pins associated with this peripheral
     */
    static void configureAllPins() {
@@ -3302,7 +2736,7 @@ public:
     */
    static void disable() {
 
-      disableNvicInterrupts();
+      Info::disableNvicInterrupts();
 
       if constexpr (Info::mapPinsOnEnable) {
          disableAllPins();
@@ -3315,49 +2749,7 @@ public:
       Info::disableClock();
    }
 
-   /**
-    * Configure QuadDecoder from values specified in init
-   
-    * @param quadInit Class containing initialisation values
-    */
-   static ErrorCode configure(const typename Info::QuadInit &quadInit) {
-   
-      // Assertions placed here so only checked if FtmQuadDecoder actually used
-      static_assert(Info::InfoQUAD::info[0].gpioBit >= 0, "FtmQuadDecoder PHA is not mapped to a pin - Modify Configure.usbdm");
-      static_assert(Info::InfoQUAD::info[1].gpioBit >= 0, "FtmQuadDecoder PHB is not mapped to a pin - Modify Configure.usbdm");
-   
-      // Enable peripheral clock and map pins
-      enable();
-   
-      if constexpr (Info::irqHandlerInstalled) {
-         // Only set call-back if feature enabled and non-null
-         if (quadInit.callbackFunction != nullptr) {
-            FtmBase_T<Info>::setCallback(quadInit.callbackFunction);
-         }
-         enableNvicInterrupts(quadInit.irqlevel);
-      }
-   
-      // Disable timer to change clock (unable to switch directly between clock sources)
-      ftm->SC  = 0;
-   
-      // Start value for counter
-      ftm->CNTIN = 0;
-   
-      // End value for counter
-      ftm->MOD =0;
-   
-      // Restart counter
-      ftm->CNT = 0;
-   
-      // Configure timer
-      ftm->FILTER = quadInit.qdfilter;
-      ftm->SC     = quadInit.sc;
-      ftm->QDCTRL = quadInit.qdctrl;
-   
-      return E_NO_ERROR;
-   }
-
-
+// /FTM/InitMethod not found
 
    /**
     * Basic configuration of Quadrature decoder.
@@ -3372,8 +2764,8 @@ public:
          FtmQuadratureMode ftmQuadratureMode = FtmQuadratureMode_Phase_AB_Mode
          ) {
       // Assertions placed here so only checked if FtmQuadDecoder actually used
-      static_assert(Info::InfoQUAD::info[0].gpioBit >= 0, "FtmQuadDecoder PHA is not mapped to a pin - Modify Configure.usbdm");
-      static_assert(Info::InfoQUAD::info[1].gpioBit >= 0, "FtmQuadDecoder PHB is not mapped to a pin - Modify Configure.usbdm");
+      static_assert(Info::InfoQUAD::info[0].pinIndex >= PinIndex::MIN_PIN_INDEX, "FtmQuadDecoder PHA is not mapped to a pin - Modify Configure.usbdm");
+      static_assert(Info::InfoQUAD::info[1].pinIndex >= PinIndex::MIN_PIN_INDEX, "FtmQuadDecoder PHB is not mapped to a pin - Modify Configure.usbdm");
 
       enable();
 
@@ -3438,21 +2830,6 @@ public:
 };
 #endif // defined(FTM_QDCTRL_QUADEN_MASK)
 
-/**
-* Class representing FTM0
-*/
-class Ftm0 : public FtmBase_T<Ftm0Info> {};
-
-/**
-* Class representing FTM1
-*/
-class Ftm1 : public FtmBase_T<Ftm1Info> {};
-
-
-   /**
-    * Class representing Ftm1 as Quadrature decoder
-    */
-   typedef FtmQuadDecoder_T<Ftm1Info> FtmQuadDecoder1;
 
 /**
  * End FTM_Group
@@ -3460,6 +2837,8 @@ class Ftm1 : public FtmBase_T<Ftm1Info> {};
  */
 
 } // End namespace USBDM
+
+#endif // /FTM/enablePeripheralSupport
 
 #endif /* HEADER_FTM_H */
 

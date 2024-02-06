@@ -19,9 +19,6 @@
 // USB messages are packed data in LE (native) format
 #pragma pack(push, 1)
 
-/// Magic number used to reboot into ICP mode
-static constexpr uint32_t MAGIC_NUMBER = 0xA55A1234;
-
 /**
  * Structure of Boot information in Image Flash memory
  */
@@ -59,6 +56,7 @@ enum HardwareType : uint32_t {
    HW_SOLDER_STATION_V3  = 4, // MK20DX128VLF5
    HW_LOGIC_BOARD_V4a    = 5, // As for V4 but smaller flash MK20DX32VLF5
    HW_SOLDER_STATION_V4  = 6, // MK20DX256VLH7
+   HW_USBDM_MK22F        = 7  // MK22FN512M12
 };
 
 #if defined(USBDM_ASSERT)
@@ -80,6 +78,7 @@ static inline const char *getHardwareType(HardwareType hardwareVersion) {
          "SOLDER_STATION_V3",
          "LOGIC_BOARD_V4a",
          "SOLDER_STATION_V4",
+         "USBDM_MK"
    };
    const char *name = "Unknown";
    if (hardwareVersion < (sizeof(names)/sizeof(names[0]))) {
@@ -106,6 +105,7 @@ static inline const char *getHardwareType(HardwareType hardwareVersion) {
          "Soldering Station V3",
          "Digital Lab Board V4a",
          "Soldering Station V4",
+         "USBDM MK22F"
    };
    const char *name = "Unknown";
    if (hardwareVersion < (sizeof(names)/sizeof(names[0]))) {
@@ -142,6 +142,9 @@ constexpr const char *getHardwareVersion() {
    }
    if constexpr(version == HW_SOLDER_STATION_V4) {
       return "Soldering station V4";
+   }
+   if constexpr(version == HW_USBDM_MK22F) {
+      return "USBDM MK22F";
    }
    return "Unknown";
 }

@@ -12,6 +12,7 @@
  */
 
 #include "hardware.h"
+// /HARDWARE/Includes not found
 
 /**
  * Namespace enclosing USBDM classes
@@ -33,7 +34,8 @@ extern "C" void __attribute__((constructor)) cpp_initialise() {
    }
 }
 
-// No user object definitions found
+#ifdef PORT_PCR_MUX
+// /HARDWARE_CPP/Definitions not found
 
 /**
  * Map all configured pins to peripheral signals.
@@ -48,21 +50,12 @@ void mapAllPins() {
 
 #endif
 
-
-#if defined(PCC_PCCn_CGC_MASK)
-   PCC->PCC_PORTA = PCC_PCCn_CGC_MASK;
-   PCC->PCC_PORTB = PCC_PCCn_CGC_MASK;
-   PCC->PCC_PORTC = PCC_PCCn_CGC_MASK;
-   PCC->PCC_PORTD = PCC_PCCn_CGC_MASK;
-   PCC->PCC_PORTE = PCC_PCCn_CGC_MASK;
-#else
-   enablePortClocks(PORTA_CLOCK_MASK|PORTB_CLOCK_MASK|PORTC_CLOCK_MASK|PORTD_CLOCK_MASK|PORTE_CLOCK_MASK);
-#endif
-
+   enablePortClocks(USBDM::PORTA_CLOCK_MASK|USBDM::PORTB_CLOCK_MASK|USBDM::PORTC_CLOCK_MASK|USBDM::PORTD_CLOCK_MASK|USBDM::PORTE_CLOCK_MASK);
    PORTA->GPCHR = ForceLockedPins|0x0000UL|PORT_GPCHR_GPWE(0x000CUL);
    PORTA->GPCLR = ForceLockedPins|0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
    PORTA->GPCLR = ForceLockedPins|0x0200UL|PORT_GPCLR_GPWE(0x0006UL);
    PORTA->GPCLR = ForceLockedPins|0x0700UL|PORT_GPCLR_GPWE(0x0009UL);
+   PORTD->GPCLR = ForceLockedPins|0x0100UL|PORT_GPCLR_GPWE(0x0010UL);
 
    if constexpr (ForceLockoutUnbondedPins) {
       PORTA->GPCLR = PinLock_Locked |0x0000UL|PORT_GPCLR_GPWE(0xFFE0UL); // Lockout unavailable pins
@@ -78,6 +71,7 @@ void mapAllPins() {
    }
 
 }
+#endif 
 /**
  * End group USBDM_Group
  * @}
@@ -85,23 +79,6 @@ void mapAllPins() {
 /*
  *  Static objects
  */
-   /**
-    * Callback to catch unhandled interrupt
-    */
-   void unhandledCallback() {
-      setAndCheckErrorCode(E_NO_HANDLER);
-   }
-   
-   /**
-    * Callback to catch unhandled channel interrupt
-    *
-    * @param mask Mask identifying channel
-    */
-   void timerUnhandledChannelCallback(uint8_t mask) {
-      (void)mask;
-      setAndCheckErrorCode(E_NO_HANDLER);
-   }
-
 
 
 } // End namespace USBDM

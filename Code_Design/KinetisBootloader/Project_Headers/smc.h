@@ -28,6 +28,7 @@ namespace USBDM {
  * @{
  */
 
+#if false // /SMC/enablePeripheralSupport
 /**
  *  Sleep on exit from Interrupt Service Routine (ISR)\n
  *  This option controls whether the processor re-enters sleep mode when exiting the\n
@@ -46,12 +47,11 @@ enum SmcSleepOnExit {
  *
  * @image html KinetisPowerModes.png
  */
-template <class Info>
-class SmcBase_T : public Info {
+class SmcBase : public SmcInfo {
 
 protected:
 	   /** Hardware instance pointer */
-	   static constexpr HardwarePtr<SMC_Type> smc = Info::baseAddress;
+	   static constexpr HardwarePtr<SMC_Type> smc = baseAddress;
 
    /**
     * Enter Stop Mode (STOP, VLPS, LLSx, VLLSx)
@@ -106,7 +106,7 @@ public:
     * @return Pointer to static string
     */
    static const char *getSmcStatusName() {
-      return getSmcStatusName(Info::getStatus());
+      return getSmcStatusName(getStatus());
    }
 
    /**
@@ -130,7 +130,7 @@ public:
     * @return E_INTERRUPTED Processor failed to enter STOP mode due to interrupt
     */
    static ErrorCode enterStopMode(SmcStopMode smcStopMode) {
-      Info::setStopMode(smcStopMode);
+      setStopMode(smcStopMode);
 
       return enterStopMode();
    }
@@ -178,7 +178,7 @@ public:
     * @return E_NO_ERROR    Processor entered STOP
     * @return E_INTERRUPTED Processor failed to enter STOP mode due to interrupt
     */
-   static ErrorCode enterStopMode(typename Info::Init smcInit) {
+   static ErrorCode enterStopMode(Init smcInit) {
       smcInit.setOptions();
       return enterStopMode();
    }
@@ -243,149 +243,13 @@ public:
       (void)(SCB->SCR);
    }
    
-   /**
-    * Enter Run Mode.
-    *
-    * This may be used to change between supported RUN modes (RUN, VLPR, HSRUN).
-
-    * Only the following transitions are allowed: VLPR <-> RUN <-> HSRUN.
-    *
-    * @param[in] clockConfig Clock configuration (Includes run mode to enter)
-    *
-    * @return E_NO_ERROR                 No error
-    * @return E_CLOCK_INIT_FAILED        Clock transition failure
-    * @return E_ILLEGAL_POWER_TRANSITION Cannot transition to smcRunMode from current run mode
-    */
-   static ErrorCode enterRunMode(ClockConfig clockConfig) {
    
-      SmcRunMode smcRunMode = Mcg::clockInfo[clockConfig].runMode;
-   
-      ErrorCode rc = E_NO_ERROR;
-   
-      /*
-       * Transition    Change clock configuration
-       * VLPR->RUN     After
-       * RUN->VLPR     Before
-       */
-      switch(smcRunMode) {
-   
-         case SmcRunMode_Normal:
-            // Change power mode
-            SMC->PMCTRL = (SMC->PMCTRL&~SMC_PMCTRL_RUNM_MASK)|smcRunMode;
-   
-            // Wait for power status to change
-            while (Info::getStatus() != SmcStatus_RUN) {
-               __asm__("nop");
-            }
-            // Change clock mode
-            rc = Mcg::clockTransition(Mcg::clockInfo[clockConfig]);
-            break;
-   
-         case SmcRunMode_VeryLowPower:
-            // Change clock mode
-            rc = Mcg::clockTransition(Mcg::clockInfo[clockConfig]);
-            if (rc != E_NO_ERROR) {
-               break;
-            }
-            // Change power mode
-            SMC->PMCTRL = (SMC->PMCTRL&~SMC_PMCTRL_RUNM_MASK)|smcRunMode;
-   
-            // Wait for power status to change
-            while (Info::getStatus() != SmcStatus_VLPR) {
-               __asm__("nop");
-            }
-            break;
-         default:
-            return setErrorCode(E_ILLEGAL_PARAM);
-      }
-      return rc;
-   }
-
-   
-   /**
-    * Change power mode.
-    *
-    * @note Note this method does not affect advanced STOP options such as PORPO and RAM2PO
-    *       These should be set beforehand.
-    *
-    * @param smcPowerMode  Power mode to change to (apart from SmcPowerMode_RUN/VLPR/HSRUN)
-    *
-    * @return E_NOERROR                   Success
-    * @return E_ILLEGAL_PARAM             Cannot enter RUN or VLPR using this method (use enterRunMode())
-    * @return E_ILLEGAL_POWER_TRANSITION  It is not possible to transition directly to the given power mode
-    * @return E_INTERRUPTED               Processor failed to change mode due to interrupt
-    */
-   static ErrorCode enterPowerMode(SmcPowerMode smcPowerMode) {
-   
-      switch(smcPowerMode) {
-   
-         // Transition refers to Figure 15-5. Power mode state diagram in MK22F Manual (K22P121M120SF7RM)
-   
-         case SmcPowerMode_RUN   : // (VLPR,HSRUN)->RUN Transition 3,12
-         case SmcPowerMode_VLPR  : // RUN->VLPR         Transition 3
-            // Clock changes needed etc. Use enterRunMode()
-            return E_ILLEGAL_PARAM;
-   
-         case SmcPowerMode_VLPW  : // VLPR->VLPW        Transition 4
-            // Check if in correct run mode
-            if (SmcRunMode_VeryLowPower != (SMC->PMCTRL&SMC_PMCTRL_RUNM_MASK)) {
-               return setErrorCode(E_ILLEGAL_POWER_TRANSITION);
-            }
-            [[fallthrough]];
-         case SmcPowerMode_WAIT  : // (RUN,VLPR)->VLPW  Transition 1,4
-            enterWaitMode();
-            return E_NO_ERROR;
-            break;
-   
-         case SmcPowerMode_NormalSTOP   : // RUN->STOP Transition 2a
-            // Check if in correct run mode
-            if (SmcRunMode_Normal != (SMC->PMCTRL&SMC_PMCTRL_RUNM_MASK)) {
-               return E_ILLEGAL_POWER_TRANSITION;
-            }
-            [[fallthrough]];
-         case SmcPowerMode_VLPS  :        // (RUN,VLPR)->VLPS  Transition 7,6 
-         case SmcPowerMode_VLLS0 :        // (RUN,VLPR)->VLLS0 Transition 8a,9a
-         case SmcPowerMode_VLLS1 :        // (RUN,VLPR)->VLLS1 Transition 8b,9b
-         case SmcPowerMode_VLLS2 :        // (RUN,VLPR)->VLLS2/LLS2 Transition 8c,9c
-         case SmcPowerMode_VLLS3 :        // (RUN,VLPR)->VLLS3/LLS3 Transition 8d,9d 
-            // Set partial_stop and (v)lls options
-            smc->STOPCTRL = (smc->STOPCTRL&~SMC_STOPCTRL_VLLSM_MASK)|(smcPowerMode>>8);
-   
-            return enterStopMode((SmcStopMode)(smcPowerMode&SMC_PMCTRL_STOPM_MASK));
-      }
-      return setErrorCode(E_ILLEGAL_POWER_TRANSITION);
-   }
-
-   
-   /**
-    * Default value for Smc::Init
-    * This value is created from Configure.usbdmProject settings (Peripheral Parameters->SMC)
-    */
-   static constexpr SmcInfo::Init DefaultInitValue {
-      SmcAllowVeryLowPower_Enabled , // Allow very low power modes - VLPR, VLPW and VLPS are allowed
-      SmcAllowLowLeakageStop_Enabled , // Allow low leakage stop mode - LLS is allowed
-      SmcAllowVeryLowLeakageStop_Enabled , // Allow very low leakage stop mode - VLLSx is allowed
-      SmcExitLowPowerOnInt_Disabled , // Exit low power on interrupt - Stay in VLPR on int
-      SmcStopMode_NormalStop , // Stop Mode Control - Normal Stop (STOP)
-      SmcPowerOnResetInVlls0_Enabled , // Power-On_Reset Detection in VLLS0 mode - POR detect circuit is enabled in VLLS0
-      SmcLowLeakageStopMode_VLLS3,  // Low Leakage Mode Control - Enter VLLS3 in VLLSx mode
-   };
-   
-   /**
-    * Configure with settings from <b>Configure.usbdmProject</b>.
-    */
-   static void defaultConfigure() {
-      DefaultInitValue.initialise();
-   }
 
 
 };
 
-   /**
-    * Class representing SMC
-    */
-   class Smc : public SmcBase_T<SmcInfo> {};
 
+#endif // /SMC/enablePeripheralSupport
 /**
  * End SMC_Group
  * @}

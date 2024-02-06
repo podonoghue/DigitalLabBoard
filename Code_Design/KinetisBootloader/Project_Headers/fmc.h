@@ -25,6 +25,7 @@ namespace USBDM {
  * @brief Abstraction for Miscellaneous Control Module
  * @{
  */
+#if false // /FMC/enablePeripheralSupport
 
 /**
  * Template class providing a base for Miscellaneous Control Module
@@ -37,18 +38,9 @@ public:
     * This value is created from Configure.usbdmProject settings (Peripheral Parameters->FMC)
     */
    static constexpr FmcInfo::FlashBank0Init DefaultFlashBank0InitValue {
-      FmcFlashSpeculation_InstructionsAndData , // Bank 0 Flash Controller Speculation Buffer - Instructions and Data
-      FmcFlashCache_InstructionsAndData,  // Bank 0 Flash Controller Cache - Instructions and Data
+      FmcPageBuffer_Disabled,  // (fmc_pfb0cr_b0sebe) Bank 0 Single Entry Buffer Enable - Buffer is disabled
    };
    
-   /**
-    * Configure Flash Bank 0
-    *
-    * @param flashInit Initialisation value
-    */
-   static void configureFlashBank0(const FmcInfo::FlashBank0Init &flashInit) {
-      flashInit.configure();
-   }
 
 };
 
@@ -193,31 +185,6 @@ public:
    }
 
    /**
-    * Configure with settings from Configure.usbdmProject.
-    */
-   static void defaultConfigure() {
-
-      enableNvicInterrupts(Info::irqLevel);
-   }
-
-   /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(Info::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicInterrupts(NvicPriority nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-   }
-
-   /**
     * Disable interrupts in NVIC
     */
    static void disableNvicInterrupts() {
@@ -229,11 +196,9 @@ public:
 template<class Info> FmcCallbackFunction FmcInterrupt_T<Info>::sCallback = FmcInterrupt_T<Info>::unhandledCallback;
 #endif
 
-   /**
-    * Class representing FMC
-    */
    class Fmc : public FmcBase {};
 
+#endif // /FMC/enablePeripheralSupport
 /**
  * End FMC_Group
  * @}

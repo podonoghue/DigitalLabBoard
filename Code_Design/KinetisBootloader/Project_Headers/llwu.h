@@ -20,12 +20,13 @@
 
 namespace USBDM {
 
+#if false // /LLWU/enablePeripheralSupport
+
 /**
  * @addtogroup LLWU_Group LLWU, Low-leakage Wake-up Unit
  * @brief Abstraction for Low-leakage Wake-up Unit
  * @{
  */
-
 
 /**
  * Type definition for LLWU interrupt call back
@@ -55,9 +56,9 @@ protected:
       // Out of bounds value for function index
       static constexpr bool Test1 = (llwuPin>=0) && (llwuPin<(Info::numSignals));
       // Function is not currently mapped to a pin
-      static constexpr bool Test2 = !Test1 || (Info::info[llwuPin].gpioBit != UNMAPPED_PCR);
+      static constexpr bool Test2 = !Test1 || (Info::info[llwuPin].pinIndex != PinIndex::UNMAPPED_PCR);
       // Non-existent function and catch-all. (should be INVALID_PCR)
-      static constexpr bool Test3 = !Test1 || !Test2 || (Info::info[llwuPin].gpioBit >= 0);
+      static constexpr bool Test3 = !Test1 || !Test2 || (Info::info[llwuPin].pinIndex >= PinIndex::MIN_PIN_INDEX);
 
       static_assert(Test1, "Illegal LLWU Input - Check Configure.usbdm for available inputs");
       static_assert(Test2, "LLWU input is not mapped to a pin - Modify Configure.usbdm");
@@ -181,69 +182,9 @@ public:
    /** Pointer to hardware */
    static constexpr HardwarePtr<LLWU_Type> llwu = Info::baseAddress;
 
-   // Template _mapPinsOption.xml (/LLWU/classInfo)
+// /LLWU/classInfo not found
+// /LLWU/staticFunctions not found
 
-   /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/LLWU/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void configureAllPins() {
-   
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
-   }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/LLWU/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
-   
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
-   /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/LLWU/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
-    */
-   static void enable() {
-      
-      configureAllPins();
-   }
-
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/LLWU/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      disableNvicInterrupts();
-      
-      disableAllPins();
-      
-   }
-// End Template _mapPinsOption.xml
-
-   /**
-    * Configure with settings from Configure.usbdmProject.
-    */
-   static void defaultConfigure() {
-
-      // Configure pins
-      Info::initPCRs();
-      
-      // Configure registers
-      DefaultInitValue.configure();
-      
-      enableNvicInterrupts(Info::irqLevel);
-   }
 
    /*
     * ***************************************************
@@ -400,30 +341,6 @@ public:
 #endif
    }
 
-   /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(Info::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicInterrupts(uint32_t nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(Info::irqNums[0]);
-   }
-
    template<LlwuPin llwuPin>
    class Pin : public PcrTable_T<Info, llwuPin> {
 
@@ -464,119 +381,19 @@ public:
       }
    };
 
-   /**
-    * Configure LLWU peripheral wake-up source
-    *
-    * @param llwuPeripheral       Peripheral used as wake-up source
-    * @param llwuPeripheralWakeup Whether this peripheral can wake-up the processor
-    */
-   static void configurePeripheralSource(
-         LlwuPeripheral       llwuPeripheral,
-         LlwuPeripheralWakeup llwuPeripheralWakeup) {
-   
-      if (llwuPeripheralWakeup) {
-         llwu->ME = llwu->ME | llwuPeripheral;
-      }
-      else {
-         llwu->ME = llwu->ME & (uint8_t)~llwuPeripheral;
-      }
-   }
-   
-   /**
-    * Get flag bit mask indicating wake-up peripheral sources
-    * The mask returned correspond to (multiple) peripheral sources.
-    * These flags are cleared through the originating peripheral.
-    *
-    *
-    * Example checking source
-    * @code
-    *    if ((peripheralWakeupSource&LlwuPeripheral_Lptmr) != 0) {
-    *       // Wake-up from LPTMR
-    *    }
-    * @endcode
-    *
-    * @return Bit mask
-    */
-   static uint32_t getPeripheralWakeupSources() {
-      return llwu->MF;
-   }
-
-   /**
-    *  Check if peripheral is source of wake-up
-    *  These flags are cleared through the originating peripheral.
-    *
-    * @param llwuPeripheral       Peripheral used as wake-up source
-    *
-    * @return false Given peripheral is not source of wake-up.
-    * @return true  Given peripheral is source of wake-up.
-    */
-   static bool isPeripheralWakeupSource(LlwuPeripheral llwuPeripheral) {
-      return llwu->MF & llwuPeripheral;
-   }
-
-   /**
-    * Controls Reset wake-up control
-    *
-    * @param llwuResetFilter Enables the digital filter for the RESET pin during LLS, VLLS3, VLLS2, or VLLS1 modes
-    * @param llwuResetWakeup This bit must be set to allow the device to be reset while in a low-leakage power mode.
-    *        On devices where Reset is not a dedicated pin, the RESET pin must also be enabled
-    *        in the explicit port mux control
-    */
-   static void configureResetFilter(
-         LlwuResetFilter llwuResetFilter,
-         LlwuResetWakeup llwuResetWakeup = LlwuResetWakeup_Enabled) {
-      llwu->RST = llwuResetFilter|llwuResetWakeup;
-   }
-
-
-   // LLWU default init value
-   static constexpr LlwuInfo::Init DefaultInitValue {
-      LlwuPeripheral_None,  // Peripheral LPTMR0 - Wake-up disabled  
-      LlwuPeripheral_None,  // Peripheral CMP0 - Wake-up disabled  
-      LlwuPeripheral_None,  // Peripheral CMP1 - Wake-up disabled  
-      LlwuPeripheral_None,  //  - Wake-up disabled  
-      LlwuPeripheral_None,  // Peripheral TSI0 - Wake-up disabled  
-      LlwuPeripheral_None,  // Peripheral RTC_Alarm - Wake-up disabled  
-      LlwuPeripheral_None,  //  - Wake-up disabled  
-      LlwuPeripheral_None,  // Peripheral RTC_Seconds - Wake-up disabled  
-      LlwuPin_0, LlwuPinMode_Disabled,  // Unused input 0 - Wake-up pin disabled, 
-      LlwuPin_1, LlwuPinMode_Disabled,  // Unused input 1 - Wake-up pin disabled, 
-      LlwuPin_2, LlwuPinMode_Disabled,  // Unused input 2 - Wake-up pin disabled, 
-      LlwuPin_3, LlwuPinMode_Disabled,  // Pin PTA4 - Wake-up pin disabled, 
-      LlwuPin_4, LlwuPinMode_Disabled,  // Unused input 4 - Wake-up pin disabled, 
-      LlwuPin_5, LlwuPinMode_Disabled,  // Pin PTB0 - Wake-up pin disabled, 
-      LlwuPin_6, LlwuPinMode_Disabled,  // Pin PTC1 - Wake-up pin disabled, 
-      LlwuPin_7, LlwuPinMode_Disabled,  // Pin PTC3 - Wake-up pin disabled, 
-      LlwuPin_8, LlwuPinMode_Disabled,  // Pin PTC4 - Wake-up pin disabled, 
-      LlwuPin_9, LlwuPinMode_Disabled,  // Pin PTC5 - Wake-up pin disabled, 
-      LlwuPin_10, LlwuPinMode_Disabled,  // Pin PTC6 - Wake-up pin disabled, 
-      LlwuPin_11, LlwuPinMode_Disabled,  // Unused input 11 - Wake-up pin disabled, 
-      LlwuPin_12, LlwuPinMode_Disabled,  // Pin PTD0 - Wake-up pin disabled, 
-      LlwuPin_13, LlwuPinMode_Disabled,  // Pin PTD2 - Wake-up pin disabled, 
-      LlwuPin_14, LlwuPinMode_Disabled,  // Pin PTD4 - Wake-up pin disabled, 
-      LlwuPin_15, LlwuPinMode_Disabled,  // Pin PTD6 - Wake-up pin disabled, 
-      LlwuFilterNum_1, LlwuPin_3 , // Filter 1 Pin Select - Pin PTA4
-      LlwuFilterPinMode_Disabled,  // Wake-up On External Pin with Digital Filter - Wake-up disabled, 
-      LlwuFilterNum_2, LlwuPin_3 , // Filter 2 Pin Select - Pin PTA4
-      LlwuFilterPinMode_Disabled,  // Wake-up On External Pin with Digital Filter - Wake-up disabled, 
-      LlwuResetWakeup_Enabled, LlwuResetFilter_Disabled,  
-   };
-
 
 
 };
 
 template<class Info> LlwuCallbackFunction LlwuBase_T<Info>::sCallback = LlwuBase_T<Info>::unhandledCallback;
 
-   /**
-    * Class representing LLWU
-    */
-   class Llwu : public LlwuBase_T<LlwuInfo> {};
 
 /**
  * End LLWU_Group
  * @}
  */
+
+#endif // /LLWU/enablePeripheralSupport
 
 } // End namespace USBDM
 

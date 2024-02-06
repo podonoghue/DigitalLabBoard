@@ -28,6 +28,7 @@ namespace USBDM {
  * @brief Abstraction for Low Power Timer
  * @{
  */
+#if false // /LPTMR/enablePeripheralSupport
 
 #ifdef PCC_PCC_LPTMR0_CGC_MASK
 /**
@@ -64,109 +65,28 @@ protected:
    }
 
 public:
-// Template _mapPinsOption.xml (/LPTMR0/classInfo)
 
-   /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/LPTMR0/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void configureAllPins() {
-   
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
-   }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/LPTMR0/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
-   
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
-   /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/LPTMR0/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
-    */
-   static void enable() {
-      Info::enableClock();
-      configureAllPins();
-   }
-
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/LPTMR0/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      disableNvicInterrupts();
-      
-      disableAllPins();
-      Info::disableClock();
-   }
-// End Template _mapPinsOption.xml
-
+// No class Info found
    /**
     * Configure LPTMR in time counting mode.
     * The timer is enabled
     *
-    * @param lptmrResetOnCompare Counter action when lptmr_csr_tcf is set
-    * @param lptmrInterrupt      Enables LPTMR interrupts
-    * @param lptmrClockSel       Clock source for LPTMR
-    * @param ticks               Comparison value
-    *        The timer comparison flag is set when the counter reaches this value and increments. 
-    *        The hardware trigger will assert until the next time the counter increments. 
+    * @param lptmrCompareAction Counter action when compare event occurs
+    *        The counter can contunue conting or be reset to zero.
+    * @param lptmrEventAction   Enables LPTMR interrupts
+    * @param seconds            Comparison value
+    *        The timer comparison flag is set when the counter reaches this value and increments.
+    *        The hardware trigger will assert until the next time the counter increments.
     *        This value determines the period in TimeInterval mode or the event time in Pulse Counting mode
-    * @param lptmrPrescale       Configures the size of the Prescaler in Time Interval mode
-    */
-   static void configureTimeIntervalMode(
-         LptmrResetOnCompare lptmrResetOnCompare,
-         LptmrInterrupt      lptmrInterrupt,
-         LptmrClockSel       lptmrClockSel,
-         Ticks               ticks               = 65535_ticks,
-         LptmrPrescale       lptmrPrescale       = LptmrPrescale_Direct) {
-   
-      enable();
-      // Change settings with timer disabled
-      lptmr->CSR = lptmrResetOnCompare|LptmrMode_TimeInterval|LPTMR_CSR_TCF_MASK;
-   
-      // Set clock source and prescaler
-      lptmr->PSR = lptmrClockSel|lptmrPrescale;
-   
-      // Set event time
-      lptmr->CMR = ticks;
-   
-      // Enable timer
-      lptmr->CSR = lptmrResetOnCompare|lptmrInterrupt|LptmrMode_TimeInterval|LPTMR_CSR_TCF_MASK|LPTMR_CSR_TEN_MASK;
-   }
-
-   /**
-    * Configure LPTMR in time counting mode.
-    * The timer is enabled
-    *
-    * @param lptmrResetOnCompare Counter action when lptmr_csr_tcf is set
-    * @param lptmrInterrupt      Enables LPTMR interrupts
-    * @param seconds             Comparison value
-    *        The timer comparison flag is set when the counter reaches this value and increments. 
-    *        The hardware trigger will assert until the next time the counter increments. 
-    *        This value determines the period in TimeInterval mode or the event time in Pulse Counting mode
-    * @param lptmrClockSel       Clock source for LPTMR
+    * @param lptmrClockSel      Selects the clock source for LPTMR
     */
    static ErrorCode configureTimeIntervalMode(
-         LptmrResetOnCompare lptmrResetOnCompare,
-         LptmrInterrupt      lptmrInterrupt,
-         Seconds             seconds,
-         LptmrClockSel       lptmrClockSel       = LptmrClockSel_Lpoclk) {
+         LptmrCompareAction lptmrCompareAction,
+         LptmrEventAction   lptmrEventAction,
+         const Seconds&     seconds,
+         LptmrClockSel      lptmrClockSel      = LptmrClockSel_Lpoclk) {
    
-      enable();
+      Info::enable();
    
       uint8_t  psr = lptmrClockSel;
       uint32_t cmr;
@@ -176,8 +96,8 @@ public:
          return rc;
       }
    
-      // Change settings with timer disabled
-      lptmr->CSR = lptmrResetOnCompare|LptmrMode_TimeInterval|LPTMR_CSR_TCF_MASK;
+      // Change settings with timer disabled 2
+      lptmr->CSR = lptmrCompareAction|LptmrMode_TimeInterval|LPTMR_CSR_TCF_MASK;
    
       // Set clock source and prescaler
       lptmr->PSR = psr;
@@ -186,7 +106,7 @@ public:
       lptmr->CMR = cmr;
    
       // Enable timer
-      lptmr->CSR = lptmrResetOnCompare|lptmrInterrupt|LptmrMode_TimeInterval|LPTMR_CSR_TCF_MASK|LPTMR_CSR_TEN_MASK;
+      lptmr->CSR = lptmrCompareAction|lptmrEventAction|LptmrMode_TimeInterval|LPTMR_CSR_TCF_MASK|LPTMR_CSR_TEN_MASK;
    
       return E_NO_ERROR;
    }
@@ -196,30 +116,31 @@ public:
     * Provides selection of input pin, edge selection and reset mode.
     * The timer is enabled and pins configured.
     *
-    * @param lptmrPinSel         Input source to be used in Pulse Counter mode
-    * @param lptmrPulseEdge      Polarity of the input source in Pulse Counter mode
-    * @param lptmrClockSel       Clock source for LPTMR
-    * @param lptmrGlitchFilter   Configures the size of the glitch filter in Pulse Counting mode
-    * @param lptmrResetOnCompare Counter action when lptmr_csr_tcf is set
-    * @param lptmrInterrupt      Enables LPTMR interrupts
-    * @param ticks               Comparison value
-    *        The timer comparison flag is set when the counter reaches this value and increments. 
-    *        The hardware trigger will assert until the next time the counter increments. 
+    * @param lptmrPinSel        Input source to be used in Pulse Counter mode
+    * @param lptmrPulseEdge     Polarity of the input source in Pulse Counter mode
+    * @param lptmrClockSel      Selects the clock source for LPTMR
+    * @param lptmrGlitchFilter  Configures the size of the glitch filter in Pulse Counting mode
+    * @param lptmrCompareAction Counter action when compare event occurs
+    *        The counter can contunue conting or be reset to zero.
+    * @param lptmrEventAction   Enables LPTMR interrupts
+    * @param ticks              Comparison value
+    *        The timer comparison flag is set when the counter reaches this value and increments.
+    *        The hardware trigger will assert until the next time the counter increments.
     *        This value determines the period in TimeInterval mode or the event time in Pulse Counting mode
     */
    static void configurePulseCountingMode(
-         LptmrPinSel         lptmrPinSel,
-         LptmrPulseEdge      lptmrPulseEdge,
-         LptmrClockSel       lptmrClockSel       = LptmrClockSel_Lpoclk,
-         LptmrGlitchFilter   lptmrGlitchFilter   = LptmrGlitchFilter_Direct,
-         LptmrResetOnCompare lptmrResetOnCompare = LptmrResetOnCompare_Enabled,
-         LptmrInterrupt      lptmrInterrupt      = LptmrInterrupt_Disabled,
-         Ticks               ticks               = 65535_ticks) {
+         LptmrPinSel        lptmrPinSel,
+         LptmrPulseEdge     lptmrPulseEdge,
+         LptmrClockSel      lptmrClockSel      = LptmrClockSel_Lpoclk,
+         LptmrGlitchFilter  lptmrGlitchFilter  = LptmrGlitchFilter_Direct,
+         LptmrCompareAction lptmrCompareAction = LptmrCompareAction_Reset,
+         LptmrEventAction   lptmrEventAction   = LptmrEventAction_None,
+         const Ticks&       ticks              = 65535_ticks) {
    
-      enable();
+      Info::enable();
    
-      // Change settings with timer disabled
-      lptmr->CSR = lptmrPinSel|lptmrPulseEdge|lptmrResetOnCompare|LptmrMode_PulseCounting|LPTMR_CSR_TCF_MASK;
+      // Change settings with timer disabled 3
+      lptmr->CSR = lptmrPinSel|lptmrPulseEdge|lptmrCompareAction|LptmrMode_PulseCounting|LPTMR_CSR_TCF_MASK;
    
       // Set clock source and prescaler
       lptmr->PSR = lptmrClockSel|lptmrGlitchFilter;
@@ -228,52 +149,10 @@ public:
       lptmr->CMR = ticks;
    
       // Enable timer
-      lptmr->CSR = lptmrPinSel|lptmrPulseEdge|lptmrResetOnCompare|lptmrInterrupt|LptmrMode_PulseCounting|LPTMR_CSR_TCF_MASK|LPTMR_CSR_TEN_MASK;
+      lptmr->CSR = lptmrPinSel|lptmrPulseEdge|lptmrCompareAction|lptmrEventAction|LptmrMode_PulseCounting|LPTMR_CSR_TCF_MASK|LPTMR_CSR_TEN_MASK;
    }
 
 
-// /LPTMR/InitMethod not found
-   /**
-    * Configure LPTMR from values specified in init.
-    *
-    * @param init Class containing initialisation information
-    */
-   static ErrorCode configure(const typename Info::Init &init) {
-
-      // Enable peripheral clock and map pins
-      enable();
-
-      if constexpr (Info::irqHandlerInstalled) {
-         // Only set call-back if feature enabled and non-null
-         if (init.callbackFunction != nullptr) {
-            setCallback(init.callbackFunction);
-         }
-         enableNvicInterrupts(init.irqlevel);
-      }
-      uint8_t  psr = init.psr;
-      uint32_t cmr = init.cmr;
-
-      if (init.cmrperiod != 0) {
-         // Calculate values from duration in seconds
-         ErrorCode rc = calculateDurationValues(init.cmrperiod, psr, cmr);
-         if (rc != E_NO_ERROR) {
-            return rc;
-         }
-      }
-      // Change settings with timer disabled
-      lptmr->CSR = 0;
-
-      // Update clock setting
-      lptmr->PSR = psr;
-
-      // Timer Compare Register
-      lptmr->CMR = cmr;
-
-      // Enable timer
-      lptmr->CSR = init.csr|LPTMR_CSR_TEN_MASK;
-
-      return E_NO_ERROR;
-   }
 
    /**
     * Restarts the counter\n
@@ -283,30 +162,6 @@ public:
       uint32_t csr = lptmr->CSR;
       lptmr->CSR   = 0;
       lptmr->CSR   = csr|LPTMR_CSR_TCF_MASK;
-   }
-
-   /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(Info::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicInterrupts(uint32_t nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(Info::irqNums[0]);
    }
 
    /**
@@ -582,7 +437,7 @@ public:
       uint32_t prescalerValue=0;
       while (prescalerValue<=16) {
          float    clockFrequency = inputClock/prescaleFactor;
-         uint32_t mod   = rintf(duration*clockFrequency)-1;
+         uint32_t mod   = rintf(float(duration*clockFrequency))-1;
          if (mod < Info::minimumResolution) {
             // Too short a period for reasonable resolution
             return setAndCheckErrorCode(E_TOO_SMALL);
@@ -718,78 +573,8 @@ template<class Info> typename Info::CallbackFunction LptmrBase_T<Info>::sCallbac
     */
    #define LPTMR0_HANDLER() template<> void Lptmr0::irqHandler()
 
-   /**
-    * Class representing LPTMR0
-    *
-    * <b>Example</b>
-    * @code
-    *
-    * // LPTMR callback
-    * void flash(void) {
-    *    RED_LED::toggle();
-    * }
-    *
-    * ...
-    *
-    * // Configure LPTMR in time counting mode
-    * Lptmr0::configureTimeIntervalMode(
-    *      LptmrResetOn_Compare,
-    *      LptmrInterrupt_Enabled,
-    *      LptmrClockSel_Lpoclk);
-    *
-    * // Set period of timer event
-    * Lptmr0::setPeriod(5_s);
-    *
-    * // Set call-back
-    * Lptmr0::setCallback(flash);
-    * @endcode
-    */
-   class Lptmr0 : public LptmrBase_T<Lptmr0Info> {
-   public:
-      /**
-       * Default value for Lptmr::PulseCountingModeInit
-       * This value is created from Configure.usbdmProject settings (Peripheral Parameters->LPTMR)
-       */
-      static constexpr PulseCountingModeInit DefaultPulseCountingModeInitValue {
-         LptmrPinSel_Cmp0,  // Input Pin - CMP0 output
-         LptmrPulseEdge_Rising,  // Pin Polarity - Active-high source, rising-edge increments lptmr_cnr
-         LptmrClockSel_Lpoclk,  // Clock Source - Low power oscillator (LPO - 1kHz)
-         LptmrGlitchFilter_Direct,  // Filter Value - No glitch filter
-         LptmrInterrupt_Disabled,  // Timer interrupt enable - Interrupt disabled
-         LptmrResetOnCompare_Enabled,  // Counter Action on Compare Event - lptmr_cnr is reset whenever lptmr_csr_tcf is set
-         65535_ticks,  // Timer Compare Register
-      };
 
-      /**
-       * Default value for Lptmr::TimeIntervalModeInit
-       * This value is created from Configure.usbdmProject settings (Peripheral Parameters->LPTMR)
-       */
-      static constexpr TimeIntervalModeInit DefaultTimeIntervalModeInitValue {
-         LptmrResetOnCompare_Enabled,  // Counter Action on Compare Event - lptmr_cnr is reset whenever lptmr_csr_tcf is set
-         LptmrInterrupt_Disabled,  // Timer interrupt enable - Interrupt disabled
-         LptmrClockSel_Lpoclk,  // Clock Source - Low power oscillator (LPO - 1kHz)
-         LptmrPrescale_Direct,  // Prescaler Value - Prescaler = 1
-         65535_ticks,  // Timer Compare Register
-      };
-
-      /**
-       * Enable LPTMR with default configuration.
-       *
-       * Includes enabling clock and any pins used.
-       * Sets LPTMR to default configuration
-       */
-      static void defaultConfigure() {
-   
-         if constexpr (0) {
-            configure(DefaultPulseCountingModeInitValue);
-         }
-         else {
-            configure(DefaultTimeIntervalModeInitValue);
-         }
-      }
-   };
-
-
+#endif // /LPTMR/enablePeripheralSupport
 /**
  * End LPTMR_Group
  * @}

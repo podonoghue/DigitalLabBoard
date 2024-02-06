@@ -1,4 +1,4 @@
-#  Should be placed in /lib/udev/rules.d/47-digital-lab.rules
+#  Should be placed in /lib/udev/rules.d/60-digital-lab.rules
 #  Note: HEX numbers must be lower case - yes really!!!!
 #
 SUBSYSTEM!="usb", GOTO="iscan_rules_end"

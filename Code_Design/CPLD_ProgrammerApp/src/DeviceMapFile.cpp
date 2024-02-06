@@ -16,7 +16,7 @@
 #if (linux == 1)
 /** Path to read-only data files on Linux */
 static const char *XILINX_DATA1   = "/opt/Xilinx/14.7/ISE_DS/ISE/xbr/data/";
-static const char *XILINX_DATA2   = "/usr/share/digitallabboard/";
+static const char *XILINX_DATA2   = "/usr/share/eee20001-lab-software/";
 #else
 static const char *XILINX_DATA1 = "C:/Apps/Xilinx/14.7/ISE_DS/ISE/xbr/data/";
 static const char *XILINX_DATA2 = "C:/Xilinx/14.7/ISE_DS/ISE/xbr/data/";

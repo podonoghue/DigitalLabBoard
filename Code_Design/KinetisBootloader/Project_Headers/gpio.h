@@ -84,6 +84,65 @@ protected:
 
 public:
    /**
+    * Get default PCR value for a pin
+    *
+    * @param pinIndx Pin index e.g. PTB3.
+    *
+    * @return PCR value determined by Configure.usbdm setting
+    */
+   static constexpr PcrValue GpioPcrValue(PinIndex pinIndx) {
+      (void)pinIndx;
+      if (pinIndx <= PinIndex::PTA31) {
+         return GpioAInfo::info[int(pinIndx)-int(PinIndex::PTA0)].pcrValue;
+      }
+      if (pinIndx <= PinIndex::PTB31) {
+         return GpioBInfo::info[int(pinIndx)-int(PinIndex::PTB0)].pcrValue;
+      }
+      if (pinIndx <= PinIndex::PTC31) {
+         return GpioCInfo::info[int(pinIndx)-int(PinIndex::PTC0)].pcrValue;
+      }
+      if (pinIndx <= PinIndex::PTD31) {
+         return GpioDInfo::info[int(pinIndx)-int(PinIndex::PTD0)].pcrValue;
+      }
+      if (pinIndx <= PinIndex::PTE31) {
+         return GpioEInfo::info[int(pinIndx)-int(PinIndex::PTE0)].pcrValue;
+      }
+      return PcrValue(0);
+   }
+   
+   /**
+    * Get GPIO from pinIndex
+    *
+    * @param pinIndex PinIndex Used to determine return value
+    *
+    * @return Pointer to relevant GPIO
+    */
+   static constexpr uint32_t getGpioAddress(PinIndex pinIndex ){
+      if (pinIndex < PinIndex::MIN_PIN_INDEX) {
+         // INVALID_PCR, UNMAPPED_PCR, FIXED_NO_PCR
+         return 0;
+      }
+      if (pinIndex <= PinIndex::PTA31) {
+         return GPIOA_BasePtr;
+      }
+      if (pinIndex <= PinIndex::PTB31) {
+         return GPIOB_BasePtr;
+      }
+      if (pinIndex <= PinIndex::PTC31) {
+         return GPIOC_BasePtr;
+      }
+      if (pinIndex <= PinIndex::PTD31) {
+         return GPIOD_BasePtr;
+      }
+      if (pinIndex <= PinIndex::PTE31) {
+         return GPIOE_BasePtr;
+      }
+       static_assert("Illegal Port");
+       return 0;
+   }
+   
+
+   /**
     * Set pin as digital input
     *
     * @note Does not affect other pin settings
@@ -363,19 +422,18 @@ public:
  * @endcode
  *
  *
- * @tparam clockInfo             Clock mask for PORT (PCR register) associated with GPIO
- * @tparam portAddress           Address of PORT (PCR register array) associated with GPIO
- * @tparam irqNum                IRQ number for pin interrupt
- * @tparam gpioAddress           GPIO hardware address
- * @tparam defPcrValue           Default value for PCR (including MUX value)
+ * @tparam defPcrValue           Default value for PCR (excluding MUX value which is forced to GPIO)
  * @tparam defaultNvicPriority   Default interrupt priority.\n
  *                               NvicPriority_NotInstalled indicates PORT not configured for interrupts.
- * @tparam bitNum                Bit number within PORT/GPIO
+ * @tparam pinIndex              Pin index used to locate PORT/GPIO and bit position
  * @tparam polarity              Polarity of pin. Either ActiveHigh or ActiveLow
  */
-template<uint32_t clockInfo, uint32_t portAddress, IRQn_Type irqNum, uint32_t gpioAddress, PcrValue defPcrValue, NvicPriority defaultNvicPriority, int bitNum, Polarity polarity>
-class Gpio_T : public Gpio, public Pcr_T<clockInfo, portAddress, irqNum, gpioPcrValue(defPcrValue), defaultNvicPriority, bitNum> {
+template<PcrValue defPcrValue, PinIndex pinIndex, Polarity polarity>
+class Gpio_T : public Gpio, public Pcr_T<gpioPcrValue(defPcrValue), pinIndex> {
 
+   static constexpr int bitNum = int(pinIndex) % 32;
+
+//      PcrBase::CheckPinExistsAndIsMapped<bitNum> check;
    static_assert((static_cast<unsigned>(bitNum)<=31), "Illegal bit number in Gpio");
 
 private:
@@ -384,15 +442,17 @@ private:
     */
    Gpio_T(const Gpio_T&) = delete;
    Gpio_T(Gpio_T&&) = delete;
-
-   static constexpr PcrInit defaultPcrValue = gpioPcrValue(defPcrValue);
-
 protected:
    constexpr Gpio_T() : Gpio(gpioAddress, bitNum, polarity) {};
 
 public:
+   static constexpr PcrInit defaultPcrValue = gpioPcrValue(defPcrValue);
+
+   /// GPIO hardware address
+   static constexpr uint32_t gpioAddress = Gpio::getGpioAddress(pinIndex);
+
    /** PCR associated with this GPIO pin */
-   using Pcr = Pcr_T<clockInfo, portAddress, irqNum, defaultPcrValue, defaultNvicPriority, bitNum>;
+   using Pcr = Pcr_T<defaultPcrValue, pinIndex>;
 
    /** Get base address of GPIO hardware as pointer to struct */
    static constexpr HardwarePtr<GPIO_Type> gpio = gpioAddress;
@@ -431,26 +491,6 @@ public:
       setInactive();
       Pcr::setPCR(defaultPcrValue.value);
    }
-
-//   /**
-//    * Set pin as digital I/O.
-//    * Pin is initially set as an input.
-//    * Use SetIn() and SetOut() to change direction.
-//    *
-//    * @note Resets the Pin Control Register value (PCR value).
-//    * @note Resets the pin output value to the inactive state
-//    *
-//    * @param[in] pcrValue PCR value to use in configuring pin (excluding MUX value). See pcrValue()
-//    */
-//   static void setInOut(PcrValue pcrValue) {
-//      // Make input initially
-//      setIn();
-//      // Set inactive pin state (if later made output)
-//      setInactive();
-//      // Configure PCR
-//      Pcr::setPCR(pcrValue);
-//   }
-
    /**
     * Set pin as digital I/O.
     * Pin is initially set as an input.
@@ -534,25 +574,6 @@ public:
       Pcr::setPCR(defaultPcrValue.value);
    }
 
-//   /**
-//    * Enable pin as digital output with initial inactive level.\n
-//    * Configures all Pin Control Register (PCR) values
-//    *
-//    * @note Resets the Pin Control Register value (PCR value).
-//    * @note Resets the pin value to the inactive state
-//    * @note Use setOut() for a lightweight change of direction without affecting other pin settings.
-//    *
-//    * @param[in] pcrValue PCR value to use in configuring port (excluding MUX value). See pcrValue()
-//    */
-//   static void setOutput(PcrValue pcrValue) {
-//      // Set initial level before enabling pin drive
-//      setInactive();
-//      // Make pin an output
-//      setOut();
-//      // Configure pin
-//      Pcr::setPCR(pcrValue);
-//   }
-
    /**
     * Enable pin as digital output with initial inactive level.\n
     * Configures all Pin Control Register (PCR) values
@@ -571,8 +592,6 @@ public:
       // Configure pin
       Pcr::setPCR(pcrInit.value);
    }
-
-
 
    /**
     * @brief
@@ -630,23 +649,6 @@ public:
       // Configure pin
       Pcr::setPCR(defaultPcrValue.value);
    }
-
-//   /**
-//    * @brief
-//    * Enable pin as digital input.\n
-//    * Configures all Pin Control Register (PCR) values
-//    *
-//    * @note Resets the Pin Control Register value (PCR value).
-//    * @note Use setIn() for a lightweight change of direction without affecting other pin settings.
-//    *
-//    * @param[in] pcrValue PCR value to use in configuring port (excluding MUX value)
-//    */
-//   static void setInput(PcrValue pcrValue) {
-//      // Make pin an input
-//      setIn();
-//      // Configure pin
-//      Pcr::setPCR(pcrValue);
-//   }
 
    /**
     * @brief
@@ -1084,7 +1086,7 @@ public:
  * @tparam polarity      Polarity of pin. Either ActiveHigh or ActiveLow
  */
 template<class Info, const uint32_t index, Polarity polarity>
-class GpioTable_T : public Gpio_T<Info::info[index].clockInfo, Info::info[index].portAddress, Info::info[index].irqNum, Info::info[index].gpioAddress, gpioPcrValue(Info::info[index].pcrValue), Info::info[index].irqLevel, Info::info[index].gpioBit, polarity> {};
+class GpioTable_T : public Gpio_T<Info::info[index].pcrValue, Info::info[index].pinIndex, polarity> {};
 /**
  * @brief Template representing a field within a port
  *
@@ -1115,22 +1117,15 @@ class GpioTable_T : public Gpio_T<Info::info[index].clockInfo, Info::info[index]
  * int x = Pta6_3::read();
  * @endcode
  *
- * @tparam portAddress          Address of PORT (PCR register array) associated with GPIO
- * @tparam clockInfo            Clock mask for PORT (PCR register) associated with GPIO
- * @tparam irqNum               IRQ number for pin interrupt
- * @tparam gpioAddress          GPIO hardware address
- * @tparam defPcrValue          Default value for PCR (including MUX value)
+ * @tparam defPcrValue          Default value for PCR (excluding MUX value which is forced to GPIO)
  * @tparam irqLevel             Default interrupt priority.\n
  *                              NvicPriority_NotInstalled indicates PORT not configured for interrupts.
  * @tparam left                 Bit number of leftmost bit in GPIO (inclusive)
  * @tparam right                Bit number of rightmost bit in GPIO (inclusive)
  * @tparam FlipMask             Polarity of all bits in field. Either ActiveHigh, ActiveLow or a bitmask (0=>bit active-high, 1=>bit active-low)
  */
-template<uint32_t portAddress, uint32_t clockInfo, IRQn_Type irqNum, uint32_t gpioAddress, PcrValue defPcrValue, NvicPriority  irqLevel,
-         unsigned Left, unsigned Right, uint32_t FlipMask=ActiveHigh>
-class GpioField_T : public GpioField, public PcrBase_T<portAddress, irqNum, irqLevel>{
-
-   static_assert(((Left<=31)&&(Left>=Right)), "Illegal bit number for left or right in GpioField");
+template<PcrValue defPcrValue, PinIndex Left, PinIndex Right, Polarity FlipMask=ActiveHigh>
+class GpioField_T : public GpioField, public PcrBase_T<mapPinToPort(Left)>{
 
 private:
    /**
@@ -1140,11 +1135,15 @@ private:
    GpioField_T(GpioField_T&&) = delete;
    static constexpr PcrInit defaultPcrValue = gpioPcrValue(defPcrValue);
 
+   static_assert((Left>=Right), "left must be >= right in GpioField");
+
 public:
-   constexpr GpioField_T() : GpioField(gpioAddress, BITMASK, Right, FLIP_MASK) {}
+   static constexpr uint32_t gpioAddress = Gpio::getGpioAddress(Left);
+
+//   constexpr GpioField_T() : GpioField(gpioAddress, BITMASK, Right, FLIP_MASK) {}
 
    /** Get base address of GPIO hardware as pointer to struct */
-   static constexpr HardwarePtr<GPIO_Type> gpio = gpioAddress;
+   static constexpr HardwarePtr<GPIO_Type> gpio = Gpio::getGpioAddress(Left);
 
    /// Base address of GPIO hardware
    static constexpr uint32_t gpioBase = gpioAddress;
@@ -1163,25 +1162,26 @@ public:
 
 public:
    /** Port associated with this GPIO Field */
-   using Port = PcrBase_T<portAddress, irqNum, irqLevel>;
+   using Port = PcrBase_T<mapPinToPort(Left)>;
 
    /** Bit number of left bit within underlying port hardware */
-   static constexpr unsigned LEFT = Left;
+   static constexpr unsigned LEFT = int(Left)%32;
 
    /** Bit number of right bit within underlying port hardware */
-   static constexpr unsigned RIGHT = Right;
+   static constexpr unsigned RIGHT = int(Right)%32;
+
+   static_assert((LEFT>=RIGHT), "left and right are not in same port in GpioField");
 
    /** Mask for the bits being manipulated within underlying port hardware */
-   static constexpr uint32_t BITMASK = static_cast<uint32_t>((1ULL<<(Left-Right+1))-1)<<Right;
+   static constexpr uint32_t BITMASK = static_cast<uint32_t>((1ULL<<(LEFT-RIGHT+1))-1)<<RIGHT;
 
    /** Mask to flip bits in field. Two special cases for later optimisation */
    static constexpr uint32_t FLIP_MASK =
-         (((FlipMask<<Right)&BITMASK)==BITMASK)?0xFFFFFFFFUL:  // All active-low
-         (((FlipMask<<Right)&BITMASK)==0)?0x00000000UL:        // All active-high
-         (FlipMask<<Right);                                    // Mixed
+         (((FlipMask<<RIGHT)&BITMASK)==BITMASK)?0xFFFFFFFFUL:  // All active-low
+         (((FlipMask<<RIGHT)&BITMASK)==0)?0x00000000UL:        // All active-high
+         (FlipMask<<RIGHT);                                    // Mixed
 
-   static_assert(((Left<=31)&&(Left>=Right)), "Illegal bit number for left or right in GpioField");
-   static_assert((FlipMask==0xFFFFFFFFUL)||((((FlipMask<<Right)&BITMASK)>>Right)==FlipMask), "Illegal FlipMask (polarity) in GpioField");
+   static_assert((FlipMask==0xFFFFFFFFUL)||((((FlipMask<<RIGHT)&BITMASK)>>RIGHT)==FlipMask), "Illegal FlipMask (polarity) in GpioField");
 
    /**
     * Calculate Port bit-mask from field bit number
@@ -1191,7 +1191,7 @@ public:
     * @return Mask for given bit within underlying port hardware
     */
    static constexpr uint32_t mask(uint32_t bitNum) {
-      return 1<<(bitNum+Right);
+      return 1<<(bitNum+RIGHT);
    }
 
    /**
@@ -1203,7 +1203,7 @@ public:
     */
    static void disablePins() {
       // Enable clock to port
-      enablePortClocks(clockInfo);
+      PcrBase::enablePortClock(Left);
       /*
        * Set all PCRs.
        */
@@ -1227,7 +1227,7 @@ public:
     */
    static void setInOut(PcrValue pcrValue=defaultPcrValue) {
       // Enable clock to port
-      enablePortClocks(clockInfo);
+      PcrBase::enablePortClock(Left);
 
       // Default to input
       gpio->PDDR = gpio->PDDR & ~BITMASK;
@@ -1254,7 +1254,7 @@ public:
        * Set all PCRs.
        * Can't use GPCLR/GPCHR as doesn't affect IRQ function (PinAction)
        */
-      for (unsigned bitNum=Right; bitNum<=Left; bitNum++) {
+      for (unsigned bitNum=RIGHT; bitNum<=LEFT; bitNum++) {
          Port::port->PCR[bitNum] = pcr;
       }
    }
@@ -1402,7 +1402,7 @@ public:
     * @note Does not affect other pin settings
     */
    static void setDirection(uint32_t mask) {
-      gpio->PDDR = (gpio->PDDR&~BITMASK)|((mask<<Right)&BITMASK);
+      gpio->PDDR = (gpio->PDDR&~BITMASK)|((mask<<RIGHT)&BITMASK);
    }
    /**
     * Set bits in field
@@ -1412,7 +1412,7 @@ public:
     * @note Polarity _is_ _not_ significant
     */
    static void bitSet(const uint32_t mask) {
-      gpio->PSOR = (mask<<Right)&BITMASK;
+      gpio->PSOR = (mask<<RIGHT)&BITMASK;
    }
    /**
     * Clear bits in field
@@ -1422,7 +1422,7 @@ public:
     * @note Polarity _is_ _not_ significant
     */
    static void bitClear(const uint32_t mask) {
-      gpio->PCOR = (mask<<Right)&BITMASK;
+      gpio->PCOR = (mask<<RIGHT)&BITMASK;
    }
    /**
     * Toggle bits in field
@@ -1430,7 +1430,7 @@ public:
     * @param[in] mask Mask to apply to the field (1 => toggle bit, 0 => unchanged)
     */
    static void bitToggle(const uint32_t mask) {
-      gpio->PTOR = (mask<<Right)&BITMASK;
+      gpio->PTOR = (mask<<RIGHT)&BITMASK;
    }
    /**
     * Read field as unmodified bit field
@@ -1440,7 +1440,7 @@ public:
     * @note Polarity _is_ _not_ significant
     */
    static uint32_t bitRead() {
-      return (gpio->PDIR & BITMASK)>>Right;
+      return (gpio->PDIR & BITMASK)>>RIGHT;
    }
    /**
     * Read field
@@ -1451,12 +1451,12 @@ public:
     */
    static uint32_t read() {
       if constexpr (FLIP_MASK==0) {
-         return (gpio->PDIR & BITMASK)>>Right;
+         return (gpio->PDIR & BITMASK)>>RIGHT;
       }
       if constexpr (FLIP_MASK==0xFFFFFFFFUL) {
-         return (~gpio->PDIR & BITMASK)>>Right;
+         return (~gpio->PDIR & BITMASK)>>RIGHT;
       }
-      return ((gpio->PDIR^FLIP_MASK) & BITMASK)>>Right;
+      return ((gpio->PDIR^FLIP_MASK) & BITMASK)>>RIGHT;
    }
    /**
     * Read value being driven to field pins (if configured as output)
@@ -1468,12 +1468,12 @@ public:
     */
    static uint32_t readState() {
       if constexpr (FLIP_MASK==0) {
-         return (gpio->PDOR & BITMASK)>>Right;
+         return (gpio->PDOR & BITMASK)>>RIGHT;
       }
       if constexpr (FLIP_MASK==0xFFFFFFFFUL) {
-         return (~gpio->PDOR & BITMASK)>>Right;
+         return (~gpio->PDOR & BITMASK)>>RIGHT;
       }
-      return ((gpio->PDOR^FLIP_MASK) & BITMASK)>>Right;
+      return ((gpio->PDOR^FLIP_MASK) & BITMASK)>>RIGHT;
    }
    /**
     * Write field
@@ -1487,11 +1487,11 @@ public:
          value = ~value;
       }
       else if constexpr (FLIP_MASK != 0) {
-         value = value^(FLIP_MASK>>Right);
+         value = value^(FLIP_MASK>>RIGHT);
       }
       {
          USBDM::CriticalSection cs;
-         gpio->PDOR = ((gpio->PDOR) & ~BITMASK) | ((value<<Right)&BITMASK);
+         gpio->PDOR = ((gpio->PDOR) & ~BITMASK) | ((value<<RIGHT)&BITMASK);
       }
    }
 
@@ -1504,7 +1504,7 @@ public:
     */
    static void bitWrite(uint32_t value) {
       USBDM::CriticalSection cs;
-      gpio->PDOR = ((gpio->PDOR) & ~BITMASK) | ((value<<Right)&BITMASK);
+      gpio->PDOR = ((gpio->PDOR) & ~BITMASK) | ((value<<RIGHT)&BITMASK);
    }
 
    /**
@@ -1544,8 +1544,8 @@ public:
     * @tparam polarity      Polarity of pin. Either ActiveHigh or ActiveLow
     */
    template<unsigned bitNum> class Bit :
-   public Gpio_T<clockInfo, portAddress, irqNum, gpioAddress, GPIO_DEFAULT_PCR, irqLevel, bitNum+RIGHT, (FLIP_MASK&(1UL<<bitNum))?ActiveLow:ActiveHigh> {
-      static_assert(bitNum<=(Left-Right), "Bit does not exist in field");
+   public Gpio_T<GPIO_DEFAULT_PCR, PinIndex(bitNum+RIGHT), (FLIP_MASK&(1UL<<bitNum))?ActiveLow:ActiveHigh> {
+      static_assert(bitNum<=(LEFT-RIGHT), "Bit does not exist in field");
    public:
       // Allow access to owning field
       using Owner = GpioField_T;
@@ -1560,20 +1560,19 @@ public:
  * @tparam right
  * @tparam polarity
  */
-template<class Info, unsigned left, unsigned right, uint32_t polarity>
+template<class Info, PinIndex left, PinIndex right, Polarity polarity>
 class GpioFieldTable_T :
-      public GpioField_T<Info::info[right].portAddress, Info::info[right].clockInfo, Info::info[right].irqNum,
-                         Info::info[right].gpioAddress, Info::info[right].pcrValue, Info::info[right].irqLevel, left, right, polarity> {
+      public GpioField_T<Info::info[right].pcrValue, left, right, polarity> {
 
-      static constexpr int bitNum = Info::info[right].gpioBit;
+      static constexpr int bitNum = Info::info[right].pinIndex;
 
       // Tests are chained so only a single assertion can fail so as to reduce noise
       // Out of bounds value for field boundaries
       static constexpr bool Test1 = ((Info::numSignals)>=left) && (left>=right);
       // Function is not currently mapped to a pin
-      static constexpr bool Test2 = !Test1 || ((Info::info[left].gpioBit != UNMAPPED_PCR) && (Info::info[right].gpioBit != UNMAPPED_PCR));
+      static constexpr bool Test2 = !Test1 || ((Info::info[left].pinIndex != PinIndex::UNMAPPED_PCR) && (Info::info[right].pinIndex != PinIndex::UNMAPPED_PCR));
       // Non-existent function and catch-all. (should be INVALID_PCR)
-      static constexpr bool Test3 = !Test1 || !Test2 || ((Info::info[left].gpioBit >= 0) || (Info::info[right].gpioBit >= 0));
+      static constexpr bool Test3 = !Test1 || !Test2 || ((Info::info[left].pinIndex >= 0) || (Info::info[right].pinIndex >= 0));
 
       static_assert(Test1, "Illegal field boundaries");
       static_assert(Test2, "GPIO bit in field is not mapped to a pin - Modify Configure.usbdm");
@@ -1618,9 +1617,12 @@ class GpioFieldTable_T :
     * @tparam bitNum        Bit number in the port
     * @tparam polarity      Polarity of pin. Either ActiveHigh or ActiveLow
     */
-   template<unsigned bitNum, Polarity polarity=ActiveHigh> class GpioA :
-         public Gpio_T<PortAInfo.clockInfo, PortAInfo.portAddress, PortAInfo.irqNum, PortAInfo.gpioAddress, GPIO_DEFAULT_PCR, PortAInfo.irqLevel, bitNum, polarity> {};
-   typedef PcrBase_T<PortAInfo.portAddress, PortAInfo.irqNum, PortAInfo.irqLevel> PortA;
+   template<int bitNum, Polarity polarity=ActiveHigh> class GpioA :
+         public Gpio_T<GpioAInfo::info[bitNum].pcrValue, PcrBase::pinIndexOf(PinIndex::PTA0,bitNum), polarity> {};
+   /**
+    * Common features shared across all pins of PortA
+    */
+   typedef PcrBase_T<mapPinToPort(PinIndex::PTA0)> PortA;
 
    /**
     * @brief Convenience template for GpioA fields. See @ref GpioField_T
@@ -1658,8 +1660,8 @@ class GpioFieldTable_T :
     * @tparam right         Bit number of rightmost bit in port (inclusive)
     * @tparam polarity      Polarity of all pins. Either ActiveHigh, ActiveLow or a bitmask (0=>bit active-high, 1=>bit active-low)
     */
-   template<unsigned left, unsigned right, uint32_t polarity=ActiveHigh>
-   class GpioAField : public GpioField_T<PortAInfo.portAddress, PortAInfo.clockInfo, PortAInfo.irqNum, PortAInfo.gpioAddress, GPIO_DEFAULT_PCR, PortAInfo.irqLevel, left, right, polarity> {};
+   template<int left, int right, uint32_t polarity=ActiveHigh>
+   class GpioAField : public GpioField_T<GPIO_DEFAULT_PCR, PcrBase::pinIndexOf(PinIndex::PTA0,left), PcrBase::pinIndexOf(PinIndex::PTA0,right), Polarity(polarity)> {};
 
    /**
     * @brief Convenience template for GpioB. See @ref Gpio_T
@@ -1699,9 +1701,12 @@ class GpioFieldTable_T :
     * @tparam bitNum        Bit number in the port
     * @tparam polarity      Polarity of pin. Either ActiveHigh or ActiveLow
     */
-   template<unsigned bitNum, Polarity polarity=ActiveHigh> class GpioB :
-         public Gpio_T<PortBInfo.clockInfo, PortBInfo.portAddress, PortBInfo.irqNum, PortBInfo.gpioAddress, GPIO_DEFAULT_PCR, PortBInfo.irqLevel, bitNum, polarity> {};
-   typedef PcrBase_T<PortBInfo.portAddress, PortBInfo.irqNum, PortBInfo.irqLevel> PortB;
+   template<int bitNum, Polarity polarity=ActiveHigh> class GpioB :
+         public Gpio_T<GpioBInfo::info[bitNum].pcrValue, PcrBase::pinIndexOf(PinIndex::PTB0,bitNum), polarity> {};
+   /**
+    * Common features shared across all pins of PortB
+    */
+   typedef PcrBase_T<mapPinToPort(PinIndex::PTB0)> PortB;
 
    /**
     * @brief Convenience template for GpioB fields. See @ref GpioField_T
@@ -1739,8 +1744,8 @@ class GpioFieldTable_T :
     * @tparam right         Bit number of rightmost bit in port (inclusive)
     * @tparam polarity      Polarity of all pins. Either ActiveHigh, ActiveLow or a bitmask (0=>bit active-high, 1=>bit active-low)
     */
-   template<unsigned left, unsigned right, uint32_t polarity=ActiveHigh>
-   class GpioBField : public GpioField_T<PortBInfo.portAddress, PortBInfo.clockInfo, PortBInfo.irqNum, PortBInfo.gpioAddress, GPIO_DEFAULT_PCR, PortBInfo.irqLevel, left, right, polarity> {};
+   template<int left, int right, uint32_t polarity=ActiveHigh>
+   class GpioBField : public GpioField_T<GPIO_DEFAULT_PCR, PcrBase::pinIndexOf(PinIndex::PTB0,left), PcrBase::pinIndexOf(PinIndex::PTB0,right), Polarity(polarity)> {};
 
    /**
     * @brief Convenience template for GpioC. See @ref Gpio_T
@@ -1780,9 +1785,12 @@ class GpioFieldTable_T :
     * @tparam bitNum        Bit number in the port
     * @tparam polarity      Polarity of pin. Either ActiveHigh or ActiveLow
     */
-   template<unsigned bitNum, Polarity polarity=ActiveHigh> class GpioC :
-         public Gpio_T<PortCInfo.clockInfo, PortCInfo.portAddress, PortCInfo.irqNum, PortCInfo.gpioAddress, GPIO_DEFAULT_PCR, PortCInfo.irqLevel, bitNum, polarity> {};
-   typedef PcrBase_T<PortCInfo.portAddress, PortCInfo.irqNum, PortCInfo.irqLevel> PortC;
+   template<int bitNum, Polarity polarity=ActiveHigh> class GpioC :
+         public Gpio_T<GpioCInfo::info[bitNum].pcrValue, PcrBase::pinIndexOf(PinIndex::PTC0,bitNum), polarity> {};
+   /**
+    * Common features shared across all pins of PortC
+    */
+   typedef PcrBase_T<mapPinToPort(PinIndex::PTC0)> PortC;
 
    /**
     * @brief Convenience template for GpioC fields. See @ref GpioField_T
@@ -1820,8 +1828,8 @@ class GpioFieldTable_T :
     * @tparam right         Bit number of rightmost bit in port (inclusive)
     * @tparam polarity      Polarity of all pins. Either ActiveHigh, ActiveLow or a bitmask (0=>bit active-high, 1=>bit active-low)
     */
-   template<unsigned left, unsigned right, uint32_t polarity=ActiveHigh>
-   class GpioCField : public GpioField_T<PortCInfo.portAddress, PortCInfo.clockInfo, PortCInfo.irqNum, PortCInfo.gpioAddress, GPIO_DEFAULT_PCR, PortCInfo.irqLevel, left, right, polarity> {};
+   template<int left, int right, uint32_t polarity=ActiveHigh>
+   class GpioCField : public GpioField_T<GPIO_DEFAULT_PCR, PcrBase::pinIndexOf(PinIndex::PTC0,left), PcrBase::pinIndexOf(PinIndex::PTC0,right), Polarity(polarity)> {};
 
    /**
     * @brief Convenience template for GpioD. See @ref Gpio_T
@@ -1861,9 +1869,12 @@ class GpioFieldTable_T :
     * @tparam bitNum        Bit number in the port
     * @tparam polarity      Polarity of pin. Either ActiveHigh or ActiveLow
     */
-   template<unsigned bitNum, Polarity polarity=ActiveHigh> class GpioD :
-         public Gpio_T<PortDInfo.clockInfo, PortDInfo.portAddress, PortDInfo.irqNum, PortDInfo.gpioAddress, GPIO_DEFAULT_PCR, PortDInfo.irqLevel, bitNum, polarity> {};
-   typedef PcrBase_T<PortDInfo.portAddress, PortDInfo.irqNum, PortDInfo.irqLevel> PortD;
+   template<int bitNum, Polarity polarity=ActiveHigh> class GpioD :
+         public Gpio_T<GpioDInfo::info[bitNum].pcrValue, PcrBase::pinIndexOf(PinIndex::PTD0,bitNum), polarity> {};
+   /**
+    * Common features shared across all pins of PortD
+    */
+   typedef PcrBase_T<mapPinToPort(PinIndex::PTD0)> PortD;
 
    /**
     * @brief Convenience template for GpioD fields. See @ref GpioField_T
@@ -1901,8 +1912,8 @@ class GpioFieldTable_T :
     * @tparam right         Bit number of rightmost bit in port (inclusive)
     * @tparam polarity      Polarity of all pins. Either ActiveHigh, ActiveLow or a bitmask (0=>bit active-high, 1=>bit active-low)
     */
-   template<unsigned left, unsigned right, uint32_t polarity=ActiveHigh>
-   class GpioDField : public GpioField_T<PortDInfo.portAddress, PortDInfo.clockInfo, PortDInfo.irqNum, PortDInfo.gpioAddress, GPIO_DEFAULT_PCR, PortDInfo.irqLevel, left, right, polarity> {};
+   template<int left, int right, uint32_t polarity=ActiveHigh>
+   class GpioDField : public GpioField_T<GPIO_DEFAULT_PCR, PcrBase::pinIndexOf(PinIndex::PTD0,left), PcrBase::pinIndexOf(PinIndex::PTD0,right), Polarity(polarity)> {};
 
    /**
     * @brief Convenience template for GpioE. See @ref Gpio_T
@@ -1942,9 +1953,12 @@ class GpioFieldTable_T :
     * @tparam bitNum        Bit number in the port
     * @tparam polarity      Polarity of pin. Either ActiveHigh or ActiveLow
     */
-   template<unsigned bitNum, Polarity polarity=ActiveHigh> class GpioE :
-         public Gpio_T<PortEInfo.clockInfo, PortEInfo.portAddress, PortEInfo.irqNum, PortEInfo.gpioAddress, GPIO_DEFAULT_PCR, PortEInfo.irqLevel, bitNum, polarity> {};
-   typedef PcrBase_T<PortEInfo.portAddress, PortEInfo.irqNum, PortEInfo.irqLevel> PortE;
+   template<int bitNum, Polarity polarity=ActiveHigh> class GpioE :
+         public Gpio_T<GpioEInfo::info[bitNum].pcrValue, PcrBase::pinIndexOf(PinIndex::PTE0,bitNum), polarity> {};
+   /**
+    * Common features shared across all pins of PortE
+    */
+   typedef PcrBase_T<mapPinToPort(PinIndex::PTE0)> PortE;
 
    /**
     * @brief Convenience template for GpioE fields. See @ref GpioField_T
@@ -1982,8 +1996,8 @@ class GpioFieldTable_T :
     * @tparam right         Bit number of rightmost bit in port (inclusive)
     * @tparam polarity      Polarity of all pins. Either ActiveHigh, ActiveLow or a bitmask (0=>bit active-high, 1=>bit active-low)
     */
-   template<unsigned left, unsigned right, uint32_t polarity=ActiveHigh>
-   class GpioEField : public GpioField_T<PortEInfo.portAddress, PortEInfo.clockInfo, PortEInfo.irqNum, PortEInfo.gpioAddress, GPIO_DEFAULT_PCR, PortEInfo.irqLevel, left, right, polarity> {};
+   template<int left, int right, uint32_t polarity=ActiveHigh>
+   class GpioEField : public GpioField_T<GPIO_DEFAULT_PCR, PcrBase::pinIndexOf(PinIndex::PTE0,left), PcrBase::pinIndexOf(PinIndex::PTE0,right), Polarity(polarity)> {};
 
 
 /**

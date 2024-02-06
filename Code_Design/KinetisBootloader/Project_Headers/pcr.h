@@ -48,6 +48,219 @@ namespace USBDM {
 #pragma GCC push_options
 #pragma GCC optimize ("Os")
 
+/**
+* Port pin index
+*
+* Global indices for port pins
+*/
+enum class PinIndex : int16_t {
+   INVALID_PCR  = -2,   // Signal does not exist
+   UNMAPPED_PCR = -3,   // Signal is not currently mapped to a pin
+   FIXED_NO_PCR = -4,   // Signal has mapping to fixed pin
+   MIN_PIN_INDEX = 0,   // First available pin (inclusive)
+   Unassigned    = UNMAPPED_PCR,
+   PTA0 = 0+0,
+   PTA1 = 0+1,
+   PTA2 = 0+2,
+   PTA3 = 0+3,
+   PTA4 = 0+4,
+   PTA5 = 0+5,
+   PTA6 = 0+6,
+   PTA7 = 0+7,
+   PTA8 = 0+8,
+   PTA9 = 0+9,
+   PTA10 = 0+10,
+   PTA11 = 0+11,
+   PTA12 = 0+12,
+   PTA13 = 0+13,
+   PTA14 = 0+14,
+   PTA15 = 0+15,
+   PTA16 = 0+16,
+   PTA17 = 0+17,
+   PTA18 = 0+18,
+   PTA19 = 0+19,
+   PTA20 = 0+20,
+   PTA21 = 0+21,
+   PTA22 = 0+22,
+   PTA23 = 0+23,
+   PTA24 = 0+24,
+   PTA25 = 0+25,
+   PTA26 = 0+26,
+   PTA27 = 0+27,
+   PTA28 = 0+28,
+   PTA29 = 0+29,
+   PTA30 = 0+30,
+   PTA31 = 0+31,
+   PTB0 = 32+0,
+   PTB1 = 32+1,
+   PTB2 = 32+2,
+   PTB3 = 32+3,
+   PTB4 = 32+4,
+   PTB5 = 32+5,
+   PTB6 = 32+6,
+   PTB7 = 32+7,
+   PTB8 = 32+8,
+   PTB9 = 32+9,
+   PTB10 = 32+10,
+   PTB11 = 32+11,
+   PTB12 = 32+12,
+   PTB13 = 32+13,
+   PTB14 = 32+14,
+   PTB15 = 32+15,
+   PTB16 = 32+16,
+   PTB17 = 32+17,
+   PTB18 = 32+18,
+   PTB19 = 32+19,
+   PTB20 = 32+20,
+   PTB21 = 32+21,
+   PTB22 = 32+22,
+   PTB23 = 32+23,
+   PTB24 = 32+24,
+   PTB25 = 32+25,
+   PTB26 = 32+26,
+   PTB27 = 32+27,
+   PTB28 = 32+28,
+   PTB29 = 32+29,
+   PTB30 = 32+30,
+   PTB31 = 32+31,
+   PTC0 = 64+0,
+   PTC1 = 64+1,
+   PTC2 = 64+2,
+   PTC3 = 64+3,
+   PTC4 = 64+4,
+   PTC5 = 64+5,
+   PTC6 = 64+6,
+   PTC7 = 64+7,
+   PTC8 = 64+8,
+   PTC9 = 64+9,
+   PTC10 = 64+10,
+   PTC11 = 64+11,
+   PTC12 = 64+12,
+   PTC13 = 64+13,
+   PTC14 = 64+14,
+   PTC15 = 64+15,
+   PTC16 = 64+16,
+   PTC17 = 64+17,
+   PTC18 = 64+18,
+   PTC19 = 64+19,
+   PTC20 = 64+20,
+   PTC21 = 64+21,
+   PTC22 = 64+22,
+   PTC23 = 64+23,
+   PTC24 = 64+24,
+   PTC25 = 64+25,
+   PTC26 = 64+26,
+   PTC27 = 64+27,
+   PTC28 = 64+28,
+   PTC29 = 64+29,
+   PTC30 = 64+30,
+   PTC31 = 64+31,
+   PTD0 = 96+0,
+   PTD1 = 96+1,
+   PTD2 = 96+2,
+   PTD3 = 96+3,
+   PTD4 = 96+4,
+   PTD5 = 96+5,
+   PTD6 = 96+6,
+   PTD7 = 96+7,
+   PTD8 = 96+8,
+   PTD9 = 96+9,
+   PTD10 = 96+10,
+   PTD11 = 96+11,
+   PTD12 = 96+12,
+   PTD13 = 96+13,
+   PTD14 = 96+14,
+   PTD15 = 96+15,
+   PTD16 = 96+16,
+   PTD17 = 96+17,
+   PTD18 = 96+18,
+   PTD19 = 96+19,
+   PTD20 = 96+20,
+   PTD21 = 96+21,
+   PTD22 = 96+22,
+   PTD23 = 96+23,
+   PTD24 = 96+24,
+   PTD25 = 96+25,
+   PTD26 = 96+26,
+   PTD27 = 96+27,
+   PTD28 = 96+28,
+   PTD29 = 96+29,
+   PTD30 = 96+30,
+   PTD31 = 96+31,
+   PTE0 = 128+0,
+   PTE1 = 128+1,
+   PTE2 = 128+2,
+   PTE3 = 128+3,
+   PTE4 = 128+4,
+   PTE5 = 128+5,
+   PTE6 = 128+6,
+   PTE7 = 128+7,
+   PTE8 = 128+8,
+   PTE9 = 128+9,
+   PTE10 = 128+10,
+   PTE11 = 128+11,
+   PTE12 = 128+12,
+   PTE13 = 128+13,
+   PTE14 = 128+14,
+   PTE15 = 128+15,
+   PTE16 = 128+16,
+   PTE17 = 128+17,
+   PTE18 = 128+18,
+   PTE19 = 128+19,
+   PTE20 = 128+20,
+   PTE21 = 128+21,
+   PTE22 = 128+22,
+   PTE23 = 128+23,
+   PTE24 = 128+24,
+   PTE25 = 128+25,
+   PTE26 = 128+26,
+   PTE27 = 128+27,
+   PTE28 = 128+28,
+   PTE29 = 128+29,
+   PTE30 = 128+30,
+   PTE31 = 128+31,
+   MAX_PIN_INDEX, // Last available pin (exclusive)
+};
+   
+/**
+* Port index
+*
+* Global indices for ports
+*/
+enum class PortIndex : int16_t {
+   PortA = 0,
+   PortB = 1,
+   PortC = 2,
+   PortD = 3,
+   PortE = 4,
+};
+   
+   /**
+    * Map PinIndex to PortIndex e.g. PinIndex::PTA3 => PortIndex::PortA
+    *
+    * @param pinIndex
+    *
+    * @return portIndex
+    */
+   constexpr PortIndex mapPinToPort(PinIndex pinIndex) {
+      return PortIndex(int(pinIndex)/32);
+   }
+   
+   /**
+    * Map PortIndex to base PinIndex e.g. PortIndex::PortA => PinIndex::PTA0
+    *
+    * @param portIndex
+    *
+    * @return pinIndex
+    */
+   constexpr PinIndex mapPortToPin(PortIndex portIndex) {
+      return PinIndex(int(portIndex)*32);
+   }
+   
+
+// Pin number for port pin within individual port e.g. GPIOB[31..0]
+typedef uint8_t  PinNum;
+
 #if (false)
 class Ticks {
 
@@ -102,6 +315,9 @@ public:
 
    constexpr auto operator ==(const Ticks &other)   const { return value==other.value; }
    constexpr auto operator ==(const unsigned other) const { return value==other; }
+
+   constexpr auto operator !=(const Ticks &other)   const { return value!=other.value; }
+   constexpr auto operator !=(const unsigned other) const { return value!=other; }
 
    constexpr operator unsigned() const { return value; }
    explicit operator unsigned() const volatile { return value; }
@@ -158,6 +374,11 @@ public:
    constexpr auto operator ==(const unsigned other) const { return value==other; }
    constexpr auto operator ==(int other)            const { return value==other; }
 
+   constexpr auto operator !=(const Seconds &other) const { return value!=other.value; }
+   constexpr auto operator !=(const float other)    const { return value!=other; }
+   constexpr auto operator !=(const unsigned other) const { return value!=other; }
+   constexpr auto operator !=(int other)            const { return value!=other; }
+
    constexpr auto operator <(const Seconds &other) const { return value<other.value; }
    constexpr auto operator <(const float other)    const { return value<other; }
    constexpr auto operator <(const unsigned other) const { return value<other; }
@@ -178,8 +399,12 @@ public:
    constexpr auto operator >=(const unsigned other) const { return value>=other; }
    constexpr auto operator >=(int other)            const { return value>=other; }
 
-   constexpr operator float() const { return value; }
-   explicit operator float() const volatile { return value; }
+   constexpr operator float()    const { return value; }
+   explicit  operator float()    const volatile { return value; }
+   constexpr operator unsigned() const { return (unsigned)round(value); }
+   constexpr operator uint32_t() const { return (uint32_t)round(value); }
+   constexpr operator signed()   const { return (signed)round(value); }
+   constexpr operator int32_t()  const { return (int32_t)round(value); }
 };
 
 class Hertz {
@@ -226,6 +451,11 @@ public:
    constexpr auto operator ==(const unsigned other) const { return value==other; }
    constexpr auto operator ==(int other)            const { return value==other; }
 
+   constexpr auto operator !=(const Hertz &other)   const { return value!=other.value; }
+   constexpr auto operator !=(const float other)    const { return value!=other; }
+   constexpr auto operator !=(const unsigned other) const { return value!=other; }
+   constexpr auto operator !=(int other)            const { return value!=other; }
+
    constexpr auto operator <(const Hertz &other)   const { return value<other.value; }
    constexpr auto operator <(const float other)    const { return value<other; }
    constexpr auto operator <(const unsigned other) const { return value<other; }
@@ -247,7 +477,10 @@ public:
    constexpr auto operator >=(int other)            const { return value>=other; }
 
    constexpr operator float()    const { return value; }
-   constexpr operator unsigned() const { return (int)round(value); }
+   constexpr operator unsigned() const { return (unsigned)round(value); }
+   constexpr operator uint32_t() const { return (uint32_t)round(value); }
+   constexpr operator signed()   const { return (signed)round(value); }
+   constexpr operator int32_t()  const { return (int32_t)round(value); }
 };
 
 constexpr auto operator *(float left,     Seconds right)  { return Seconds(left*right.getValue()); }
@@ -270,7 +503,10 @@ constexpr auto operator /(int left,       Hertz right)   { return Seconds(left/r
 constexpr auto operator /(Ticks left,     Hertz right)   { return Seconds(left.getValue()/right.getValue()); }
 
 #else
-   using Ticks    = unsigned;
+enum Ticks : unsigned {
+
+};
+//   using Ticks    = unsigned;
    using Seconds  = float;
    using Hertz    = float;
 #endif
@@ -300,7 +536,7 @@ union Seconds_Ticks {
    constexpr Seconds_Ticks() : value(0) {}
 
    constexpr Seconds toSeconds() const { return bit_cast<float, unsigned>(value); }
-   constexpr Ticks   toTicks()   const { return value; }
+   constexpr Ticks   toTicks()   const { return (Ticks)value; }
 
 #if false
    constexpr void fromSeconds(Seconds seconds) { value = bit_cast<unsigned, float>(seconds.getValue()); }
@@ -344,6 +580,7 @@ union Seconds_Ticks {
 
    /**
     * IRQ priority levels
+    * (nvic_irqLevel)
     *
     * Priority level used to configure the NVIC
     * Subset of available levels
@@ -357,7 +594,6 @@ union Seconds_Ticks {
       NvicPriority_MidHigh      = (NvicPriority_VeryLow*2/6), ///< MidHigh
       NvicPriority_High         = (NvicPriority_VeryLow*1/6), ///< High
       NvicPriority_VeryHigh     = 0,                          ///< VeryHigh
-
    };
 
 
@@ -433,6 +669,11 @@ public:
     * @return uint32
     */
    constexpr __attribute__((always_inline))  operator uint32_t() const { return ptr; }
+
+   /**
+    * Get value as volatile pointer to hardware
+    */
+   constexpr __attribute__((always_inline))  operator volatile T *() const { return reinterpret_cast<volatile T *>(ptr);}
 };
 
 /**
@@ -442,8 +683,9 @@ public:
  * @param[in]  nvicPriority  Interrupt priority
  *
  * @note Any pending interrupts are cleared before enabling.
+ * @note NvicPriority_NotInstalled will actually disable interrupts
  */
-void enableNvicInterrupt(IRQn_Type irqNum, uint32_t nvicPriority);
+void enableNvicInterrupt(IRQn_Type irqNum, NvicPriority nvicPriority);
 
 /**
  * @addtogroup PeripheralPinTables Peripheral Information Classes
@@ -459,14 +701,6 @@ enum Polarity : uint32_t {
    ActiveHigh = 0x00000000U,  ///< Signal is active high i.e. Active => High level, Inactive => Low level
 };
 
-/** Pin number indicating the function has a fixed mapping to a pin */
-constexpr   int8_t FIXED_NO_PCR         = 0x00;
-
-/** Pin number indicating the function doesn't exist. Note: -ve value*/
-constexpr   int8_t INVALID_PCR          = static_cast<int8_t>(0xA5);
-
-/** Pin number indicating the function is not currently mapped to a pin. Note: -ve value */
-constexpr   int8_t UNMAPPED_PCR         = static_cast<int8_t>(0xA4);
 
 #ifdef PCC
 /**
@@ -490,6 +724,8 @@ static inline void disablePortClocks(uint32_t pccAddress) {
 };
 
 #endif
+
+#ifdef PORT_PCR_MUX_MASK
 
 #ifndef PORT_PCR_LK
 /**
@@ -562,17 +798,18 @@ constexpr bool operator ==(PcrValue pcrValue, uint32_t mask) {
 
    /**
     * Pin input filter
+    * (port_pcr_pfe)
     *
     * Pin filtering on digital inputs
     */
    enum PinFilter : uint32_t {
       PinFilter_None    = PORT_PCR_PFE(0), ///< No pin filter
       PinFilter_Passive = PORT_PCR_PFE(1), ///< Pin filter enabled
-
    };
 
    /**
     * Pin pull device
+    * (port_pcr_pd)
     *
     * Pin pull device (up/down/none) on digital inputs
     */
@@ -580,55 +817,55 @@ constexpr bool operator ==(PcrValue pcrValue, uint32_t mask) {
       PinPull_None = PORT_PCR_PD(0b00), ///< No pull device
       PinPull_Up   = PORT_PCR_PD(0b11), ///< Weak pull-up
       PinPull_Down = PORT_PCR_PD(0b10), ///< Weak pull-down
-
    };
 
    /**
     * Pin drive strength
+    * (port_pcr_dse)
     *
     * Pin drive strength of digital outputs
     */
    enum PinDriveStrength : uint32_t {
       PinDriveStrength_Low  = PORT_PCR_DSE(0), ///< Low drive strength
       PinDriveStrength_High = PORT_PCR_DSE(1), ///< High drive strength
-
    };
 
    /**
     * Pin drive mode
+    * (port_pcr_ode)
     *
     * Pin drive mode (push-pull/open-drain) of digital outputs
     */
    enum PinDriveMode : uint32_t {
       PinDriveMode_PushPull  = PORT_PCR_ODE(0), ///< Push-pull
       PinDriveMode_OpenDrain = PORT_PCR_ODE(1), ///< Open-drain
-
    };
 
    /**
     * Pin slew rate
+    * (port_pcr_sre)
     *
     * Pin slew rate of digital outputs
     */
    enum PinSlewRate : uint32_t {
       PinSlewRate_Fast = PORT_PCR_SRE(0), ///< Fast
       PinSlewRate_Slow = PORT_PCR_SRE(1), ///< Slow
-
    };
 
    /**
     * Pin Control Register (PCR) lock
+    * (port_pcr_lk)
     *
     * Prevents modification of some of the PCR values once set
     */
    enum PinLock : uint32_t {
       PinLock_Unlocked = PORT_PCR_LK(0), ///< PCR not locked after 1st write
       PinLock_Locked   = PORT_PCR_LK(1), ///< PCR locked after 1st write
-
    };
 
    /**
     * Pin interrupt/DMA actions
+    * (port_pcr_irqc)
     *
     * DMA and/or interrupt actions to happen on pin change or level
     */
@@ -642,18 +879,16 @@ constexpr bool operator ==(PcrValue pcrValue, uint32_t mask) {
       PinAction_IrqFalling = PORT_PCR_IRQC(10), ///< Generate IRQ request on falling edge
       PinAction_IrqEither  = PORT_PCR_IRQC(11), ///< Generate IRQ request on either edge
       PinAction_IrqHigh    = PORT_PCR_IRQC(12), ///< Generate IRQ request on high level
-
    };
 
    /**
     * Pin Multiplexor setting
+    * (port_pcr_mux)
     *
     * Which function is mapped to the pin
     */
    enum PinMux : uint32_t {
       PinMux_Analogue = PORT_PCR_MUX(0), ///< Analogue function (ADC/TSI etc)
-      PinMux_Tsi      = PORT_PCR_MUX(0), ///< Touch Sense Input
-      PinMux_Disabled = PORT_PCR_MUX(0), ///< Disabled
       PinMux_Gpio     = PORT_PCR_MUX(1), ///< GPIO function
       PinMux_2        = PORT_PCR_MUX(2), ///< Multiplexor 2 function
       PinMux_3        = PORT_PCR_MUX(3), ///< Multiplexor 3 function
@@ -661,7 +896,8 @@ constexpr bool operator ==(PcrValue pcrValue, uint32_t mask) {
       PinMux_5        = PORT_PCR_MUX(5), ///< Multiplexor 5 function
       PinMux_6        = PORT_PCR_MUX(6), ///< Multiplexor 6 function
       PinMux_7        = PORT_PCR_MUX(7), ///< Multiplexor 7 function
-
+      PinMux_Tsi      = PORT_PCR_MUX(0), ///< Touch Sense Input
+      PinMux_Disabled = PORT_PCR_MUX(0), ///< Disabled
    };
 
    /**
@@ -1080,7 +1316,7 @@ constexpr PcrValue analoguePcrValue(PcrValue op) {
    static constexpr PcrValue GPIO_DEFAULT_PCR(PinPull_None|PinFilter_None|PinDriveStrength_Low|PinDriveMode_PushPull|PinSlewRate_Fast|PinLock_Unlocked|PinAction_None|PinMux_Gpio);
 
 
-
+#if 0
 /**
  * Port information
  * Information required to configure the PCR for a particular function
@@ -1093,24 +1329,13 @@ private:
    PortInfo(PortInfo&&) = delete;
 
 public:
-   const uint32_t      portAddress;  ///< Port hardware base pointer
-   const uint32_t      clockInfo;    ///< Either clock mask or port clock control register address
-   const uint32_t      gpioAddress;  ///< Associated GPIO Hardware base pointer
-   const IRQn_Type     irqNum;       ///< Port interrupt number
    const NvicPriority  irqLevel;     ///< Interrupt priority level or NvicPriority_NotInstalled if handler not installed
 
-   constexpr PortInfo(const uint32_t      portAddress,
-                      const uint32_t      clockInfo,
-                      const IRQn_Type     irqNum,
-                      const uint32_t      gpioAddress,
-                      const NvicPriority  nvicPriority) :
-               portAddress(portAddress),
-               clockInfo(clockInfo),
-               gpioAddress(gpioAddress),
-               irqNum(irqNum),
+   constexpr PortInfo(const NvicPriority  nvicPriority) :
                irqLevel(nvicPriority) {
    }
 };
+#endif
 
 /**
  * Pin information
@@ -1123,42 +1348,19 @@ private:
    PinInfo(PinInfo&&) = delete;
 
 public:
-   const uint32_t      portAddress;  ///< Port hardware base pointer
-   const uint32_t      clockInfo;    ///< Either clock mask or port clock control register address
-   const uint32_t      gpioAddress;  ///< GPIO Hardware base pointer
+   const PinIndex      pinIndex;     ///< Pin index for pin e.g. PTC3
    const PcrValue      pcrValue;     ///< Default PCR value for pin - Includes PinMux value which determines pin use in most cases
-   const int8_t        gpioBit;      ///< Bit number for pin - must be signed for special values used for error checks
-   const IRQn_Type     irqNum;       ///< Port interrupt number
-   const NvicPriority  irqLevel;     ///< Interrupt priority level or NvicPriority_NotInstalled if handler not installed
 
    /**
     * Constructor from portInfo etc.
     *
-    * @param portInfo      Describes port
-    * @param gpioBit       Bit number GPIO being modified
+    * @param pinIndex      Pin index to determine associated GPIO
     * @param pcrValue      Default PCR value for pin
     */
    constexpr PinInfo(
-         const PortInfo &portInfo,
-         int             gpioBit,
-         PcrValue        pcrValue) :
-                     portAddress(portInfo.portAddress), clockInfo(portInfo.clockInfo), gpioAddress(portInfo.gpioAddress),
-                     pcrValue(pcrValue), gpioBit(gpioBit), irqNum(portInfo.irqNum), irqLevel(portInfo.irqLevel) {}
-
-   /**
-    * Constructor from pinInfo with override for bit number and PCR value.
-    * This is useful when re-using a PinInfo for another PinMux value i.e. peripheral
-    *
-    * @param pinInfo       Describes pin
-    * @param gpioBit       Bit number GPIO being modified
-    * @param pcrValue      Default PCR value for pin
-    */
-   constexpr PinInfo(
-         const PinInfo &pinInfo,
-         int             gpioBit,
-         PcrValue        pcrValue) :
-                     portAddress(pinInfo.portAddress), clockInfo(pinInfo.clockInfo), gpioAddress(pinInfo.gpioAddress),
-                     pcrValue(pcrValue), gpioBit(gpioBit), irqNum(pinInfo.irqNum), irqLevel(pinInfo.irqLevel) {}
+         PinIndex        pinIndex,
+         PcrValue        pcrValue) : pinIndex(pinIndex), pcrValue(pcrValue) {
+   }
 };
 
 #ifdef PORT_DFCR_CS_MASK
@@ -1197,32 +1399,106 @@ public:
       if (bitNum<0) {
          return 0;
       }
-      if (bitNum>(int)(sizeof(uint32_t)*CHAR_BIT)) {
-         return (int)(sizeof(uint32_t)*CHAR_BIT);
+      if (bitNum>=(int)(sizeof(uint32_t)*CHAR_BIT)) {
+         return int((sizeof(uint32_t)*CHAR_BIT)-1);
       }
       return bitNum;
    }
 
-   /** Class to static check inputNum input exists and is mapped to an input pin */
-   template<int bitNum> class CheckPinExistsAndIsMapped {
+   /**
+    * Class to static check signal exists and is mapped to a pin
+    *
+    * @tparam pinIndex Pin index to check
+    */
+   template<PinIndex pinIndex> class CheckPinExistsAndIsMapped {
       // Tests are chained so only a single assertion can fail so as to reduce noise
 
       // Function is not currently mapped to a pin
-      static constexpr bool Test1 = (bitNum != UNMAPPED_PCR);
+      static constexpr bool check1 = (pinIndex != PinIndex::UNMAPPED_PCR);
       // Peripheral signal does not exit
-      static constexpr bool Test2 = !Test1 || (bitNum != INVALID_PCR);
+      static constexpr bool check2 = !check1 || (pinIndex != PinIndex::INVALID_PCR);
       // Peripheral signal mapped directly to pin - no PCR (not an error)
-      static constexpr bool Test3 = !Test2 || (bitNum != FIXED_NO_PCR);
+      static constexpr bool check3 = !check1 || !check2 || (pinIndex != PinIndex::FIXED_NO_PCR);
       // Illegal value
-      static constexpr bool Test4 = !Test3 || (bitNum>0) || (bitNum<=31);
+      static constexpr bool check4 = !check1 || !check2 || !check3 || ((pinIndex>=PinIndex::MIN_PIN_INDEX) && (pinIndex<PinIndex::MAX_PIN_INDEX));
 
-      static_assert(Test1, "Peripheral signal is not mapped to a pin - Modify Configure.usbdm");
-      static_assert(Test2, "Peripheral signal doesn't exist in this device/package - Check Configure.usbdm for available signals");
-      static_assert(Test4, "Illegal bit number should be [0..31]");
+      static_assert(check1, "Peripheral signal is not mapped to a pin - Modify Configure.usbdm");
+      static_assert(check2, "Peripheral signal doesn't exist in this device/package - Check Configure.usbdm for available signals");
+      static_assert(check4, "Illegal pin index - should be in range [PinIndex::MIN_PIN_INDEX..PinIndex::MAX_PIN_INDEX)");
 
    public:
       /** Dummy function to allow convenient in-line checking */
       static constexpr void check() {}
+   };
+
+#define CreatePinChecker(periph)                                                                                                                        \
+   template<PinIndex pinIndex> class CheckPinExistsAndIsMapped {                                                                                        \
+      /* Tests are chained so only a single assertion can fail so as to reduce noise */                                                                 \
+                                                                                                                                                        \
+      /* Function is not currently mapped to a pin */                                                                                                   \
+      static constexpr bool check1 = (pinIndex != PinIndex::UNMAPPED_PCR);                                                                              \
+      /* Peripheral signal does not exit */                                                                                                             \
+      static constexpr bool check2 = !check1 || (pinIndex != PinIndex::INVALID_PCR);                                                                    \
+      /* Peripheral signal mapped directly to pin - no PCR (not an error) */                                                                            \
+      static constexpr bool check3 = !check1 || !check2 || (pinIndex != PinIndex::FIXED_NO_PCR);                                                        \
+      /* Illegal value */                                                                                                                               \
+      static constexpr bool check4 = !check1 || !check2 || !check3 || ((pinIndex>=PinIndex::MIN_PIN_INDEX) && (pinIndex<PinIndex::MAX_PIN_INDEX));      \
+                                                                                                                                                        \
+      static_assert(check1, periph " signal is not mapped to a pin - Modify Configure.usbdm");                                                          \
+      static_assert(check2, periph " signal doesn't exist in this device/package - Check Configure.usbdm for available signals");                       \
+      static_assert(check4, periph " illegal pin index - should be in range [PinIndex::MIN_PIN_INDEX..PinIndex::MAX_PIN_INDEX)");                       \
+                                                                                                                                                        \
+   public:                                                                                                                                              \
+      /** Dummy function to allow convenient in-line checking */                                                                                        \
+      static constexpr void check() {}                                                                                                                  \
+   };
+
+#define CreatePeripheralPinChecker(periph)                                                                                                              \
+   template<class Inf, int signalNum> class CheckPinExistsAndIsMapped {                                                                                \
+                                                                                                                                                        \
+      /* Check index is valid for peripheral INFO table */                                                                                              \
+      static_assert(signalNum<Inf::numSignals, periph " illegal signal index");                                                                        \
+                                                                                                                                                        \
+      static constexpr PinIndex pinIndex = Inf::info[signalNum].pinIndex;                                                                              \
+                                                                                                                                                        \
+      /* Tests are chained so only a single assertion can fail so as to reduce noise */                                                                 \
+                                                                                                                                                        \
+      /* Function is not currently mapped to a pin */                                                                                                   \
+      static constexpr bool check1 = (pinIndex != PinIndex::UNMAPPED_PCR);                                                                              \
+      /* Peripheral signal does not exit */                                                                                                             \
+      static constexpr bool check2 = !check1 || (pinIndex != PinIndex::INVALID_PCR);                                                                    \
+      /* Peripheral signal mapped directly to pin - no PCR (not an error) */                                                                            \
+      static constexpr bool check3 = !check1 || !check2 || (pinIndex != PinIndex::FIXED_NO_PCR);                                                        \
+      /* Illegal value */                                                                                                                               \
+      static constexpr bool check4 = !check1 || !check2 || !check3 || ((pinIndex>=PinIndex::MIN_PIN_INDEX) && (pinIndex<PinIndex::MAX_PIN_INDEX));      \
+                                                                                                                                                        \
+      static_assert(check1, periph " signal is not mapped to a pin - Modify Configure.usbdm");                                                          \
+      static_assert(check2, periph " signal doesn't exist in this device/package - Check Configure.usbdm for available signals");                       \
+      static_assert(check4, periph " illegal pin index - should be in range [PinIndex::MIN_PIN_INDEX..PinIndex::MAX_PIN_INDEX)");                       \
+                                                                                                                                                        \
+   public:                                                                                                                                              \
+      /** Dummy function to allow convenient in-line checking */                                                                                        \
+      static constexpr void check() {}                                                                                                                  \
+   };
+
+   /**
+    * Class to static check signal mapping is valid for a peripheral
+    * Conditions are chained so only a single assert is reported
+    *
+    * @tparam Info         Info table used for lookup
+    * @tparam signalNum    Index into table
+    */
+   template<class Info, int signalNum> class CheckSignalMapping {
+
+      static constexpr PinIndex pinIndex = Info::info[signalNum].pinIndex;
+
+      /* Illegal index for table */
+      static_assert(signalNum<Info::numSignals, "Illegal signal index for this peripheral");
+
+   public:
+      static void check() {
+         CheckPinExistsAndIsMapped<pinIndex>::check();
+      }
    };
 
 private:
@@ -1238,17 +1514,180 @@ public:
    static void unhandledCallback(uint32_t) {
       setAndCheckErrorCode(E_NO_HANDLER);
    }
+   
+   /**
+    * Get PORT from portIndex
+    *
+    * @param portIndex Port index e.g. PortIndex::PortA. Used to determine return value
+    *
+    * @return Pointer to relevant PORT
+    */
+   static constexpr uint32_t getPortAddress(PortIndex portIndex) {
+   
+      if (portIndex <= PortIndex::PortA) {
+         return PORTA_BasePtr;
+      }
+      if (portIndex <= PortIndex::PortB) {
+         return PORTB_BasePtr;
+      }
+      if (portIndex <= PortIndex::PortC) {
+         return PORTC_BasePtr;
+      }
+      if (portIndex <= PortIndex::PortD) {
+         return PORTD_BasePtr;
+      }
+      if (portIndex <= PortIndex::PortE) {
+         return PORTE_BasePtr;
+      }
+      static_assert("Illegal Port");
+      return 0;
+   }
+   
+   /**
+    * Get PORT clock enable mask from pinIndex
+    *
+    * @param pinIndex Pin index e.g. PTB3. Used to determine return value
+    *
+    * @return Clock enable mask e.g. SIM_SCGC5_PORTB
+    */
+   static constexpr uint32_t getClockMask(PinIndex pinIndex) {
+      if (pinIndex < PinIndex::MIN_PIN_INDEX) {
+         // INVALID_PCR, UNMAPPED_PCR, FIXED_NO_PCR
+         return 0;
+      }
+      if (pinIndex <= PinIndex::PTA31) {
+         return SIM_SCGC5_PORTA_MASK;
+      }
+      if (pinIndex <= PinIndex::PTB31) {
+         return SIM_SCGC5_PORTB_MASK;
+      }
+      if (pinIndex <= PinIndex::PTC31) {
+         return SIM_SCGC5_PORTC_MASK;
+      }
+      if (pinIndex <= PinIndex::PTD31) {
+         return SIM_SCGC5_PORTD_MASK;
+      }
+      if (pinIndex <= PinIndex::PTE31) {
+         return SIM_SCGC5_PORTE_MASK;
+      }
+       static_assert("Illegal Port");
+       return 0;
+   }
+   
+   /**
+    * Get PORT IRQ number from portIndex
+    *
+    * @param portIndex Port index e.g. PortB. Used to determine return value
+    *
+    * @return IRQ number
+    */
+   static constexpr IRQn_Type getIrqNum(PortIndex portIndex) {
+   
+      if (portIndex <= PortIndex::PortA) {
+         constexpr IRQn_Type PortIrqs[] = PORTA_IRQS;
+         return PortIrqs[0];
+      }
+      if (portIndex <= PortIndex::PortB) {
+         constexpr IRQn_Type PortIrqs[] = PORTB_IRQS;
+         return PortIrqs[0];
+      }
+      if (portIndex <= PortIndex::PortC) {
+         constexpr IRQn_Type PortIrqs[] = PORTC_IRQS;
+         return PortIrqs[0];
+      }
+      if (portIndex <= PortIndex::PortD) {
+         constexpr IRQn_Type PortIrqs[] = PORTD_IRQS;
+         return PortIrqs[0];
+      }
+      if (portIndex <= PortIndex::PortE) {
+         constexpr IRQn_Type PortIrqs[] = PORTE_IRQS;
+         return PortIrqs[0];
+      }
+      // INVALID_PCR, UNMAPPED_PCR, FIXED_NO_PCR
+      static_assert("Illegal Port");
+      return IRQn_Type(0);
+   }
+   
+   /**
+    * Check if interrupt handler has been installed
+    *
+    * @param pinIndex Pin index e.g. PTB3. Used to determine relevant port
+    *
+    * @return true if handler installed
+    */
+   static constexpr bool isHandlerInstalled(PinIndex pinIndex) {
+      (void)pinIndex;
+         if (pinIndex <= PinIndex::PTA31) {
+            return false;
+         }
+         if (pinIndex <= PinIndex::PTB31) {
+            return false;
+         }
+         if (pinIndex <= PinIndex::PTC31) {
+            return false;
+         }
+         if (pinIndex <= PinIndex::PTD31) {
+            return false;
+         }
+         if (pinIndex <= PinIndex::PTE31) {
+            return false;
+         }
+      return false;
+   }
+   
+
+
+   /**
+    * Get PCR from pinIndex
+    *
+    * @param pinIndex Pin index e.g. PinIndex::PTB3. Used to determine return value
+    *
+    * @return Pointer to relevant PORT
+    */
+   static constexpr uint32_t getPcrAddress(PinIndex pinIndex){
+
+      return getPortAddress(mapPinToPort(pinIndex)) + offsetof(PORT_Type, PCR) + sizeof(PORT_Type::PCR[0])*(int(pinIndex)%32);
+   }
+
+   /**
+    * Enable clock to selected port
+    *
+    * @param pinIndex Pin index e.g. PTB3. Used to determine port
+    */
+   static inline void enablePortClock(PinIndex pinIndex) {
+      SIM->SCGC5 = SIM->SCGC5 | getClockMask(pinIndex);
+      __DMB();
+   }
+
+   /**
+    * Disable clock to selected port
+    *
+    * @param pinIndex Pin index e.g. PTB3. Used to determine port
+    */
+   static inline void disablePortClock(PinIndex pinIndex) {
+      SIM->SCGC5 = SIM->SCGC5 & ~getClockMask(pinIndex);
+      __DMB();
+   }
+
+   /**
+    * Translate a bitNum within a PORT/GPIO to a pinIndex
+    *
+    * @param basePinIndex The pinIndex for the first bit of associated PORT/GPIO e.g. PTC0
+    * @param bitNum       Bit number within the PORT/GPIO
+    *
+    * @return  PinIndex of the bit
+    */
+   static constexpr PinIndex pinIndexOf(PinIndex basePinIndex, int bitNum) {
+      return PinIndex(int(basePinIndex)+bitNum);
+   }
 };
 
 /**
  * Common PORT features shared across all port pins
  *
- * @tparam portAddress           Address of port to be used
- * @tparam irqNum                Interrupt number for NVIC entry
- * @tparam defaultNvicPriority   Default interrupt priority.\n
- *                               NvicPriority_NotInstalled indicates PORT not configured for interrupts.
+ * @tparam portIndex PortIndex used to determine associated port
  */
-template<uint32_t portAddress, IRQn_Type irqNum, NvicPriority defaultNvicPriority>
+template<PortIndex portIndex>
 class PcrBase_T {
 
 private:
@@ -1258,23 +1697,29 @@ private:
    PcrBase_T(const PcrBase_T&) = delete;
    PcrBase_T(PcrBase_T&&) = delete;
 
-   /** Callback functions for ISRs */
-   static PinCallbackFunction fCallback;
-
 public:
 
    // Empty Constructor
    constexpr PcrBase_T() = default;
 
 #if defined(PORT_DFCR_CS_MASK)
-   /** PORT hardware as pointer to struct */
-   static constexpr HardwarePtr<PORT_DFER_Type> port = portAddress;
+   /// PORT hardware as pointer to struct
+   static constexpr HardwarePtr<PORT_DFER_Type> port = PcrBase::getPortAddress(portIndex);
 #else
-   /** PORT hardware as pointer to struct */
-   static constexpr HardwarePtr<PORT_Type> port = portAddress;
+   /// PORT hardware as pointer to struct
+   static constexpr HardwarePtr<PORT_Type> port = PcrBase::getPortAddress(portIndex);
 #endif
 
-   static constexpr bool     HANDLER_INSTALLED  = defaultNvicPriority>=0;  ///< Used to check if USBDM port pin interrupt handler has been installed
+   /// Hardware IRQ number
+   static constexpr IRQn_Type irqNum = PcrBase::getIrqNum(portIndex);
+
+   /// Indicates if USBDM port pin interrupt handler has been installed in vector table
+   static constexpr bool HANDLER_INSTALLED = PcrBase::isHandlerInstalled(mapPortToPin(portIndex));
+
+public:
+
+   /** Callback functions for ISRs */
+   static PinCallbackFunction fCallback;
 
    /**
     * Interrupt handler\n
@@ -1288,9 +1733,65 @@ public:
       // Clear flags
       port->ISFR = status;
 
+      // Pass to call-back
       fCallback(status);
    }
 
+   /**
+    * Set callback for Pin interrupts
+    *
+    * @param[in] callback The function to call on Pin interrupt. \n
+    *                     nullptr to indicate none
+    *
+    * @return E_NO_ERROR            No error
+    * @return E_HANDLER_ALREADY_SET Handler already set
+    *
+    * @note There is a single callback function for all pins on the related port.
+    *       It is necessary to identify the originating pin in the callback
+    */
+   static ErrorCode setPinCallback(PinCallbackFunction callback) {
+
+      // Always OK to remove shared handler
+      if (callback == nullptr) {
+         fCallback = PcrBase::unhandledCallback;
+         return E_NO_ERROR;
+      }
+#ifdef DEBUG_BUILD
+      // Callback is shared across all port pins. Check if different callback already assigned
+      if ((fCallback != PcrBase::unhandledCallback) && (fCallback != callback)) {
+         return setErrorCode(ErrorCode::E_HANDLER_ALREADY_SET);
+      }
+#endif
+      fCallback = callback;
+      return E_NO_ERROR;
+   }
+
+   /**
+    * Enable Pin interrupts in NVIC.
+    */
+   static void enableNvicPinInterrupts() {
+      static_assert(irqNum>=0, "Pin does not support interrupts");
+      NVIC_EnableIRQ(irqNum);
+   }
+
+   /**
+    * Enable and set priority of Pin interrupts in NVIC.
+    * Any pending NVIC interrupts are first cleared.
+    *
+    * @param[in]  nvicPriority  Interrupt priority
+    */
+   static void enableNvicPinInterrupts(NvicPriority nvicPriority) {
+      static_assert(irqNum>=0, "Pin does not support interrupts");
+      enableNvicInterrupt(irqNum, nvicPriority);
+   }
+
+   /**
+    * Disable Pin interrupts in NVIC.
+    */
+   static void disableNvicPinInterrupts() {
+      static_assert(irqNum>=0, "Pin does not support interrupts");
+      NVIC_DisableIRQ(irqNum);
+   }
    /**
     * Wrapper to allow the use of a class member as a callback function
     * @note Only usable with static objects.
@@ -1369,63 +1870,11 @@ public:
       };
       return fn;
    }
-
-   /**
-    * Set callback for Pin interrupts
-    *
-    * @param[in] callback The function to call on Pin interrupt. \n
-    *                     nullptr to indicate none
-    *
-    * @return E_NO_ERROR            No error
-    * @return E_HANDLER_ALREADY_SET Handler already set
-    *
-    * @note There is a single callback function for all pins on the related port.
-    *       It is necessary to identify the originating pin in the callback
-    */
-   static ErrorCode setPinCallback(PinCallbackFunction callback) {
-      static_assert(HANDLER_INSTALLED, "Gpio not configured for interrupts - Modify Configure.usbdm");
-
-      if (callback == nullptr) {
-         fCallback = PcrBase::unhandledCallback;
-         return E_NO_ERROR;
-      }
-#ifdef DEBUG_BUILD
-      // Callback is shared across all port pins. Check if callback already assigned
-      if ((fCallback != PcrBase::unhandledCallback) && (fCallback != callback)) {
-         return setErrorCode(ErrorCode::E_HANDLER_ALREADY_SET);
-      }
-#endif
-      fCallback = callback;
-      return E_NO_ERROR;
-   }
-
-   /**
-    * Enable Pin interrupts in NVIC.
-    */
-   static void enableNvicPinInterrupts() {
-      static_assert(irqNum>=0, "Pin does not support interrupts");
-      NVIC_EnableIRQ(irqNum);
-   }
-
-   /**
-    * Enable and set priority of Pin interrupts in NVIC.
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicPinInterrupts(NvicPriority nvicPriority) {
-      static_assert(irqNum>=0, "Pin does not support interrupts");
-      enableNvicInterrupt(irqNum, nvicPriority);
-   }
-
-   /**
-    * Disable Pin interrupts in NVIC.
-    */
-   static void disableNvicPinInterrupts() {
-      static_assert(irqNum>=0, "Pin does not support interrupts");
-      NVIC_DisableIRQ(irqNum);
-   }
 };
+
+template<PortIndex portIndex>
+PinCallbackFunction USBDM::PcrBase_T<portIndex>::fCallback = PcrBase::unhandledCallback;
+
 
 /**
  * @brief Template representing a Pin Control Register (PCR)
@@ -1433,7 +1882,7 @@ public:
  * Code examples:
  * @code
  * // Create PCR type
- * using PortC_3 = USBDM::Pcr_T<SIM_SCGC5_PORTC_MASK, PORTC_BasePtr, 3, USBDM::DEFAULT_PCR>;
+ * using PortC_3 = USBDM::Pcr_T<USBDM::DEFAULT_PCR, PTC3>;
  *
  * // Configure PCR
  * PortC_3::setPCR(PinPull_Up,PinDriveStrength_High,PinDriveMode_PushPull,PinAction_None,PinFilter_None,PinSlewRate_Fast,PinMux_3);
@@ -1442,19 +1891,11 @@ public:
  * PortC_3::disableClock();
  * @endcode
  *
- * @tparam clockInfo             PCC register address or mask for SIM clock register associated with this PCR
- * @tparam portAddress           PORT to be manipulated e.g. PORTA (PCR array)
- * @tparam bitNum                Bit number e.g. 3
  * @tparam defPcrValue           Default value for PCR (including MUX value)
- * @tparam irqNum                IRQ number for pin interrupt
- * @tparam defaultNvicPriority   Default interrupt priority.\n
- *                               NvicPriority_NotInstalled indicates PORT not configured for interrupts.
+ * @tparam pinIndex              Pin index e.g. PTA3
  */
-template<uint32_t clockInfo, uint32_t portAddress, IRQn_Type irqNum, PcrValue defPcrValue, NvicPriority defaultNvicPriority, int bitNum>
-class Pcr_T : public PcrBase_T<portAddress, irqNum, defaultNvicPriority> {
-
-   // This situation is checked for elsewhere with more specific error messages
-//   PcrBase::CheckPinExistsAndIsMapped<bitNum> check;
+template<PcrValue defPcrValue, PinIndex pinIndex>
+class Pcr_T : public PcrBase_T<mapPinToPort(pinIndex)> {
 
 protected:
    /// Default constructor used by derived classes only
@@ -1462,13 +1903,16 @@ protected:
 
 public:
    /// Bit number of bit being manipulated within underlying port hardware
-   static constexpr int       BITNUM             = bitNum;
+   static constexpr int BITNUM = int(pinIndex)%32;
 
    /// Mask for the bit being manipulated within underlying port hardware
-   static constexpr uint32_t  BITMASK            = makeBitMask(bitNum);
+   static constexpr uint32_t BITMASK = makeBitMask(BITNUM);
 
    /// Default PCR value including PinMux value for peripheral
-   static constexpr PcrInit  defaultPcrValue = defPcrValue;
+   static constexpr PcrInit defaultPcrValue = defPcrValue;
+
+   /// Address of associated port
+   static constexpr uint32_t portAddress = PcrBase::getPortAddress(mapPinToPort(pinIndex));
 
 private:
    /**
@@ -1477,13 +1921,7 @@ private:
    Pcr_T(const Pcr_T&) = delete;
    Pcr_T(Pcr_T&&) = delete;
 
-#ifdef PORT_DFCR_CS_MASK
-   static constexpr HardwarePtr<uint32_t>       PCR    = portAddress+offsetof(PORT_DFER_Type,PCR[bitNum]);
-#else
-   static constexpr HardwarePtr<uint32_t>       PCR    = portAddress+offsetof(PORT_Type,PCR[bitNum]);
-#endif
-
-   using PcrBase = PcrBase_T<portAddress, irqNum, defaultNvicPriority>;
+   static constexpr HardwarePtr<uint32_t> PCR = PcrBase::getPcrAddress(pinIndex);
 
 public:
    /**
@@ -1491,7 +1929,7 @@ public:
     */
    static void enablePortClock() {
       if constexpr (portAddress != 0) {
-         enablePortClocks(clockInfo);
+         PcrBase::enablePortClock(pinIndex);
       }
    }
 
@@ -1500,7 +1938,7 @@ public:
     */
    static void disablePortClock() {
       if constexpr (portAddress != 0) {
-         disablePortClocks(clockInfo);
+         PcrBase::disablePortClock(pinIndex);
       }
    }
 
@@ -1514,7 +1952,7 @@ public:
       if constexpr (portAddress == 0) {
          return 0;
       }
-      enablePortClocks(clockInfo);
+      PcrBase::enablePortClock(pinIndex);
       return *PCR;
    }
    
@@ -1528,7 +1966,7 @@ public:
    static void setPCR(PcrValue pcrValue=defaultPcrValue)  {
    
       if constexpr (portAddress != 0) {
-         enablePortClocks(clockInfo);
+         PcrBase::enablePortClock(pinIndex);
    
          uint32_t pcr  = static_cast<uint32_t>(pcrValue);
    
@@ -1550,7 +1988,7 @@ public:
    static void setPCR(const PcrInit &pcrInit)  {
    
       if constexpr (portAddress != 0) {
-         enablePortClocks(clockInfo);
+         PcrBase::enablePortClock(pinIndex);
    
          uint32_t pcr  = static_cast<uint32_t>(pcrInit.value);
    
@@ -1585,7 +2023,7 @@ public:
          PinMux           pinMux           = PinMux_Analogue)  {
    
       if constexpr (portAddress != 0) {
-         enablePortClocks(clockInfo);
+         PcrBase::enablePortClock(pinIndex);
    
          // Set PCR register for pin
          *PCR = pinPull|pinDriveStrength|pinDriveMode|pinAction|pinFilter|pinSlewRate|pinMux;
@@ -1834,9 +2272,6 @@ public:
 
 };
 
-template<uint32_t portAddress, IRQn_Type irqNum, NvicPriority defaultNvicPriority>
-PinCallbackFunction USBDM::PcrBase_T<portAddress, irqNum, defaultNvicPriority>::fCallback = PcrBase::unhandledCallback;
-
 /**
  * @brief Template function to set a PCR to the default value
  *
@@ -1908,12 +2343,14 @@ void processPcrs(uint32_t pcrValue) {
  * @tparam index         Index of pin in configuration table within class
  */
 template<class Info, uint8_t index>
-class PcrTable_T : public Pcr_T<Info::info[index].clockInfo, Info::info[index].portAddress, Info::info[index].irqNum, Info::info[index].pcrValue, Info::info[index].irqLevel, Info::info[index].gpioBit> {
+class PcrTable_T : public Pcr_T<Info::info[index].pcrValue, Info::info[index].pinIndex> {
 };
 /**
  * @}
  ** PeripheralPinTables
  */
+
+#endif // PORT_PCR_MUX_MASK
 
 #if defined(RELEASE_BUILD)
 // MACRO to do OR operation

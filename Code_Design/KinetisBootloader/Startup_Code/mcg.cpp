@@ -26,8 +26,6 @@
  * This file is generated automatically.
  * Any manual changes will be lost.
  */
-extern "C" uint32_t SystemCoreClock;
-extern "C" uint32_t SystemBusClock;
 
 namespace USBDM {
 
@@ -39,80 +37,102 @@ namespace USBDM {
 #define SIM_CLKDIV1_OUTDIV3(x) (0)
 #endif
 
+#if false // /MCG/enableClockChangeNotifications
 ClockChangeCallback *Mcg::clockChangeCallbackQueue = nullptr;
+#endif
 
 /**
  * Table of clock settings
  */
 const ClockInfo Mcg::clockInfo[] = {
+   // /MCG/McgClockInfoEntries
    {  // ClockConfig_RUN_PEE_48MHz (McgClockMode_PEE)
-
-      /// SIM CLKDIV1 System Clock Divider Register 1
-      SIM_CLKDIV1_OUTDIV4(3) | // Flash Clock Divider (OUTDIV4) - Divide by [1-16] - /4
-      SIM_CLKDIV1_OUTDIV2(1) | // Bus Clock Divider (OUTDIV2) - Divide by [1-16] - /2
-      SIM_CLKDIV1_OUTDIV1(1),  // Core & System Clock Divider (OUTDIV1) - Divide by [1-16] - /2
+   
+      /// SIM CLKDIV1 System Clock Divider Register 1 
+      SimFlashClkDivider_DivBy4 | // (sim_clkdiv1_outdiv4[0]) Flash Clock Divider (OUTDIV4) - Divide by [1-16] - /4
+      SimBusClkDivider_DivBy2 | // (sim_clkdiv1_outdiv2[0]) Bus Clock Divider (OUTDIV2) - Divide by [1-16] - /2
+      SimCoreClkDivider_DivBy2,  // (sim_clkdiv1_outdiv1[0]) Core &amp; System Clock Divider (OUTDIV1) - Divide by [1-16] - /2
 
       Sim::DefaultSopt2Values[ClockConfig_RUN_PEE_48MHz].sopt2,
 
-      /// Clock Mode
-      McgClockMode_PEE,  // Default Clock Mode - PLL Engaged External (PEE)
+      /// Clock Mode 
+      McgClockMode_PEE,  // (mcgClockMode[0]) MCG Clock Mode - PLL Engaged External (PEE)
 
-      /// Run Mode
-      SmcRunMode_Normal,  // Run mode - Normal RUN
+      /// Run Mode 
+      SmcRunMode_Normal,  // (smc_pmctrl_runm[0]) Run mode - Normal RUN
 
-      /// Control Register 1 - Excluding CLKS, IREFS
-      McgFllPrescale_HighDivBy512 | // FLL External Reference Divider - /512 (high)
-      McgIrClkEn_Enabled | // Internal Reference Clock [MCGIRCLK] - Enabled
-      McgIrefs_DisabledInStop,  // Internal Reference [MCGIRCLK] Stop Enable - IR disabled in STOP
+      /// Control Register 1 - Excluding CLKS, IREFS 
+      McgFllPrescale_LowDivBy8 | // (mcg_c1_frdiv[0]) FLL External Reference Divider - /8 (low)
+      McgIrClkEn_Enabled | // (mcg_c1_irclken[0]) Internal Reference Clock [MCGIRCLK] - Enabled
+      McgIrefs_DisabledInStop,  // (mcg_c1_irefsten[0]) Internal Reference [MCGIRCLK] Stop Enable - IR disabled in STOP
 
-      /// Control Register 2 - Excluding LP, FCTRIM
-      McgOsc0LossOfClockAction_Interrupt | // OSC0 Action on Loss of Clock - Interrupt request
-      McgRange0_VeryHigh | // Frequency Range Select - Very High range
-      OscMode_LowPowerOscillator | // OSC0 mode - Low Power Oscillator
-      McgIrClkSrc_Fast,  // Internal Reference Clock [MCGIRCLK] Source - Fast internal reference clock
+      /// Control Register 2 - Excluding LP, FCTRIM 
+      McgOsc0LossOfClockAction_Interrupt | // (mcg_c2_locre0[0]) OSC0 Action on Loss of Clock - Interrupt request
+      McgRange0_VeryHigh | // (mcg_c2_range0[0]) Frequency Range Select - Very High range
+      OscMode_LowPowerOscillator | // (oscMode) OSC0 mode - Low Power Oscillator
+      McgIrClkSrc_Fast,  // (mcg_c2_ircs[0]) Internal Reference Clock [MCGIRCLK] Source - Fast internal reference clock
 
-      /// Control Register 4 - Excluding FCTRIM, SCFTRIM
-      McgFllLockRangeWidth_Wide | // DMX32 DCO lock range - Wide
-      McgFllLockRange_High,  // DCO Range Select - High (x2560/x2929, 80-100/96 MHz)
+      /// Control Register 4 - Excluding FCTRIM, SCFTRIM 
+      McgFllLockRangeWidth_Wide | // (mcg_c4_dmx32[0]) DMX32 DCO lock range - Wide
+      McgFllLockRange_Low,  // (mcg_c4_drst_drs[0]) DCO Range Select - Low (x640/x732, 20-25/24 MHz)
 
-      /// Control Register 5
-      McgPllEnable_AsNeeded | // PLL0 Enable - PLL active as needed
-      McgPllStopEnable_DisabledInStop | // PLL Stop Enable - PLL0 is disabled in any Stop mode
-      MCG_C5_PRDIV0(3),  // PLL0 External Reference Divider
+      /// Control Register 5 
+      McgPllEnable_AsNeeded | // (mcg_c5_pllclken0[0]) PLL0 Enable - PLL active as needed
+      McgPllStopEnable_DisabledInStop | // (mcg_c5_pllsten0[0]) PLL Stop Enable - PLL0 is disabled in any Stop mode
+      3,  // (mcg_c5_prdiv0[0]) PLL0 External Reference Divider
 
-      /// Control Register 6
-      PllLossOfClockInterrupt_Disabled | // PLL Loss of Lock Interrupt Enable - No interrupt request
-      McgPllFllSelect_PLL | // FLL/PLL Clock selection for MCGOUTCLK when CLKS=0 - PLL is selected
-      McgOsc0ClockMonitor_Disabled | // OSC0 Clock Monitor Enable - Clock monitor disabled
-      MCG_C6_VDIV0(0),  // PLL0 VCO Divider (VDIV0)
+      /// Control Register 6 
+      PllLossOfClockInterrupt_Disabled | // (mcg_c6_lolie0[0]) PLL Loss of Lock Interrupt Enable - No interrupt request
+      McgPllFllSelect_PLL | // (mcg_c6_plls[0]) FLL/PLL Clock selection for MCGOUTCLK when CLKS=0 - PLL is selected
+      McgOsc0ClockMonitor_Disabled | // (mcg_c6_cme0[0]) OSC0 Clock Monitor Enable - Clock monitor disabled
+      0,  // (mcg_c6_vdiv0[0]) PLL0 VCO Divider (VDIV0)
 
-      /// Status and Control Register
-      McgFastInternalClockDivider_DivBy1,  // Fast Internal Clock [FIRC] Reference Divider - /1
+      /// Status and Control Register 
+      McgFastInternalClockDivider_DivBy1,  // (mcg_sc_fcrdiv[0]) Fast Internal Clock [FIRC] Reference Divider - /1
 
-      /// Control Register 7
-      McgErcSelect_OscClk,  // MCG External reference clock - OSC0 Clock
+      /// Control Register 7 
+      McgErcSelect_OscClk,  // (mcg_c7_oscsel[0]) MCG External reference clock - OSC0 Clock
 
-      /// Control Register 8
-      McgOsc1LossOfClockAction_Interrupt | // OSC1 (RTC) Loss of Clock Reset Enable - Interrupt request
-      McgOsc1ClockMonitor_Disabled | // OSC1 (RTC) Clock Monitor Enable - Clock monitor disabled
-      PllLossOfClockReset_Disabled,  // PLL Loss of Lock Reset Enable - Interrupt request
+      /// Control Register 8 
+      McgOsc1LossOfClockAction_Interrupt | // (mcg_c8_locre1[0]) OSC1 (RTC) Loss of Clock Reset Enable - Interrupt request
+      McgOsc1ClockMonitor_Disabled | // (mcg_c8_cme1[0]) OSC1 (RTC) Clock Monitor Enable - Clock monitor disabled
+      PllLossOfClockReset_Disabled,  // (mcg_c8_lolre[0]) PLL Loss of Lock Reset Enable - Interrupt request
 
    },
 
 };
+   /**
+    *  MCG Fixed Frequency Clock [MCGFFCLK]
+    *  Used as input clock to FLL and available to some peripherals
+    *  Derived from External Reference Clock or Slow IRC
+    */
+   volatile uint32_t SystemMcgFFClock;
+   
+   /**
+    *  System MCG Output Clock [MCGOUTCLK]
+    *  MCG Main clock output
+    */
+   volatile uint32_t SystemMcgOutClock;
+   
+   /**
+    *  FLL Output clock frequency
+    *  Output of FLL.
+    *  Available as MCGFLLCLK and used for MCGOUTCLK in FEI or FEE clock modes
+    */
+   volatile uint32_t SystemMcgFllClock;
+   
+   /**
+    *  PLL Output clock frequency
+    *  Output of PLL
+    */
+   volatile uint32_t SystemMcgPllClock;
+   
 
-/** MCGFFCLK - Fixed frequency clock (input to FLL) */
-volatile uint32_t SystemMcgFFClock;
 
-/** MCGOUTCLK - Primary output from MCG, various sources */
-volatile uint32_t SystemMcgOutClock;
+/** Current clock mode (FEI out of reset) */
+McgClockMode Mcg::currentClockMode = McgClockMode_FEI;
 
-/** MCGFLLCLK - Output of FLL */
-volatile uint32_t SystemMcgFllClock;
-
-/** MCGPLLCLK - Output of PLL */
-volatile uint32_t SystemMcgPllClock;
-
+#if true // /MCG/enablePeripheralSupport
 #if USBDM_ERRATA_E2448
 /**
  *  Change SIM->CLKDIV1 value
@@ -153,12 +173,11 @@ static void setSysDividers(uint32_t simClkDiv1) {
    SIM->CLKDIV1 = simClkDiv1;
 }
 #endif
+#endif
 
-/** Callback for programmatically set handler */
-MCGCallbackFunction Mcg::callback = {0};
+// /MCG/staticDefinitions not found 
 
-/** Current clock mode (FEI out of reset) */
-McgClockMode Mcg::currentClockMode = McgClockMode_FEI;
+#if true // /MCG/enablePeripheralSupport
 
 constexpr McgClockMode clockTransitionTable[][8] = {
    /* from to => FEI                FEE,               FBI,               BLPI,              FBE,              BLPE,               PBE,               PEE */
@@ -250,15 +269,17 @@ void Mcg::writeMainRegs(const ClockInfo &clockInfo, uint8_t bugFix) {
  */
 ErrorCode Mcg::clockTransition(const ClockInfo &clockInfo) {
 
+#if false // /MCG/enableClockChangeNotifications
    // Notify of clock changes (before)
    notifyBeforeClockChange();
+#endif
 
    McgClockMode finalMode = clockInfo.clockMode;
 
 #ifdef USB_CLK_RECOVER_IRC_EN_IRC_EN_MASK
    if (clockInfo.c7&&MCG_C7_OSCSEL_MASK) {
       // Note IRC48M Internal Oscillator automatically enable if MCG_C7_OSCSEL = 2
-      SIM->SCGC4 = SIM->SCGC4 | SIM_SCGC4_USBOTG_MASK;
+      SIM->SCGC4 = SIM->SCGC4 | SIM_SCGC4_USB0_MASK;
       USB0->CLK_RECOVER_IRC_EN = USB_CLK_RECOVER_IRC_EN_IRC_EN_MASK|USB_CLK_RECOVER_IRC_EN_REG_EN_MASK;
    }
 #endif
@@ -439,12 +460,17 @@ ErrorCode Mcg::clockTransition(const ClockInfo &clockInfo) {
    mcg->C8 = clockInfo.c8;
 #endif
 
+#if false // /MCG/enableClockChangeNotifications
    // Notify of clock changes (after)
    notifyAfterClockChange();
+#endif
 
    return E_NO_ERROR;
 }
 
+#endif // /MCG/enablePeripheralSupport
+
+#if true // /MCG/enablePeripheralSupport
 /**
  * Get Slow IRC clock frequency
  */
@@ -520,8 +546,6 @@ void Mcg::SystemCoreClockUpdate(void) {
    SystemMcgPllClock = 0;
 
    switch (mcg->S&MCG_S_CLKST_MASK) {
-      default:
-         break;
       case MCG_S_CLKST(0) : // FLL
          SystemMcgOutClock = mcgFllClock;
          SystemMcgFllClock = mcgFllClock;
@@ -542,27 +566,56 @@ void Mcg::SystemCoreClockUpdate(void) {
    }
    SimInfo::updateSystemClocks(SystemMcgOutClock);
 }
-
+#endif // /MCG/enablePeripheralSupport
+ 
 /**
  * Initialise MCG to default settings.
  */
-void Mcg::defaultConfigure() {
+void Mcg::startupConfigure() {
 
 #if !defined(INITIAL_CLOCK_STATE)
 // Needed for use with a boot-loader that changes the clock
 #define INITIAL_CLOCK_STATE McgClockMode_FEI;
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
+#define SCFTRIM (*(uint8_t *)0x03FE)
+#define SCTRIM  (*(uint8_t *)0x03FF)
+
+if (SCTRIM != 0xFF) {
+   // Trim clock
+   mcg->C3 = SCTRIM;
+   mcg->C4 = (mcg->C4&~MCG_C4_SCFTRIM_MASK)|SCFTRIM;
+
+#pragma GCC diagnostic pop
+   
+}
+
+#if true // /MCG/enablePeripheralSupport
+
+   // Do full configuration
+   
+   // Device resets into this clock mode
    currentClockMode = INITIAL_CLOCK_STATE;
 
    // Transition to desired clock mode
    clockTransition(clockInfo[ClockConfig_default]);
 
-   Sim::initRegs();
-
-   enableNvicInterrupts();
-
    SystemCoreClockUpdate();
+   
+#elif false // /MCG/assumeSlowIrcTrimmed
+
+   // Do minimal configuration if clock trimming done
+   
+   mcg->C2 = IcsInfo::mcg_c2;
+   setSysDividers(SimInfo::sim_clkdiv);
+#endif
+
+#if false // /MCG/irqHandlingMethod
+   enableNvicInterrupts();
+#endif
 }
 
 } // end namespace USBDM
@@ -573,9 +626,12 @@ void Mcg::defaultConfigure() {
 extern "C"
 void clock_initialise(void) {
 
-   USBDM::Osc0::initialise();
-   USBDM::Rtc::initialise();
+   // /MCG/ClockStartupBefore
 
-   USBDM::Mcg::initialise();
+   // /MCG/ClockStartup
+   USBDM::Mcg::startupConfigure();
+
+   // /MCG/ClockStartupAfter
+// No /ISC/ClockStartupAfter found
 }
 

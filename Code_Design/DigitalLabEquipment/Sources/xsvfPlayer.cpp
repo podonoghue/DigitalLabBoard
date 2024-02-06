@@ -740,7 +740,7 @@ bool XsvfPlayer::play() {
          console.WRITE("XSDR_TDOCAP, ", value, ", // ");
          getBits(value, tdi_value);
          moveTo(DR_Shift);
-         shiftOut(value, tdi_value, tdo_value, true);
+         shiftOut(value, tdi_value[0], tdo_value, true);
          moveTo(endir_state);
          console.WRITELN();
          printBits("tdi_value", value, tdi_value);

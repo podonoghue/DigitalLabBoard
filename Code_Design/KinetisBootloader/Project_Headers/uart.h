@@ -35,7 +35,7 @@ namespace USBDM {
  */
 
 /**
- * @brief Virtual Base class for UART interface
+ * @brief Abstract Base class for UART interface
  */
 class Uart : public FormattedIO {
 
@@ -161,79 +161,6 @@ public:
    virtual ~Uart() {
    }
 
-#ifdef UART_C4_BRFA_MASK
-   /**
-    * Set baud factor value for interface.
-    * For UARTS with baud rate fraction adjust (BRFA) support.
-    *
-    * This is calculated from baud rate and UART clock frequency
-    *
-    * @param[in]  baudrate       Interface speed in bits-per-second
-    * @param[in]  clockFrequency Frequency of UART clock
-    */
-   void __attribute__((noinline)) setBaudRate_brfa(uint32_t baudrate, uint32_t clockFrequency) {
-
-      /*
-       * Baudrate = clockFrequency / (OSR x (SBR + BRFD))
-       * Fixed OSR = 16
-       *
-       * (OSR x (SBR + BRFD/32)) = clockFrequency/Baudrate
-       * (SBR + BRFD/32) = clockFrequency/(Baudrate*OSR)
-       * 32*SBR + BRFD = 2*clockFrequency/Baudrate
-       * SBR  = (2*clockFrequency/Baudrate)>>5
-       * BRFD = (2*clockFrequency/Baudrate)&0x1F
-       */
-      // Disable UART before changing registers
-      uint8_t c2Value = uart->C2;
-      uart->C2 = 0;
-
-      // Calculate UART clock setting (5-bit fraction at right)
-      int divider = (2*clockFrequency)/baudrate;
-
-      // Set Baud rate register
-      uart->BDH = (uart->BDH&~UART_BDH_SBR_MASK) | UART_BDH_SBR((divider>>(8+5)));
-      uart->BDL = UART_BDL_SBR(divider>>5);
-      // Fractional divider to get closer to the baud rate
-      uart->C4 = (uart->C4&~UART_C4_BRFA_MASK) | UART_C4_BRFA(divider);
-
-      // Restore UART settings
-      uart->C2 = c2Value;
-   }
-#endif
-
-   /**
-    * Set baud factor value for interface.
-    * For basic UARTS.
-    *
-    * This is calculated from baud rate and UART clock frequency
-    *
-    * @param[in]  baudrate       Interface speed in bits-per-second
-    * @param[in]  clockFrequency Frequency of UART clock
-    * @param[in]  oversample     Over-sample ratio to use when calculating divider
-    */
-   void __attribute__((noinline)) setBaudRate_basic(uint32_t baudrate, uint32_t clockFrequency, uint32_t oversample) {
-
-      /*
-       * Baudrate = ClockFrequency / (OverSample x Divider)
-       * Divider = ClockFrequency / (OverSample x Baudrate)
-       */
-
-      // Disable UART before changing registers
-      uint8_t c2Value = uart->C2;
-      uart->C2 = 0;
-
-      // Calculate UART divider with rounding
-      uint32_t divider = (clockFrequency<<1)/(oversample * baudrate);
-      divider = (divider>>1)|(divider&0b1);
-
-      // Set Baud rate register
-      uart->BDH = (uart->BDH&~UART_BDH_SBR_MASK) | UART_BDH_SBR((divider>>8));
-      uart->BDL = UART_BDL_SBR(divider);
-
-      // Restore UART settings
-      uart->C2 = c2Value;
-   }
-
    /**
     * Set baud factor value for interface
     *
@@ -241,7 +168,7 @@ public:
     *
     * @param[in]  baudrate  Interface speed in bits-per-second
     */
-   virtual void setBaudRate(unsigned baudrate) = 0;
+   virtual void setBaudRate(UartBaudRate uartBaudRate) = 0;
 
    /**
     * Clear UART error status
@@ -257,32 +184,12 @@ public:
    }
 
    /**
-    * Set Idle line detect sction
+    * Set Idle line detect action
     *
     * @param uartIdleLineDetectAction Enable interrupt on tidele line detect
     */
    void setIdleLineDetectAction(UartIdleLineDetectAction uartIdleLineDetectAction) const {
       uart->C2 = (uart->C2 & ~UART_C2_ILIE_MASK) | uartIdleLineDetectAction;
-   }
-
-   /**
-    * Set Transmit empty DMA/Interrupt action
-    *
-    * @param uartTxEmptyAction Enable transmit holding register empty DMA/Interrupt action
-    */
-   void setTransmitEmptyAction(UartTxEmptyAction uartTxEmptyAction) const {
-      uart->C2 = (uart->C2 & ~UART_C2_TIE_MASK)   | uartTxEmptyAction; 
-      uart->C5 = (uart->C5 & ~UART_C5_TDMAS_MASK) | uartTxEmptyAction>>8; 
-   }
-
-   /**
-    * Set Receive full DMA/interrupt action
-    *
-    * @param uartRxFullAction Enable receive buffer full DMA/interrupt action
-    */
-   void setReceiveFullAction(UartRxFullAction uartRxFullAction) const {
-      uart->C2 = (uart->C2 & ~UART_C2_RIE_MASK)   | uartRxFullAction;
-      uart->C5 = (uart->C5 & ~UART_C5_RDMAS_MASK) | uartRxFullAction>>8;
    }
 
 
@@ -313,17 +220,7 @@ public:
 typedef void (*UARTCallbackFunction)(uint8_t status);
 
 /**
- * @brief Template class representing an UART interface
- *
- * <b>Example</b>
- * @code
- *  // Instantiate interface
- *  Uart *uart0 = new USBDM::Uart_T<Uart0Info>(115200);
- *
- *  for(int i=0; i++;) {
- *     uart.write("Hello world,").writeln(i);
- *  }
- *  @endcode
+ * @brief Abstract template class representing an UART interface with associated hardware
  *
  * @tparam Info   Class describing UART hardware
  */
@@ -399,73 +296,22 @@ public:
    }
 #endif
 
-protected:
-   /** Callback function for RxTx ISR */
-   static UARTCallbackFunction rxTxCallback;
-   /** Callback function for Error ISR */
-   static UARTCallbackFunction errorCallback;
-   /** Callback function for LON ISR */
-   static UARTCallbackFunction lonCallback;
+   virtual void setBaudRate(UartBaudRate uartBaudRate) override {
+      Info::setBaudRate(uartBaudRate);
+   }
 
 public:
-   // Template _mapPinsOption_on.xml (/UART0/classInfo)
-
-   /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/UART0/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void configureAllPins() {
-   
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
-   }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/UART0/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
-   
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
-   /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/UART0/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
-    */
-   static void enable() {
-      Info::enableClock();
-      configureAllPins();
-   }
-
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/UART0/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      disableNvicInterrupts();
-      
-      disableAllPins();
-      Info::disableClock();
-   }
-// End Template _mapPinsOption_on.xml
-
+   // No class Info found
 
    /**
     * Construct UART interface
     */
    Uart_T() : Uart(Info::baseAddress) {
+#ifdef PORT_PCR_MUX
       // Check pin assignments
-      static_assert(Info::info[0].gpioBit >= 0, "Uart_Tx has not been assigned to a pin - Modify Configure.usbdm");
-      static_assert(Info::info[1].gpioBit >= 0, "Uart_Rx has not been assigned to a pin - Modify Configure.usbdm");
+      static_assert(Info::info[0].pinIndex >= PinIndex::MIN_PIN_INDEX, "Uart_Tx has not been assigned to a pin - Modify Configure.usbdm");
+      static_assert(Info::info[1].pinIndex >= PinIndex::MIN_PIN_INDEX, "Uart_Rx has not been assigned to a pin - Modify Configure.usbdm");
+#endif
 
       initialise();
    }
@@ -476,7 +322,7 @@ public:
       Info::enableClock();
 
       if constexpr (Info::mapPinsOnEnable) {
-         configureAllPins();
+         Info::configureAllPins();
       }
       uart->C2 = UART_C2_TE(1)|UART_C2_RE(1);
    }
@@ -491,273 +337,15 @@ protected:
     * Clear UART error status
     */
    virtual void clearError() override {
-      if (Info::statusNeedsWrite) {
-         uart->S1 = 0xFF;
-      }
-      else {
-         (void)uart->D;
-      }
+      Uart0Info::clearError();
    }
 
 public:
-   /**
-    * Receive/Transmit IRQ handler (MKL)
-    */
-   static void irqHandler() {
-      uint8_t status = Info::uart->S1;
-      rxTxCallback(status);
-   }
-
-   /**
-    * Receive/Transmit IRQ handler (MK)
-    */
-   static void irqRxTxHandler() {
-      uint8_t status = Info::uart->S1;
-      rxTxCallback(status);
-   }
-
-   /**
-    * Error and LON event IRQ handler (MK)
-    */
-   static void irqErrorHandler() {
-      uint8_t status = Info::uart->S1;
-      errorCallback(status);
-   }
-
-   /**
-    * LON IRQ handler (MK)
-    */
-   static void irqLonHandler() {
-      uint8_t status = Info::uart->S1;
-      lonCallback(status);
-   }
-
-   /**
-    * Set Receive/Transmit Callback function
-    *
-    *  @param[in]  callback  Callback function to be executed on Rx or Tx interrupt.\n
-    *                        Use nullptr to remove callback.
-    */
-   static void setRxTxCallback(UARTCallbackFunction callback) {
-      usbdm_assert(Info::irqHandlerInstalled, "UART not configure for interrupts");
-      if (callback == nullptr) {
-         callback = unhandledCallback;
-      }
-      rxTxCallback = callback;
-   }
-
-   /**
-    * Set Error Callback function
-    *
-    *  @param[in]  callback  Callback function to be executed on error interrupt.\n
-    *                        Use nullptr to remove callback.
-    */
-   static void setErrorCallback(UARTCallbackFunction callback) {
-      usbdm_assert(Info::irqHandlerInstalled, "UART not configure for interrupts");
-      if (callback == nullptr) {
-         callback = unhandledCallback;
-      }
-      errorCallback = callback;
-   }
-
-   /**
-    * Set LON Callback function
-    *
-    *  @param[in]  callback  Callback function to be executed on LON interrupt.\n
-    *                        Use nullptr to remove callback.
-    */
-   static void setLonCallback(UARTCallbackFunction callback) {
-      usbdm_assert(Info::irqHandlerInstalled, "UART not configure for interrupts");
-      if (callback == nullptr) {
-         callback = unhandledCallback;
-      }
-      lonCallback = callback;
-   }
-
-   /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(Info::irqNums[0]);
-      if constexpr (Info::irqCount>1) {
-         NVIC_EnableIRQ(Info::irqNums[1]);
-      }
-      if constexpr (Info::irqCount>2) {
-         NVIC_EnableIRQ(Info::irqNums[2]);
-      }
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicInterrupts(NvicPriority nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-      if constexpr (Info::irqCount>1) {
-          enableNvicInterrupt(Info::irqNums[1], nvicPriority);
-      }
-      if constexpr (Info::irqCount>2) {
-          enableNvicInterrupt(Info::irqNums[2], nvicPriority);
-      }
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(Info::irqNums[0]);
-      if constexpr (Info::irqCount>1) {
-         NVIC_DisableIRQ(Info::irqNums[1]);
-      }
-      if constexpr (Info::irqCount>2) {
-         NVIC_DisableIRQ(Info::irqNums[2]);
-      }
-   }
 };
 
-template<class Info> UARTCallbackFunction Uart_T<Info>::rxTxCallback  = unhandledCallback;
-template<class Info> UARTCallbackFunction Uart_T<Info>::errorCallback = unhandledCallback;
-template<class Info> UARTCallbackFunction Uart_T<Info>::lonCallback   = unhandledCallback;
-
-#ifdef UART_C4_BRFA_MASK
-template<class Info> class Uart_brfa_T : public Uart_T<Info> {
-
-private:
-   Uart_brfa_T(const Uart_brfa_T&) = delete;
-   Uart_brfa_T(Uart_brfa_T&&) = delete;
-
-public:
-   /**
-    * Construct UART interface
-    *
-    * @param[in]  baudrate         Interface speed in bits-per-second
-    */
-   Uart_brfa_T(unsigned baudrate=Info::defaultBaudRate) : Uart_T<Info>() {
-      setBaudRate(baudrate);
-   }
-   /**
-    * Destructor
-    */
-   virtual ~Uart_brfa_T() {
-   }
-   /**
-    * Set baud factor value for interface
-    *
-    * This is calculated from baud rate and UART clock frequency
-    *
-    * @param[in]  baudrate Interface speed in bits-per-second
-    */
-   virtual void setBaudRate(unsigned baudrate) override {
-      Uart::setBaudRate_brfa(baudrate, Info::getInputClockFrequency());
-   }
-};
-#endif
-
-#ifdef UART_C4_OSR_MASK
-template<class Info> class Uart_osr_T : public Uart_T<Info> {
-
-private:
-   Uart_osr_T(const Uart_osr_T&) = delete;
-   Uart_osr_T(Uart_osr_T&&) = delete;
-
-public:
-   using Info::uart;
-
-   /**
-    * Construct UART interface
-    *
-    * @param[in]  baudrate         Interface speed in bits-per-second
-    */
-   Uart_osr_T(unsigned baudrate=Info::defaultBaudRate) : Uart_T<Info>() {
-      setBaudRate(baudrate);
-   }
-   /**
-    * Destructor
-    */
-   virtual ~Uart_osr_T() {
-   }
-   /**
-    * Set baud factor value for interface
-    *
-    * This is calculated from baud rate and UART clock frequency
-    *
-    * @param[in]  baudrate Interface speed in bits-per-second
-    */
-   virtual void setBaudRate(unsigned baudrate) override {
-      static constexpr int OVER_SAMPLE = Info::oversampleRatio;
-
-      // Set oversample ratio and baud rate
-      uart->C4 = (uart->C4&~UART_C4_OSR_MASK)|(OVER_SAMPLE-1);
-      Uart::setBaudRate_basic(baudrate, Info::getInputClockFrequency(), OVER_SAMPLE);
-   }
-
-   /**
-    * Set baud factor value for interface
-    *
-    * This is calculated from baud rate and LPUART clock frequency
-    *
-    * @param[in]  baudrate    Interface speed in bits-per-second
-    * @param[in]  oversample  Over-sample ratio to use when calculating divider
-    */
-   void setBaudRate(unsigned baudrate, unsigned oversample) {
-
-      // Set oversample ratio and baud rate
-      uart->C4 = (uart->C4&~UART_C4_OSR_MASK)|UART_C4_OSR(oversample-1);
-      Uart::setBaudRate_basic(baudrate, Info::getInputClockFrequency(), oversample);
-   }
-
-};
-#endif
-
-template<class Info> class Uart_basic_T : public Uart_T<Info> {
-
-private:
-   Uart_basic_T(const Uart_basic_T&) = delete;
-   Uart_basic_T(Uart_basic_T&&) = delete;
-
-public:
-   /**
-    * Construct UART interface
-    *
-    * @param[in]  baudrate         Interface speed in bits-per-second
-    */
-   Uart_basic_T(unsigned baudrate=Info::defaultBaudRate) : Uart_T<Info>() {
-      setBaudRate(baudrate);
-   }
-   /**
-    * Destructor
-    */
-   virtual ~Uart_basic_T() {
-   }
-   /**
-    * Set baud factor value for interface
-    *
-    * This is calculated from baud rate and UART clock frequency
-    *
-    * @param[in]  baudrate Interface speed in bits-per-second
-    */
-   virtual void setBaudRate(unsigned baudrate) override {
-      // Over-sample ratio - fixed in hardware
-      static constexpr int OVER_SAMPLE = 16;
-
-      Uart::setBaudRate_basic(baudrate, Info::getInputClockFrequency(), OVER_SAMPLE);
-   }
-};
-
+#if 0
 /**
- * @brief Template class representing an UART interface with buffered reception
- *
- * <b>Example</b>
- * @code
- *  // Instantiate interface
- *  Uart *uart0 = new USBDM::UartBuffered_T<Uart0Info, 20, 30>(115200);
- *
- *  for(int i=0; i++;) {
- *     uart.write("Hello world,").writeln(i);
- *  }
- *  @endcode
+ * @brief Abstract template class representing a buffered UART interface with associated hardware
  *
  * @tparam Info   Class describing UART hardware
  */
@@ -917,13 +505,22 @@ public:
 
 };
 
-#ifdef UART_C4_BRFA_MASK
+
+/**
+ * Virtual class for buffered UART
+ *
+ * - No BRFA field (Baud Rate Fine Adjust)
+ * - No OSR field (Over Sampling Ratio) i.e. Fixed x16 over-sample
+ * - Buffered
+ *
+ * @tparam Info Info class providing clock frequency etc.
+ */
 template<class Info, int rxSize=Info::receiveBufferSize, int txSize=Info::transmitBufferSize>
-class UartBuffered_brfa_T : public UartBuffered_T<Info, rxSize, txSize> {
+class UartBuffered : public UartBuffered_T<Info, rxSize, txSize> {
 
 private:
-   UartBuffered_brfa_T(const UartBuffered_brfa_T&) = delete;
-   UartBuffered_brfa_T(UartBuffered_brfa_T&&) = delete;
+   UartBuffered(const UartBuffered&) = delete;
+   UartBuffered(UartBuffered&&) = delete;
 
 public:
    /**
@@ -931,89 +528,13 @@ public:
     *
     * @param[in]  baudrate         Interface speed in bits-per-second
     */
-   UartBuffered_brfa_T(unsigned baudrate=Info::defaultBaudRate) : UartBuffered_T<Info, rxSize, txSize>() {
+   UartBuffered(unsigned baudrate=Info::defaultBaudRate) : UartBuffered_T<Info, rxSize, txSize>() {
       setBaudRate(baudrate);
    }
    /**
     * Destructor
     */
-   virtual ~UartBuffered_brfa_T() {
-   }
-   /**
-    * Set baud factor value for interface
-    *
-    * This is calculated from baud rate and LPUART clock frequency
-    *
-    * @param[in]  baudrate Interface speed in bits-per-second
-    */
-   virtual void setBaudRate(unsigned baudrate) override {
-      Uart::setBaudRate_brfa(baudrate, Info::getInputClockFrequency());
-   }
-};
-#endif
-
-#ifdef UART_C4_OSR_MASK
-template<class Info, int rxSize=Info::receiveBufferSize, int txSize=Info::transmitBufferSize>
-class UartBuffered_osr_T : public UartBuffered_T<Info, rxSize, txSize> {
-
-private:
-   UartBuffered_osr_T(const UartBuffered_osr_T&) = delete;
-   UartBuffered_osr_T(UartBuffered_osr_T&&) = delete;
-
-   using UartBuffered_T<Info, rxSize, txSize>::uart;
-
-public:
-   /**
-    * Construct UART interface
-    *
-    * @param[in]  baudrate         Interface speed in bits-per-second
-    */
-   UartBuffered_osr_T(unsigned baudrate=Info::defaultBaudRate) : UartBuffered_T<Info, rxSize, txSize>() {
-      setBaudRate(baudrate);
-   }
-   /**
-    * Destructor
-    */
-   virtual ~UartBuffered_osr_T() {
-   }
-   /**
-    * Set baud factor value for interface
-    *
-    * This is calculated from baud rate and LPUART clock frequency
-    *
-    * @param[in]  baudrate Interface speed in bits-per-second
-    */
-   virtual void setBaudRate(unsigned baudrate) override {
-      static constexpr int OVER_SAMPLE = Info::oversampleRatio;
-
-      // Set oversample ratio
-      uart->C4 = (uart->C4&~UART_C4_OSR_MASK)|(OVER_SAMPLE-1);
-
-      Uart::setBaudRate_basic(baudrate, Info::getInputClockFrequency(), OVER_SAMPLE);
-   }
-};
-#endif
-
-template<class Info, int rxSize=Info::receiveBufferSize, int txSize=Info::transmitBufferSize>
-class UartBuffered_basic_T : public UartBuffered_T<Info, rxSize, txSize> {
-
-private:
-   UartBuffered_basic_T(const UartBuffered_basic_T&) = delete;
-   UartBuffered_basic_T(UartBuffered_basic_T&&) = delete;
-
-public:
-   /**
-    * Construct UART interface
-    *
-    * @param[in]  baudrate         Interface speed in bits-per-second
-    */
-   UartBuffered_basic_T(unsigned baudrate=Info::defaultBaudRate) : UartBuffered_T<Info, rxSize, txSize>() {
-      setBaudRate(baudrate);
-   }
-   /**
-    * Destructor
-    */
-   virtual ~UartBuffered_basic_T() {
+   virtual ~UartBuffered() {
    }
    /**
     * Set baud factor value for interface
@@ -1034,6 +555,7 @@ template<class Info, int rxSize, int txSize> UartQueue<char, rxSize> UartBuffere
 template<class Info, int rxSize, int txSize> UartQueue<char, txSize> UartBuffered_T<Info, rxSize, txSize>::txQueue;
 template<class Info, int rxSize, int txSize> volatile uint32_t   UartBuffered_T<Info, rxSize, txSize>::fReadLock  = 0;
 template<class Info, int rxSize, int txSize> volatile uint32_t   UartBuffered_T<Info, rxSize, txSize>::fWriteLock = 0;
+#endif
 
    /**
     * Class representing UART0 interface
@@ -1048,38 +570,8 @@ template<class Info, int rxSize, int txSize> volatile uint32_t   UartBuffered_T<
     *  }
     *  @endcode
     */
-   typedef  Uart_brfa_T<Uart0Info> Uart0;
-
-   /**
-    * Class representing UART1 interface
-    *
-    * <b>Example</b>
-    * @code
-    *  // Instantiate interface
-    *  USBDM::Uart1 uart;
-    *
-    *  for(int i=0; i++;) {
-    *     uart.writeln("Hello world ", i);
-    *  }
-    *  @endcode
-    */
-   typedef  Uart_brfa_T<Uart1Info> Uart1;
-
-   /**
-    * Class representing UART2 interface
-    *
-    * <b>Example</b>
-    * @code
-    *  // Instantiate interface
-    *  USBDM::Uart2 uart;
-    *
-    *  for(int i=0; i++;) {
-    *     uart.writeln("Hello world ", i);
-    *  }
-    *  @endcode
-    */
-   typedef  Uart_brfa_T<Uart2Info> Uart2;
-
+   class Uart0 : public Uart_T<Uart0Info> {};
+   
 
 /**
  * End UART_Group

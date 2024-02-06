@@ -27,18 +27,6 @@ namespace USBDM {
  * @{
  */
 
-/** Watchdog Refresh value 1 */
-static constexpr uint16_t WdogRefresh1 = 0xA602;
-
-/** Watchdog Refresh value 2 */
-static constexpr uint16_t WdogRefresh2 = 0xB480;
-
-/** Watchdog Unlock value 1 */
-static constexpr uint16_t WdogUnlock1 = 0xC520;
-
-/** Watchdog Unlock value 2 */
-static constexpr uint16_t WdogUnlock2 = 0xD928;
-
 /**
  * Template class representing the Watchdog Monitor
  *
@@ -55,19 +43,8 @@ static constexpr uint16_t WdogUnlock2 = 0xD928;
 template<class Info>
 class WdogBase_T : public Info {
 
-   using CallbackFunction = typename Info::CallbackFunction;
 
 protected:
-   /**
-    * Callback to catch unhandled interrupt
-    */
-   static void unhandledCallback() {
-      setAndCheckErrorCode(E_NO_HANDLER);
-   }
-
-   /** Callback function for ISR */
-   static CallbackFunction callback;
-
 // No private methods found
 
 public:
@@ -101,14 +78,6 @@ public:
       wdog->REFRESH = wdogRefresh_2;
    }
 
-   /**
-    * IRQ handler
-    */
-   static void irqHandler() {
-      // Call handler
-      callback();
-   }
-
 protected:
 #if false
    /**
@@ -138,8 +107,8 @@ protected:
          float counterFrequency = clockFrequency/(float)prescale;
          maxTime = maxCount/clockFrequency;
          if (maxTime > timeout.toSeconds()) {
-            timeout.fromTicks(roundf(timeout.toSeconds()*counterFrequency));
-            window.fromTicks(roundf(window.toSeconds()*counterFrequency));
+            timeout.fromTicks(Ticks(roundf(float(timeout.toSeconds())*counterFrequency)));
+            window.fromTicks(Ticks(roundf(float(window.toSeconds())*counterFrequency)));
             presc = WDOG_PRESC_PRESCVAL(prescale-1);
             return E_NO_ERROR;
          }
@@ -150,101 +119,28 @@ protected:
 
 public:
    /**
-    * Configure with default settings.
-    * Configuration determined from Configure.usbdmProject
+    * Disable WDOG
     */
-   static inline void defaultConfigure() {
+   static inline void disableWdog() {
    
-      // Unlock before changing settings
-      wdog->UNLOCK  = WdogUnlock_1;
-      wdog->UNLOCK  = WdogUnlock_2;
+      if (wdog->STCTRLH&WdogEnable_Enabled) {
    
-      // Read-back to delay until change effected
-      (void)(wdog->UNLOCK);
+         // Unlock before changing settings
+         wdog->UNLOCK  = WdogUnlock_1;
+         wdog->UNLOCK  = WdogUnlock_2;
    
-      // Disable watchdog
-      wdog->STCTRLH = WdogEnable_Disabled|WdogAllowUpdate_Disabled;
-   }
-
-   /**
-    * Configure WDOG from values specified in init
+         // Read-back to delay until change effected
+         (void)(wdog->UNLOCK);
    
-    * @param init Class containing initialisation values
-    */
-   static ErrorCode configure(const typename Info::Init &init) {
-   
-      Seconds_Ticks timeout = init.timeout;
-      Seconds_Ticks window  = init.window;
-      uint16_t presc   = init.presc;
-   
-      if constexpr (Info::irqHandlerInstalled) {
-         // Only set call-back if feature enabled and non-null
-         if (init.callbackFunction != nullptr) {
-            setCallback(init.callbackFunction);
-         }
-      }      // Protect sequence from interrupts
-      CriticalSection cs;
-   
-      // Unlock before changing settings
-      wdog->UNLOCK = WdogUnlock_1;
-      wdog->UNLOCK = WdogUnlock_2;
-   
-      // Read-back to delay until change effected
-      (void)(wdog->UNLOCK);
-   
-      // Configure watchdog
-      wdog->STCTRLH  = init.stctrlh;
-      wdog->PRESC    = presc;
-      wdog->WINH     = window.toTicks()>>16;
-      wdog->WINL     = window.toTicks();
-      wdog->TOVALH   = timeout.toTicks()>>16;
-      wdog->TOVALL   = timeout.toTicks();
-   
-      // For some reason this must be done after above
-      if constexpr (Info::irqHandlerInstalled) {
-         enableNvicInterrupts(init.irqlevel);
+         // Disable watchdog
+         wdog->STCTRLH = WdogEnable_Disabled|WdogAllowUpdate_Disabled;
       }
-      return E_NO_ERROR;
    }
+   
 
 
-   
-   /**
-    * Configure watchdog
-   
-    * @note This is a protected operation which uses unlock
-    * @note Register changes after unlock is enabled
-   
-    * @param wdogEnable         Main enable for WDOG
-    * @param wdogClock          Clock source for WDOG
-    * @param wdogWindow         Windowing mode only allows refresh during a restricted window
-    * @param wdogIntBeforeReset Allows an interrupt handler to record state before the watchdog reset occurs
-    * @param wdogEnableInDebug  Control watchdog operation in DEBUG mode
-    * @param wdogEnableInStop   Control watchdog operation in STOP mode
-    * @param wdogEnableInWait   Control watchdog operation in WAIT mode
-    */
-   static void configure(
-         WdogEnable         wdogEnable,
-         WdogClock          wdogClock          = WdogClock_LpoClk,
-         WdogWindow         wdogWindow         = WdogWindow_Disabled,
-         WdogIntBeforeReset wdogIntBeforeReset = WdogIntBeforeReset_Disabled,
-         WdogEnableInDebug  wdogEnableInDebug  = WdogEnableInDebug_Disabled,
-         WdogEnableInStop   wdogEnableInStop   = WdogEnableInStop_Disabled,
-         WdogEnableInWait   wdogEnableInWait   = WdogEnableInWait_Disabled) {
-   
-      // Protect sequence from interrupts
-      CriticalSection cs;
-   
-      // Unlock before changing settings
-      wdog->UNLOCK = WdogUnlock_1;
-      wdog->UNLOCK = WdogUnlock_2;
-   
-      // Read-back to delay until change effected
-      (void)(wdog->UNLOCK);
-   
-      wdog->STCTRLH = wdogEnable|wdogClock|wdogWindow|wdogIntBeforeReset|wdogEnableInDebug|wdogEnableInStop|wdogEnableInWait;
-   }
 
+#if false // /WDOG/generateSharedIrqInfo
    /**
     * Wrapper to allow the use of a class member as a callback function
     * @note Only usable with static objects.
@@ -277,8 +173,8 @@ public:
     * @endcode
     */
    template<class T, void(T::*callback)(), T &object>
-   static CallbackFunction wrapCallback() {
-      static CallbackFunction fn = []() {
+   static typename Info::CallbackFunction wrapCallback() {
+      static typename Info::CallbackFunction fn = []() {
          (object.*callback)();
       };
       return fn;
@@ -316,29 +212,14 @@ public:
     * @endcode
     */
    template<class T, void(T::*callback)()>
-   static CallbackFunction wrapCallback(T &object) {
+   static typename Info::CallbackFunction wrapCallback(T &object) {
       static T &obj = object;
-      static CallbackFunction fn = []() {
+      static typename Info::CallbackFunction fn = []() {
          (obj.*callback)();
       };
       return fn;
    }
-
-   /**
-    * Set callback function.
-    *
-    * The callback may be executed prior to the WDOG reset.
-    * This allows the system to save important information or log the watchdog event.
-    *
-    * @param[in]  theCallback Callback function to execute on interrupt
-    */
-   static void setCallback(CallbackFunction theCallback) {
-      static_assert(Info::irqHandlerInstalled, "WDOG not configured for interrupts");
-      if (theCallback == nullptr) {
-         theCallback = unhandledCallback;
-      }
-      callback = theCallback;
-   }
+#endif
 
 public:
 
@@ -388,7 +269,11 @@ public:
 
       // Disable interrupts while accessing watchdog
       CriticalSection cs;
-      Info::writeUnlock(WdogUnlock1, WdogUnlock2);
+
+      // Unlock before changing settings
+      wdog->UNLOCK = WdogUnlock_1;
+      wdog->UNLOCK = WdogUnlock_2;
+
       wdog->PRESC  = wdogPrescale;
       wdog->TOVALH = (unsigned)timeout>>16;
       wdog->TOVALL = (unsigned)timeout;
@@ -396,7 +281,7 @@ public:
       wdog->WINL   = (unsigned)window;
    }
 
-#if false
+#if false // /WDOG/secondsSupport
    /**
     * Sets the watchdog time-out value in seconds.
     *
@@ -456,31 +341,6 @@ public:
    }
 
    /**
-    * Enable interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
-    */
-   static void enableNvicInterrupts() {
-      enableNvicInterrupt(Info::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicInterrupts(NvicPriority nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(Info::irqNums[0]);
-   }
-
-   /**
     * Enable/disable interrupts
     *
     * @param[in]  enable        True => enable, False => disable
@@ -499,12 +359,13 @@ public:
    }
 };
 
-template<class Info> typename WdogBase_T<Info>::CallbackFunction WdogBase_T<Info>::callback = WdogBase_T<Info>::unhandledCallback;
+//template<class Info> typename WdogBase_T<Info>::CallbackFunction WdogBase_T<Info>::callback = WdogBase_T<Info>::unhandledCallback;
 
    /**
     * Class representing WDOG
     */
    class Wdog : public WdogBase_T<WdogInfo> {};
+   
 
 /**
  * End WDOG_Group

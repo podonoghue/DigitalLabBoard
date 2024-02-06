@@ -41,6 +41,8 @@ enum ErrorCode {
    E_TIMEOUT,                     //!< Timeout occurred during operation
    E_INTERRUPTED,                 //!< Interrupt occurred during operation
    E_BUSY,                        //!< Device is busy
+   E_MATCH,                       //!< Match event on SPI
+   E_WRONG_STATE,                 //!< Device is in wrong state for action
 
    E_CMSIS_ERR_OFFSET = 1<<20,    //!< Offset added to CMSIS error codes
 };
@@ -122,7 +124,7 @@ inline void clearError() {
    errorCode = E_NO_ERROR;
 }
 
-#define USE_CONSOLE 0
+#define USE_CONSOLE 1
 
 #if USE_CONSOLE
 /**

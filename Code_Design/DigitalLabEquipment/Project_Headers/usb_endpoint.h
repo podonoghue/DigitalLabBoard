@@ -17,6 +17,7 @@
  * This file is generated automatically.
  * Any manual changes will be lost.
  */
+#include <array>
 #include "usb_defs.h"
 #include "derivative.h"
 #include "error.h"
@@ -333,9 +334,13 @@ public:
     * Initialise endpoint
     *  - Internal state
     *  - BDTs
+    *
+    * @param clearToggle  Clear data toggle on endpoint
     */
-   void initialise() {
-      fDataToggle       = DataToggle_0;
+   void initialise(bool clearToggle) {
+      if (clearToggle) {
+         fDataToggle       = DataToggle_0;
+      }
       fState            = EPIdle;
       fNeedZLP          = false;
       fDataPtr          = nullptr;

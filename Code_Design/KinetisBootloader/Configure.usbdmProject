@@ -15,6 +15,8 @@
    <item key="$pin$PTA2_pcrSetting_2"                      value="200" />
    <item key="$pin$PTA3_pcrSetting_7"                      value="700" />
    <item key="$pin$PTA4_pcrSetting_1"                      value="100" />
+   <item key="$pin$PTD4_pcrSetting_1"                      value="100" />
+   <item key="$signal$GPIOD_4_codeIdentifier"              value="UsbLed" />
    <item key="$signal$RESET_b_descriptionSetting"          value="Reset" />
    <item key="$signal$USB0_DM_descriptionSetting"          value="USBDM" />
    <item key="$signal$USB0_DP_descriptionSetting"          value="USBDP" />
@@ -33,8 +35,13 @@
    <item key="$signal$XTAL32_descriptionSetting"           value="Unused" />
    <item key="/CMP0/cmp_fpr_filt_per"                      value="0" />
    <item key="/CMP1/cmp_fpr_filt_per"                      value="0" />
-   <item key="/Console/consoleEnable"                      value="false" />
-   <item key="/LINKER/heapSize"                            value="2048" />
+   <item key="/CRC0/enablePeripheralSupport"               value="true" />
+   <item key="/FTM0/ftm_deadtime_dtval"                    value="0" />
+   <item key="/FTM0/ftm_mode_init"                         value="false" />
+   <item key="/FTM1/ftm_deadtime_dtval"                    value="0" />
+   <item key="/FTM1/ftm_mode_init"                         value="false" />
+   <item key="/I2C0/i2c_speed"                             value="0" />
+   <item key="/LINKER/heapSize"                            value="0" />
    <item key="/LINKER/stackSize"                           value="2048" />
    <item key="/LLWU/llwu_filt1_filtsel"                    value="3" />
    <item key="/LLWU/llwu_filt2_filtsel"                    value="3" />
@@ -42,8 +49,8 @@
    <item key="/MCG/ClockConfig[1]"                         value="ClockConfig_BLPE_4MHz" />
    <item key="/MCG/ClockConfig[2]"                         value="ClockConfig_FEE_40MHz" />
    <item key="/MCG/ClockConfig[3]"                         value="ClockConfig_3" />
+   <item key="/MCG/enablePeripheralSupport"                value="true" />
    <item key="/MCG/mcgClockMode[0]"                        value="7" />
-   <item key="/MCG/mcg_c1_frdiv[0]"                        value="4" />
    <item key="/MCG/mcg_c2_range0[0]"                       value="2" />
    <item key="/MCG/mcg_c2_range0[1]"                       value="2" />
    <item key="/MCG/mcg_c2_range0[2]"                       value="2" />
@@ -52,13 +59,11 @@
    <item key="/MCG/system_mcgfllclk_clock[0]"              value="83886080" />
    <item key="/MCG/system_mcgfllclk_clock[1]"              value="83886080" />
    <item key="/MCG/system_mcgfllclk_clock[2]"              value="83886080" />
+   <item key="/OSC0/enablePeripheralSupport"               value="true" />
    <item key="/OSC0/osc_input_freq"                        value="16000000" />
    <item key="/PDB0/pdb_ch0_dly0"                          value="0" />
    <item key="/PDB0/pdb_ch0_dly1"                          value="0" />
-   <item key="/PIT/pit_ldval_tsv[0]"                       value="0" />
-   <item key="/PIT/pit_ldval_tsv[1]"                       value="0" />
-   <item key="/PIT/pit_ldval_tsv[2]"                       value="0" />
-   <item key="/PIT/pit_ldval_tsv[3]"                       value="0" />
+   <item key="/PMC/pmc_lvdsc1_lvdack"                      value="false" />
    <item key="/RTC/rtc_cr_osce"                            value="false" />
    <item key="/SIM/sim_clkdiv1_outdiv4[0]"                 value="3" />
    <item key="/SIM/sim_clkdiv1_outdiv4[1]"                 value="3" />
@@ -66,5 +71,6 @@
    <item key="/SIM/sim_clkdiv2_usb[0]"                     value="2" />
    <item key="/SIM/sim_sopt2_pllfllsel[0]"                 value="1" />
    <item key="/SIM/sim_sopt2_pllfllsel[1]"                 value="1" />
-   <item key="/USB0/irqHandlingMethod"                     value="$ClassMethod" />
+   <item key="/USB0/enablePeripheralSupport"               value="true" />
+   <item key="/USBDCD0/usbdcd_timer0_tunitcon"             value="0" />
 </section>

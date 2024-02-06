@@ -10,6 +10,7 @@
 #define INCLUDE_USBDM_DMA_H_
 
 #include "pin_mapping.h"
+#include "dmamux.h"
 #include "cstring"
 
 /*
@@ -22,6 +23,8 @@
  */
 namespace USBDM {
 
+#if false // /DMA/enablePeripheralSupport
+
 typedef DmaBasicInfo::DmaTcdCsr DmaTcdCsr;
 typedef DmaBasicInfo::DmaConfig DmaConfig;
 
@@ -30,15 +33,6 @@ typedef DmaBasicInfo::DmaConfig DmaConfig;
  * @brief Support for DMA operations
  * @{
  */
-
-/**
- * Controls operation of DMA-MUX channel.
- */
-enum DmaMuxEnable {
-   DmaMuxEnable_Disabled   = DMAMUX_CHCFG_ENBL(0),                      //!< DMA channel is disabled
-   DmaMuxEnable_Continuous = DMAMUX_CHCFG_ENBL(1)|DMAMUX_CHCFG_TRIG(0), //!< DMA channel is enabled continuously
-   DmaMuxEnable_Triggered  = DMAMUX_CHCFG_ENBL(1)|DMAMUX_CHCFG_TRIG(1), //!< DMA channel is enabled and triggered by PIT channel
-};
 
 /**
  * DMA transfer sizes.
@@ -88,53 +82,6 @@ enum DmaModulo : uint8_t {
    DmaModulo_1GiByte    = 0b11110, //!< 1-Gibibyte modulo
    DmaModulo_2GiByte    = 0b11111, //!< 2-Gibibyte modulo
 };
-
-/**
- * Controls whether a channel can be suspended by a higher priority channel.
- */
-enum DmaCanBePreempted {
-   DmaCanBePreempted_Disabled = DMA_DCHPRI_ECP(0), //!< Channel N cannot be suspended by a higher priority channel's service request
-   DmaCanBePreempted_Enabled  = DMA_DCHPRI_ECP(1), //!< Channel N can be temporarily suspended by the service request of a higher priority channel
-};
-
-/**
- * Controls whether a channel can suspend a lower priority channel.
- */
-enum DmaCanPreemptLower {
-   DmaCanPreemptLower_Enabled  = DMA_DCHPRI_DPA(0), //!< Channel N can suspend a lower priority channel
-   DmaCanPreemptLower_Disabled = DMA_DCHPRI_DPA(1), //!< Channel N cannot suspend a lower priority channel
-};
-
-/**
- * Calculate a DMA slot number using an offset from an existing number
- *
- * @param slot    Base slot to use
- * @param offset  Offset from base slot
- *
- * @return  DMA slot number calculated from slot+offset
- */
-constexpr DmaSlot inline operator+(DmaSlot slot, unsigned offset) {
-   return (DmaSlot)((unsigned)slot + offset);
-}
-
-/**
- * Calculate a DMA slot number using an offset from an existing number
- *
- * @param slot    Base slot to use
- * @param offset  Offset from base slot
- *
- * @return  DMA slot number calculated from slot+offset
- */
-constexpr DmaSlot inline operator+(DmaSlot slot, int offset) {
-   return slot + (unsigned)offset;
-}
-
-/**
- * Type definition for DMA interrupt call back.
- *
- * @param[in] dmaChannelNum
- */
-typedef void (*DmaCallbackFunction)(DmaChannelNum dmaChannelNum, uint32_t errorFlags);
 
 /**
  * Get DMA size of object.
@@ -234,15 +181,6 @@ static constexpr uint16_t dmaSize(const Ts &sobj, const Td &dobj) {
 }
 
 /**
- * Determines if the offset is applied to source and/or destination
- */
-enum DmaMinorLoopOffsetSelect {
-   DmaMinorLoopOffsetSelect_Source        = DMA_NBYTES_MLOFFYES_SMLOE(1)|DMA_NBYTES_MLOFFYES_DMLOE(0),//!< Source only
-   DmaMinorLoopOffsetSelect_Destination   = DMA_NBYTES_MLOFFYES_SMLOE(0)|DMA_NBYTES_MLOFFYES_DMLOE(1),//!< Destination only
-   DmaMinorLoopOffsetSelect_Both          = DMA_NBYTES_MLOFFYES_SMLOE(1)|DMA_NBYTES_MLOFFYES_DMLOE(1),//!< Both Source and Destination
-};
-
-/**
  * Creates DMA NBYTES entry for:
  * - Minor loop enabled CR[EMLN] = 1 (DmaMinorLoopMapping_Enabled)
  * - Source/Destination offset enabled
@@ -304,48 +242,9 @@ struct __attribute__((__packed__)) DmaTcdAttr {
    }
 };
 
-//union __attribute__((packed)) DmaNbytesInfo {
-//
-//private:
-//   uint32_t nBytes;
-//
-//   struct {
-//      uint8_t   mloe:2;
-//      uint32_t  mloff:20;
-//      uint32_t  nbytes:10;
-//   };
-//
-//public:
-//   /**
-//    * Default constructor
-//    */
-//   constexpr DmaNbytesInfo() : nbytes(0) {}
-//
-//   constexpr DmaNbytesInfo(const DmaNbytesInfo &other) = default;
-//
-//   /**
-//    * Constructor for when Minor Loop Mapping is disabled (CR[EMLM] = 0)
-//    *
-//    * @param nbytes Number of bytes for minor loop
-//    */
-//   constexpr DmaNbytesInfo(uint32_t nbytes) : nbytes(nbytes) {}
-//
-//   /**
-//    * Constructor for when Minor Loop Mapping is enabled (CR[EMLM] = 1)
-//    *
-//    * @param dmaMinorLoopOffsetSelect  Controls whether the mapping as applied to source, destination or both
-//    * @param mloff                     Minor loop offset
-//    * @param nbytes                    Number of bytes for minor loop
-//    */
-//   constexpr DmaNbytesInfo(
-//         DmaMinorLoopOffsetSelect dmaMinorLoopOffsetSelect,
-//         uint32_t                 mloff,
-//         uint32_t                 nbytes
-//         ) : nbytes(dmaMinorLoopOffsetSelect|DMA_NBYTES_MLOFFYES_MLOFF(mloff)|DMA_NBYTES_MLOFFYES_NBYTES(nbytes)) {}
-//
-//   constexpr operator uint32_t() const { return nBytes; }
-//};
-
+/**
+ *  Used to create transfer information for source or destination
+ */
 class DmaInfo {
 
 public:
@@ -365,6 +264,15 @@ public:
    // This allows the address to be restricted to a binary range
    DmaModulo   dmaModulo;
 
+   /**
+    *
+    * @param startAddress           Start address of transfer
+    * @param offset                 Signed adjustment of address after each transfer
+    * @param dmaSize                Data transfer size
+    * @param dmaModulo              Modulo adjustment for address
+    *                               This allows the address to be restricted to a binary range
+    * @param lastAddressAdjustment  Signed adjustment of address at the completion of the major iteration
+    */
    constexpr DmaInfo(
          uint32_t  startAddress,
          int32_t   offset,
@@ -457,15 +365,15 @@ struct __attribute__((__packed__)) DmaTcd {
     *        sourceAddress              Starting source address
     *        sourceOffset               Offset to apply to source address after each read
     *        sourceSize                 Source size
-    *        sourceModulo               Source modulo
     *        lastSourceAdjustment       Source adjustment to apply after completion of the major iteration count
+    *        sourceModulo               Source modulo
     *
     * @param destinationInfo            The following information in this order:
     *        destinationAddress         Starting destination address
     *        destinationOffset          Offset to apply to destination address after each read
     *        destinationSize            Destination size
-    *        destinationModulo          Destination modulo
     *        lastDestinationAdjustment  Destination adjustment to apply after completion of the major iteration count
+    *        destinationModulo          Destination modulo
     *
     * @param minorLoopByteCount         Number of bytes to be transferred in each minor loop (per service request)
     * @param majorLoopCount             Number of major iterations
@@ -508,15 +416,15 @@ struct __attribute__((__packed__)) DmaTcd {
     *        sourceAddress              Starting source address
     *        sourceOffset               Offset to apply to source address after each read
     *        sourceSize                 Source size
-    *        sourceModulo               Source modulo
     *        lastSourceAdjustment       Source adjustment to apply after completion of the major iteration count
+    *        sourceModulo               Source modulo
     *
     * @param destinationInfo            The following information in this order:
     *        destinationAddress         Starting destination address
     *        destinationOffset          Offset to apply to destination address after each read
     *        destinationSize            Destination size
-    *        destinationModulo          Destination modulo
     *        lastDestinationAdjustment  Destination adjustment to apply after completion of the major iteration count
+    *        destinationModulo          Destination modulo
     *
     * @param dmaMinorLoopOffsetSelect   Selects if the minor loop offset is applied to source and/or destination
     * @param minorLoopOffset            Offset applied to source and/or destination after minor loop
@@ -556,7 +464,6 @@ struct __attribute__((__packed__)) DmaTcd {
       DLAST(destinationInfo.lastAddressAdjustment),
       CSR(dmaTcdCsr) {
    }
-
 };
 
 /**
@@ -606,90 +513,18 @@ constexpr uint16_t dmaCiter(DmaChannelNum dmaChannelNum, uint16_t citer) {
 }
 
 /**
- * Template class providing interface to DMA Multiplexor.
- *
- * @tparam DmaMuxInfo  Information class for DMAMux
- * @tparam NumChannels Number of DMA channels in associated DMA controller
- *
- * @code
- * using dmamux = DmaMux_T<DmaMuxInfo>;
- *
- *  dmamux::configure();
- *
- * @endcode
- */
-template <class DmaMuxInfo, unsigned NumChannels>
-class DmaMux_T {
-
-public:
-
-   /// Number of multiplexor channels
-   static const unsigned numChannels = NumChannels;
-
-   /**
-    * Configures and enable hardware requests on a channel.
-    *
-    * @param[in] dmaChannelNum   The DMA channel being enabled
-    * @param[in] dmaSlot         The DMA slot (source) to connect to this channel
-    * @param[in] dmaMuxEnable    The mode for the channel
-    */
-   static void configure(DmaChannelNum dmaChannelNum, DmaSlot dmaSlot, DmaMuxEnable dmaMuxEnable=DmaMuxEnable_Continuous) {
-
-#if true
-      // Throttled DMA channels limited by PIT channels available
-      usbdm_assert((dmaMuxEnable != DmaMuxEnable_Triggered) || (dmaChannelNum<=USBDM::PitInfo::NumChannels),
-            "Illegal PIT throttled channel");
-#endif
-
-#if false
-      usbdm_assert((dmaMuxEnable != DmaMuxEnable_Triggered) || (dmaChannelNum<=USBDM::Lpit0Info::NumChannels),
-            "Illegal PIT throttled channel");
-#endif
-
-      // DmaSlots 0-63 must associate with DMA channels 0-15
-      // DmaSlots 64-128 must associate with DMA channels 15-31
-      usbdm_assert(((dmaChannelNum<16)||(dmaSlot>=64))&&((dmaChannelNum>=16)||(dmaSlot<64)),
-            "Illegal LPIT channel");
-
-      // Enable clock to peripheral
-      DmaMuxInfo::enableClock();
-
-      // Configure channel - must be disabled to change
-      DmaMuxInfo::dmamux->CHCFG[dmaChannelNum] = 0;
-      DmaMuxInfo::dmamux->CHCFG[dmaChannelNum] = dmaMuxEnable|DMAMUX_CHCFG_SOURCE(dmaSlot);
-   }
-
-   /**
-    * Disable hardware requests on channel
-    *
-    * @param dmaChannelNum Channel to modify
-    */
-   static void disable(DmaChannelNum dmaChannelNum) {
-
-      // Enable clock to peripheral
-      DmaMuxInfo::enableClock();
-
-      // Disable channel
-      DmaMuxInfo::dmamux->CHCFG[dmaChannelNum] = 0;
-   }
-};
-
-/**
  * Class representing a DMA controller.
  *
  * @tparam Info Information describing DMA controller
  */
 template<class Info>
-class DmaBase_T : public DmaBasicInfo {
+class DmaBase_T : public Info {
 
    using MuxInfo = Dmamux0Info;
 
 protected:
    /** Hardware instance pointer */
    static constexpr HardwarePtr<DMA_Type> dma = Info::baseAddress;
-
-   /** Callback functions for ISRs */
-   static DmaCallbackFunction sCallbacks[Info::NumVectors];
 
    /** Bit-mask of allocated channels */
    static uint32_t allocatedChannels;
@@ -700,34 +535,6 @@ protected:
    }
 
 public:
-   /** DMA interrupt handler -  Error callback */
-   static void errorIrqHandler() {
-
-      // Capture error status
-      uint32_t      errorFlags = dma->ES;
-
-      // Error channel
-      DmaChannelNum channel    = (DmaChannelNum)((errorFlags&DMA_ES_ERRCHN_MASK)>>DMA_ES_ERRCHN_SHIFT);
-
-      // Disable channel
-      dma->CERQ = channel;
-
-      // Clear channel error flag
-      dma->CERR = channel;
-
-      // Call channel call-back
-      sCallbacks[channel](channel, errorFlags);
-   }
-
-   /** DMA interrupt handler - Calls DMA callback
-    *
-    * @tparam channel Channel number
-    */
-   template<unsigned channel>
-   static void irqHandler() {
-      sCallbacks[channel]((DmaChannelNum)channel, 0);
-   }
-
    /**
     * Enable and configure shared DMA settings.
     * This also clears all DMA channels.
@@ -752,16 +559,12 @@ public:
 
       // Clear call-backs
       for (unsigned channel=0; channel<Info::NumVectors; channel++) {
-         sCallbacks[channel] = noHandlerCallback;
+         Info::sCallbacks[channel] = noHandlerCallback;
       }
 #ifndef NDEBUG
       // Clear the TCDs
-      volatile uint32_t *ar = (uint32_t *)dma->TCD;
-      for (unsigned index=0;
-            index<(sizeofArray(dma->TCD)*sizeof(dma->TCD[0])/sizeof(uint32_t));
-            index++) {
-
-         ar[index] = 0;
+      for (unsigned index=0; index<sizeof(dma->TCD_RAW);index++) {
+         dma->TCD_RAW[index] = 0;
       }
 #endif
       // Reset record of allocated channels
@@ -772,7 +575,7 @@ public:
     * Enable and configure shared DMA settings from settings in Configure.usbdmProject
     * This also clears all DMA channels.
     */
-   static void configure() {
+   static void defaultConfigure() {
       configure(Dma0Info::DefaultDmaConfigValue);
    }
 
@@ -789,9 +592,9 @@ public:
    /**
     * Set Continuous Link mode
     *
-    * @param dmaContinuousLink Whether to enable continuous link mode 
-    *        If enabled, on minor loop completion, the channel activates again if that 
-    *        channel has a minor loop channel link enabled and the link channel is itself. 
+    * @param dmaContinuousLink Whether to enable continuous link mode
+    *        If enabled, on minor loop completion, the channel activates again if that
+    *        channel has a minor loop channel link enabled and the link channel is itself.
     *        This effectively applies the minor loop offsets and restarts the next minor loop
     */
    void SetLinkMode(DmaContinuousLink dmaContinuousLink) {
@@ -803,9 +606,9 @@ public:
     * Set Minor loop mapping
     *
     * @param dmaMinorLoopMapping Whether to enable minor loop mapping
-    *        When enabled, TCDn.word2 is redefined to include individual enable fields, an offset field 
-    *        and the NBYTES field. The individual enable fields allow the minor loop offset to be 
-    *        applied to the source address, the destination address, or both.  
+    *        When enabled, TCDn.word2 is redefined to include individual enable fields, an offset field
+    *        and the NBYTES field. The individual enable fields allow the minor loop offset to be
+    *        applied to the source address, the destination address, or both.
     *        The NBYTES field is reduced when either offset is enabled.
     */
    void SetMinorLoopMapping(DmaMinorLoopMapping dmaMinorLoopMapping) {
@@ -818,7 +621,7 @@ public:
     *
     * @param dmaArbitration How to arbitrate between requests from different channels
     */
-   void SetArbitration(         DmaArbitration dmaArbitration) {
+   void SetArbitration(DmaArbitration dmaArbitration) {
    
       dma->CR = (dma->CR & ~DMA_CR_ERCA_MASK)|dmaArbitration;
    }
@@ -977,13 +780,13 @@ public:
     */
    static void setChannelPriority(
          DmaChannelNum      dmaChannelNum,
-         int                priority,
+         DmaPriority        dmaPriority,
          DmaCanBePreempted  dmaCanBePreempted=DmaCanBePreempted_Enabled,
          DmaCanPreemptLower dmaCanPreemptLower=DmaCanPreemptLower_Enabled) {
 
       int index = (dmaChannelNum&0xFC)|(3-(dmaChannelNum&0x03));
       constexpr volatile uint8_t *priorities = &dma->DCHPRI3;
-      priorities[index] = dmaCanBePreempted|dmaCanPreemptLower|DMA_DCHPRI_CHPRI(priority);
+      priorities[index] = dmaCanBePreempted|dmaCanPreemptLower|dmaPriority;
    }
 
    /**
@@ -1188,101 +991,18 @@ public:
       dma->CINT = dmaChannelNum;
    }
 
-   /**
-    * Enable channel interrupts in NVIC.
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  dmaChannelNum  Channel being modified
-    */
-   static void enableNvicInterrupts(DmaChannelNum dmaChannelNum) {
-      const IRQn_Type irqNum = Dma0Info::irqNums[0] + (dmaChannelNum&(Dma0Info::NumChannels-1));
-      NVIC_EnableIRQ(irqNum);
-   }
-
-   /**
-    * Enable and set priority of channel interrupts in NVIC.
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  dmaChannelNum  Channel being modified
-    * @param[in]  nvicPriority   Interrupt priority
-    */
-   static void enableNvicInterrupts(DmaChannelNum dmaChannelNum, uint32_t nvicPriority) {
-      const IRQn_Type irqNum = Dma0Info::irqNums[0] + (dmaChannelNum&(Dma0Info::NumChannels-1));
-      enableNvicInterrupt(irqNum, nvicPriority);
-   }
-
-   /**
-    * Disable channel interrupts in NVIC.
-    *
-    * @param[in]  dmaChannelNum  Channel being modified
-    */
-   static void disableNvicInterrupts(DmaChannelNum dmaChannelNum) {
-      const IRQn_Type irqNum = Dma0Info::irqNums[0] + (dmaChannelNum&(Dma0Info::NumChannels-1));
-      NVIC_DisableIRQ(irqNum);
-   }
-
-   /**
-    * Enable error interrupts in NVIC.
-    */
-   static void enableNvicErrorInterrupt() {
-      NVIC_EnableIRQ(Info::irqNums[Info::irqCount-1]);
-   }
-
-   /**
-    * Enable and set priority of error interrupts in NVIC.
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicErrorInterrupt(uint32_t nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[Info::irqCount-1], nvicPriority);
-   }
-
-   /**
-    * Disable error interrupts in NVIC.
-    */
-   static void disableNvicErrorInterrupt() {
-      NVIC_DisableIRQ(Info::irqNums[Info::irqCount-1]);
-   }
-
-   /**
-    * Set callback for ISR.
-    *
-    * @param[in] dmaChannelNum  The DMA channel to set callback for
-    * @param[in] callback       Callback function to execute on interrupt.\n
-    *                           Use nullptr to remove callback.
-    */
-   static void __attribute__((always_inline)) setCallback(DmaChannelNum dmaChannelNum, DmaCallbackFunction callback) {
-
-      static_assert(Info::irqHandlerInstalled, "DMA not configured for interrupts");
-      if (callback == nullptr) {
-         callback = noHandlerCallback;
-      }
-      sCallbacks[dmaChannelNum] = callback;
-   }
 };
-
-/**
- * Callback table for programmatically set handlers.
- */
-template<class Info> DmaCallbackFunction DmaBase_T<Info>::sCallbacks[];
 
 /** Bit-mask of allocated channels */
 template<class Info> uint32_t DmaBase_T<Info>::allocatedChannels = (1<<Info::NumChannels)-1;
 
-   /**
-    * Class representing DMAMUX0
-    */
-   typedef DmaMux_T<Dmamux0Info, Dma0Info::NumChannels> DmaMux0;
-   /**
-    * Class representing DMA0
-    */
-   typedef DmaBase_T<Dma0Info> Dma0;
+
 
 /**
  * End DMA_Group
  * @}
  */
+#endif
 } // End namespace USBDM
 
 #endif /* INCLUDE_USBDM_DMA_H_ */

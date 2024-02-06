@@ -447,7 +447,7 @@ public:
       cmp->FPR   = 0;
       cmp->SCR   = CMP_SCR_IER(0)|CMP_SCR_IEF(0);
       cmp->DACCR = (CMP_DACCR_VOSEL_MASK>>1)&CMP_DACCR_VOSEL_MASK;
-      cmp->MUXCR = Info::muxcr;
+      cmp->MUXCR = Cmp0Info::DefaultInitValue.muxcr;//Info::muxcr;
    }
 
    /**

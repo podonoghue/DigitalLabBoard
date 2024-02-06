@@ -73,37 +73,8 @@ namespace USBDM {
 template <class Info>
 class PdbBase_T : public Info {
 
-protected:
-
-   typedef typename Info::CallbackFunction CallbackFunction;
-
-   /** Callback function for ISR */
-   static CallbackFunction sCallback;
-
-   /** Callback function for error ISR */
-   static CallbackFunction sErrorCallback;
-
-   /** Handler for unexpected interrupts */
-   static void unhandledCallback() {
-      setAndCheckErrorCode(E_NO_HANDLER);
-   }
-
 public:
-   /**
-    * IRQ handler
-    */
-   static void irqHandler(void) {
-
-      if (PdbBase_T<Info>::pdb->SC & PDB_SC_PDBIF_MASK) {
-         // Clear interrupt flag
-         PdbBase_T<Info>::pdb->SC = PdbBase_T<Info>::pdb->SC & ~PDB_SC_PDBIF_MASK;
-         // Handle expected interrupt
-         sCallback();
-         return;
-      }
-      // Assume sequence error
-      sErrorCallback();
-   }
+   using Info::configure;
 
    /**
     * Wrapper to allow the use of a class member as a callback function
@@ -137,8 +108,8 @@ public:
     * @endcode
     */
    template<class T, void(T::*callback)(), T &object>
-   static CallbackFunction wrapCallback() {
-      static CallbackFunction fn = []() {
+   static typename Info::CallbackFunction wrapCallback() {
+      static typename Info::CallbackFunction fn = []() {
          (object.*callback)();
       };
       return fn;
@@ -176,100 +147,19 @@ public:
     * @endcode
     */
    template<class T, void(T::*callback)()>
-   static CallbackFunction wrapCallback(T &object) {
+   static typename Info::CallbackFunction wrapCallback(T &object) {
       static T &obj = object;
-      static CallbackFunction fn = []() {
+      static typename Info::CallbackFunction fn = []() {
          (obj.*callback)();
       };
       return fn;
    }
-
-   /**
-    * Set Callback function
-    *
-    *   @param[in]  callback Callback function to be executed on interrupt\n
-    *                        Use nullptr to remove callback.
-    */
-   static void setCallback(CallbackFunction callback) {
-
-      static_assert(Info::irqHandlerInstalled, "PDB not configure for interrupts");
-      if (callback == nullptr) {
-         callback = unhandledCallback;
-      }
-      sCallback = callback;
-   }
-
-   /**
-    * Set Callback function
-    *
-    *   @param[in]  callback Callback function to be executed on error interrupt\n
-    *                        Use nullptr to remove callback.
-    */
-   static void setErrorCallback(CallbackFunction callback) {
-
-      static_assert(Info::irqHandlerInstalled, "PDB not configure for interrupts");
-      if (callback == nullptr) {
-         callback = unhandledCallback;
-      }
-      sErrorCallback = callback;
-   }
-
-
 protected:
    /** Hardware instance pointer */
    static constexpr HardwarePtr<PDB_Type> pdb = Info::baseAddress;
 
 public:
-// Template _mapPinsOption.xml (/PDB0/classInfo)
-
-   /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/PDB0/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void configureAllPins() {
-   
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
-   }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/PDB0/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
-   
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
-   /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/PDB0/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
-    */
-   static void enable() {
-      Info::enableClock();
-      configureAllPins();
-   }
-
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/PDB0/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      disableNvicInterrupts();
-      
-      disableAllPins();
-      Info::disableClock();
-   }
-// End Template _mapPinsOption.xml
-
+// No class Info found
    /**
     * Configures the PDB
     *
@@ -289,7 +179,7 @@ public:
          PdbAction   pdbAction = PdbAction_None
    ) {
 
-      enable();
+      Info::enable();
       pdb->SC = pdbMode|pdbTrigger|pdbAction;
 
       for (unsigned index=0; index<(sizeof(pdb->CH)/sizeof(pdb->CH[0])); index++) {
@@ -305,69 +195,6 @@ public:
 #if PDB_POnDLY_COUNT>0
       pdb->POEN = 0;
 #endif
-   }
-
-   /**
-    * Configure a PDB from values specified in init
-    *
-    * @param init Class containing initialisation values
-    *
-    * @return E_NO_ERROR
-    */
-   static ErrorCode configure(const typename Info::Init &init) {
-   
-      // Enable peripheral clock and map pins
-      enable();
-   
-      // Initially assume working with Ticks
-      uint32_t scValue  = init.sc;
-      uint16_t modValue = init.mod.toTicks();
-   
-      const auto convertIfNeeded = [](const typename Info::Seconds_Ticks &value) {
-         return value.toTicks();
-      };
-   
-      pdb->MOD  = modValue;
-      pdb->IDLY = convertIfNeeded(init.idly);
-   
-      // Configure pre-triggers (to ADCs usually)
-      for (size_t n=0; n<Info::numChannels; n++) {
-         pdb->CH[n].C1 = init.c1[n];
-         for (size_t m=0; m<Info::numPreTriggers; m++) {
-            pdb->CH[n].DLY[m] = convertIfNeeded(init.dly[n][m]);
-         }
-      }
-   
-      // Configure Pulse outputs (to CMPs)
-      pdb->POEN = init.poen;
-      for (size_t x=0; x<Info::numPulseOutputs; x++) {
-         pdb->POnDLY[x].DLY1 = convertIfNeeded(init.dly1[x]);
-         pdb->POnDLY[x].DLY2 = convertIfNeeded(init.dly2[x]);
-      }
-   
-      if constexpr (Info::irqHandlerInstalled) {
-         // Only set call-backs if feature enabled
-         setCallback(init.callback);
-         setErrorCallback(init.errorCallback);
-         enableNvicInterrupts(init.irqlevel);
-      }
-   
-      // Final setting and enable load registers
-      pdb->SC = scValue|PDB_SC_LDOK_MASK;
-   
-      return E_NO_ERROR;
-   }
-   
-   /**
-    * Set PDB to default configuration.
-    *
-    * Includes enabling clock and any pins used.
-
-    * Sets PDB registers to default configuration from Configure.usbdmProject
-    */
-   static void defaultConfigure() {
-   
-      configure(Info::DefaultInitValue);
    }
 
 
@@ -478,7 +305,7 @@ public:
     */
    static Ticks convertSecondsToTicks(const Seconds &seconds, uint32_t scValue) {
 
-      return seconds*getTickFrequency(scValue);
+      return Ticks(seconds*getTickFrequency(scValue));
    }
 
    /**
@@ -536,7 +363,7 @@ public:
       for (size_t index=0; index<sizeofArray(divisors); index++) {
 
          // Calculate modulo required to get desired period using this divisor
-         float trialMod = roundf(period*inputClock/divisors[index]);
+         float trialMod = roundf(float(period)*inputClock/divisors[index]);
 //       console.writeln("trialMod = ", trialMod);
 
          if (trialMod <= Info::MinimumResolution) {
@@ -608,7 +435,7 @@ public:
     */
    static void setEventAction(
          PdbAction   pdbAction,
-         Ticks       delay = 0
+         Ticks       delay
          ) {
 
       pdb->SC = (pdb->SC&~(PDB_SC_PDBIE_MASK|PDB_SC_DMAEN_MASK))|pdbAction|PDB_SC_PDBIF_MASK;
@@ -654,8 +481,8 @@ public:
     */
    static void softwareTrigger() {
 
-      // Set software trigger + do trigger + without clearing interrupt flag
-      pdb->SC = pdb->SC | PDB_SC_TRGSEL_MASK|PDB_SC_SWTRIG_MASK|PDB_SC_PDBIF_MASK;
+      // Set software trigger source + do trigger + without clearing interrupt flag
+      pdb->SC = pdb->SC | PDB_SC_TRGSEL(15)|PDB_SC_SWTRIG_MASK|PDB_SC_PDBIF_MASK;
    }
 
    /**
@@ -817,26 +644,35 @@ public:
    }
 
    /**
+    * Clear event interrupt flag
+    */
+   static void clearEventFlag() {
+
+      // Clear flags (w0c)
+      pdb->SC = (pdb->SC&~PDB_SC_PDBIF_MASK);
+   }
+
+   /**
     * Clear error and sequence flags in the PDB channel (ADC trigger)
     *
     * @param[in] adcNum The ADC to clear flags for
     */
-   static void clearErrorFlags(unsigned adcNum) {
+   static void clearChannelFlags(unsigned adcNum) {
 
       // Clear flags
-      pdb->CH[adcNum].S = 0; // w0c bits
+      pdb->CH[adcNum].S = 0xFFFF; // w0c channel flags, w1c error flags
    }
 
    /**
-    * @tparam adcNum The number of the ADC pretrigger (channel) to control
+    * @tparam pdbChannel The number of the PDB channel (usually = ADC instance) to control
     */
-   template<unsigned adcNum>
+   template<PdbChannel pdbChannel>
    class AdcPreTrigger {
 
-      static_assert(adcNum<(sizeof(pdb->CH)/sizeof(pdb->CH[0])), "Illegal ADC number");
+      static_assert(pdbChannel<Info::numChannels, "Illegal ADC number");
 
    public:
-      static constexpr unsigned ADC_NUM = adcNum;
+      static constexpr PdbChannel PDB_CHANNEL = pdbChannel;
 
       /**
        * Configures the pretriggers associated with an ADC.
@@ -849,12 +685,10 @@ public:
        *
        * This allows multiple different ADC channels to be converted in a sequence.
        *
-       * @param pdbChannel       Pretrigger being modified
        * @param pdbPretrigger    Pretrigger settings
        * @param delay            Delay in ticks - only needed for PdbPretrigger_Delayed
        */
       static void configure (
-            PdbChannel      pdbChannel,
             PdbPretrigger0  pdbPretrigger,
             Ticks           delay          = 0_ticks) {
 
@@ -872,12 +706,10 @@ public:
        *
        * This allows multiple different ADC channels to be converted in a sequence.
        *
-       * @param pdbChannel       Pretrigger being modified
        * @param pdbPretrigger    Pretrigger settings
        * @param delay            Delay in ticks - only needed for PdbPretrigger_Delayed
        */
       static void configure (
-            PdbChannel      pdbChannel,
             PdbPretrigger1  pdbPretrigger,
             Ticks           delay          = 0_ticks) {
 
@@ -895,12 +727,10 @@ public:
        *
        * This allows multiple different ADC channels to be converted in a sequence.
        *
-       * @param pdbChannel       Pretrigger being modified
        * @param pdbPretrigger    Pretrigger settings
        * @param delay            Delay - only needed for PdbPretrigger_Delayed
        */
       static void configure (
-            PdbChannel      pdbChannel,
             PdbPretrigger0  pdbPretrigger,
             Seconds         delay          = 0.0_s) {
 
@@ -918,12 +748,10 @@ public:
        *
        * This allows multiple different ADC channels to be converted in a sequence.
        *
-       * @param pdbChannel       Pretrigger being modified
        * @param pdbPretrigger    Pretrigger settings
        * @param delay            Delay - only needed for PdbPretrigger_Delayed
        */
       static void configure (
-            PdbChannel      pdbChannel,
             PdbPretrigger1  pdbPretrigger,
             Seconds         delay          = 0.0_s) {
 
@@ -931,27 +759,27 @@ public:
       }
 
       /**
-       * Disables the pretriggers associated with an ADC.
+       * Disables the pretriggers associated with channel
        */
       static void disable() {
 
-         PdbBase_T::disableAdcPretriggers(adcNum);
+         PdbBase_T::disableAdcPretriggers(pdbChannel);
       }
 
       /**
-       * Get error and sequence flags for the adcNum
+       * Get error and sequence flags for the channel
        */
       static uint32_t getFlags() {
 
-         return PdbBase_T::getChannelFlags(adcNum);
+         return PdbBase_T::getChannelFlags(pdbChannel);
       }
 
       /**
-       * Clear error and sequence flags for the adcNum
+       * Clear error and sequence flags for the channel
        */
       static void clearFlags() {
 
-         PdbBase_T::clearErrorFlags(adcNum);
+         PdbBase_T::clearErrorFlags(pdbChannel);
       }
 
    };
@@ -1182,13 +1010,6 @@ public:
 #endif
 };
 
-template<class Info> typename Info::CallbackFunction PdbBase_T<Info>::sCallback      = PdbBase_T<Info>::unhandledCallback;
-template<class Info> typename Info::CallbackFunction PdbBase_T<Info>::sErrorCallback = PdbBase_T<Info>::unhandledCallback;
-
-   /**
-    * Class representing PDB0
-    */
-   class Pdb0 : public PdbBase_T<Pdb0Info> {};
 
 /**
  * End PDB_Group

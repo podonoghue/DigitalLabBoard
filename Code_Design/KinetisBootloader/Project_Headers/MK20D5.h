@@ -5,7 +5,7 @@
  *           Equivalent: 
  *
  * @version  V1.6
- * @date     2023/02
+ * @date     2024/02
  *
  */
 
@@ -42,11 +42,11 @@ typedef enum {
   PendSV_IRQn                   =  -2,   /**<  14 Pendable request for system service                                              */
   SysTick_IRQn                  =  -1,   /**<  15 System Tick Timer                                                                */
 /* ----------------------   MK20D5 VectorTable                       ---------------------- */
-  DMA0_IRQn                     =   0,   /**<  16 Direct memory access controller                                                  */
-  DMA1_IRQn                     =   1,   /**<  17 Direct memory access controller                                                  */
-  DMA2_IRQn                     =   2,   /**<  18 Direct memory access controller                                                  */
-  DMA3_IRQn                     =   3,   /**<  19 Direct memory access controller                                                  */
-  DMA_Error_IRQn                =   4,   /**<  20 DMA error interrupt                                                              */
+  DMA0_CH0_IRQn                 =   0,   /**<  16 Direct memory access controller                                                  */
+  DMA0_CH1_IRQn                 =   1,   /**<  17 Direct memory access controller                                                  */
+  DMA0_CH2_IRQn                 =   2,   /**<  18 Direct memory access controller                                                  */
+  DMA0_CH3_IRQn                 =   3,   /**<  19 Direct memory access controller                                                  */
+  DMA0_Error_IRQn               =   4,   /**<  20 DMA error interrupt                                                              */
   FTF_Command_IRQn              =   6,   /**<  22 Flash Memory Interface                                                           */
   FTF_ReadCollision_IRQn        =   7,   /**<  23 Flash Memory Interface                                                           */
   PMC_IRQn                      =   8,   /**<  24 Power Management Controller                                                      */
@@ -101,11 +101,11 @@ extern void SVC_Handler(void);                       /**< System Service Call vi
 extern void DebugMon_Handler(void);                  /**< Debug Monitor                                                                    */
 extern void PendSV_Handler(void);                    /**< Pendable request for system service                                              */
 extern void SysTick_Handler(void);                   /**< System Tick Timer                                                                */
-extern void DMA0_IRQHandler(void);                   /**< Direct memory access controller                                                  */
-extern void DMA1_IRQHandler(void);                   /**< Direct memory access controller                                                  */
-extern void DMA2_IRQHandler(void);                   /**< Direct memory access controller                                                  */
-extern void DMA3_IRQHandler(void);                   /**< Direct memory access controller                                                  */
-extern void DMA_Error_IRQHandler(void);              /**< DMA error interrupt                                                              */
+extern void DMA0_CH0_IRQHandler(void);               /**< Direct memory access controller                                                  */
+extern void DMA0_CH1_IRQHandler(void);               /**< Direct memory access controller                                                  */
+extern void DMA0_CH2_IRQHandler(void);               /**< Direct memory access controller                                                  */
+extern void DMA0_CH3_IRQHandler(void);               /**< Direct memory access controller                                                  */
+extern void DMA0_Error_IRQHandler(void);             /**< DMA error interrupt                                                              */
 extern void FTF_Command_IRQHandler(void);            /**< Flash Memory Interface                                                           */
 extern void FTF_ReadCollision_IRQHandler(void);      /**< Flash Memory Interface                                                           */
 extern void PMC_IRQHandler(void);                    /**< Power Management Controller                                                      */
@@ -1164,6 +1164,9 @@ typedef struct CRC_Type {
 /** @{ */
 
 /** @name DATA - Data register */ /** @{ */
+#define CRC_DATA_DATA_MASK                       (0xFFFFFFFFU)                                       /**< CRC0_DATA.DATA Mask                     */
+#define CRC_DATA_DATA_SHIFT                      (0U)                                                /**< CRC0_DATA.DATA Position                 */
+#define CRC_DATA_DATA(x)                         (((uint32_t)(((uint32_t)(x))<<CRC_DATA_DATA_SHIFT))&CRC_DATA_DATA_MASK) /**< CRC0_DATA.DATA Field                    */
 #define CRC_DATA_LL_MASK                         (0xFFU)                                             /**< CRC0_DATA.LL Mask                       */
 #define CRC_DATA_LL_SHIFT                        (0U)                                                /**< CRC0_DATA.LL Position                   */
 #define CRC_DATA_LL(x)                           (((uint32_t)(((uint32_t)(x))<<CRC_DATA_LL_SHIFT))&CRC_DATA_LL_MASK) /**< CRC0_DATA.LL Field                      */
@@ -1215,6 +1218,9 @@ typedef struct CRC_Type {
 /** @} */
 
 /** @name GPOLY - Polynomial register */ /** @{ */
+#define CRC_GPOLY_GPOLY_MASK                     (0xFFFFFFFFU)                                       /**< CRC0_GPOLY.GPOLY Mask                   */
+#define CRC_GPOLY_GPOLY_SHIFT                    (0U)                                                /**< CRC0_GPOLY.GPOLY Position               */
+#define CRC_GPOLY_GPOLY(x)                       (((uint32_t)(((uint32_t)(x))<<CRC_GPOLY_GPOLY_SHIFT))&CRC_GPOLY_GPOLY_MASK) /**< CRC0_GPOLY.GPOLY Field                  */
 #define CRC_GPOLY_LOW_MASK                       (0xFFFFU)                                           /**< CRC0_GPOLY.LOW Mask                     */
 #define CRC_GPOLY_LOW_SHIFT                      (0U)                                                /**< CRC0_GPOLY.LOW Position                 */
 #define CRC_GPOLY_LOW(x)                         (((uint32_t)(((uint32_t)(x))<<CRC_GPOLY_LOW_SHIFT))&CRC_GPOLY_LOW_MASK) /**< CRC0_GPOLY.LOW Field                    */
@@ -1330,29 +1336,32 @@ typedef struct DMA_Type {
       __IO uint8_t   DCHPRI[4];                 /**< 0100: Channel  Priority Register                                   */
    };
         uint8_t   RESERVED_6[3836];             /**< 0104: 0xEFC bytes                                                  */
-   struct {
-      __IO uint32_t  SADDR;                     /**< 1000: Source Address                                               */
-      __IO uint16_t  SOFF;                      /**< 1004: Signed Source Address Offset                                 */
-      __IO uint16_t  ATTR;                      /**< 1006: Transfer Attributes                                          */
-      union {                                   /**< 1008: (size=0004)                                                  */
-         __IO uint32_t  NBYTES_MLNO;            /**< 1008: Minor Byte Count (Minor Loop Disabled)                       */
-         __IO uint32_t  NBYTES_MLOFFNO;         /**< 1008: Signed Minor Loop Offset (Minor Loop Enabled and Offset Disabled) */
-         __IO uint32_t  NBYTES_MLOFFYES;        /**< 1008: Signed Minor Loop Offset (Minor Loop and Offset Enabled)     */
-      };
-      __IO uint32_t  SLAST;                     /**< 100C: Last Source Address Adjustment                               */
-      __IO uint32_t  DADDR;                     /**< 1010: Destination Address                                          */
-      __IO uint16_t  DOFF;                      /**< 1014: Signed Destination Address Offset                            */
-      union {                                   /**< 1016: (size=0002)                                                  */
-         __IO uint16_t  CITER_ELINKNO;          /**< 1016: Current Minor Loop Link, Major Loop Count (Channel Linking Disabled) */
-         __IO uint16_t  CITER_ELINKYES;         /**< 1016: Current Minor Loop Link, Major Loop Count (Channel Linking Enabled) */
-      };
-      __IO uint32_t  DLASTSGA;                  /**< 1018: Last Destination Address Adjustment/Scatter Gather Address   */
-      __IO uint16_t  CSR;                       /**< 101C: Control and Status                                           */
-      union {                                   /**< 101E: (size=0002)                                                  */
-         __IO uint16_t  BITER_ELINKNO;          /**< 101E: Beginning Minor Loop Link, Major Loop Count (Channel Linking Disabled) */
-         __IO uint16_t  BITER_ELINKYES;         /**< 101E: Beginning Minor Loop Link, Major Loop Count (Channel Linking Enabled) */
-      };
-   } TCD[4];                                    /**< 1000: (cluster: size=0x0080, 128)                                  */
+   union {                                      /**< 1000: (size=0080)                                                  */
+      struct {
+         __IO uint32_t  SADDR;                  /**< 1000: Source Address                                               */
+         __IO uint16_t  SOFF;                   /**< 1004: Signed Source Address Offset                                 */
+         __IO uint16_t  ATTR;                   /**< 1006: Transfer Attributes                                          */
+         union {                                /**< 1008: (size=0004)                                                  */
+            __IO uint32_t  NBYTES_MLNO;         /**< 1008: Minor Byte Count (Minor Loop Disabled)                       */
+            __IO uint32_t  NBYTES_MLOFFNO;      /**< 1008: Signed Minor Loop Offset (Minor Loop Enabled and Offset Disabled) */
+            __IO uint32_t  NBYTES_MLOFFYES;     /**< 1008: Signed Minor Loop Offset (Minor Loop and Offset Enabled)     */
+         };
+         __IO uint32_t  SLAST;                  /**< 100C: Last Source Address Adjustment                               */
+         __IO uint32_t  DADDR;                  /**< 1010: Destination Address                                          */
+         __IO uint16_t  DOFF;                   /**< 1014: Signed Destination Address Offset                            */
+         union {                                /**< 1016: (size=0002)                                                  */
+            __IO uint16_t  CITER_ELINKNO;       /**< 1016: Current Minor Loop Link, Major Loop Count (Channel Linking Disabled) */
+            __IO uint16_t  CITER_ELINKYES;      /**< 1016: Current Minor Loop Link, Major Loop Count (Channel Linking Enabled) */
+         };
+         __IO uint32_t  DLASTSGA;               /**< 1018: Last Destination Address Adjustment/Scatter Gather Address   */
+         __IO uint16_t  CSR;                    /**< 101C: Control and Status                                           */
+         union {                                /**< 101E: (size=0002)                                                  */
+            __IO uint16_t  BITER_ELINKNO;       /**< 101E: Beginning Minor Loop Link, Major Loop Count (Channel Linking Disabled) */
+            __IO uint16_t  BITER_ELINKYES;      /**< 101E: Beginning Minor Loop Link, Major Loop Count (Channel Linking Enabled) */
+         };
+      } TCD[4];                                 /**< 1000: (cluster: size=0x0080, 128)                                  */
+      __IO uint32_t  TCD_RAW[32];               /**< 1000: Raw TCD array as uint32_t                                    */
+   };
 } DMA_Type;
 
 
@@ -1780,7 +1789,7 @@ typedef struct DMA_Type {
 #define DMA0_BasePtr                   0x40008000UL //!< Peripheral base address
 #define DMA0                           ((DMA_Type *) DMA0_BasePtr) //!< Freescale base pointer
 #define DMA0_BASE_PTR                  (DMA0) //!< Freescale style base pointer
-#define DMA0_IRQS { DMA0_IRQn, DMA1_IRQn, DMA2_IRQn, DMA3_IRQn, DMA_Error_IRQn,  }
+#define DMA0_IRQS { DMA0_CH0_IRQn, DMA0_CH1_IRQn, DMA0_CH2_IRQn, DMA0_CH3_IRQn, DMA0_Error_IRQn,  }
 
 
 /** @} */ /* End group DMA0_Peripheral_access_layer_GROUP */
@@ -2846,6 +2855,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name STATUS - Capture and Compare Status */ /** @{ */
+#define FTM_STATUS_STATUS_MASK                   (0xFFU)                                             /**< FTM0_STATUS.STATUS Mask                 */
+#define FTM_STATUS_STATUS_SHIFT                  (0U)                                                /**< FTM0_STATUS.STATUS Position             */
+#define FTM_STATUS_STATUS(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_STATUS_STATUS_SHIFT))&FTM_STATUS_STATUS_MASK) /**< FTM0_STATUS.STATUS Field                */
 #define FTM_STATUS_CH0F_MASK                     (0x1U)                                              /**< FTM0_STATUS.CH0F Mask                   */
 #define FTM_STATUS_CH0F_SHIFT                    (0U)                                                /**< FTM0_STATUS.CH0F Position               */
 #define FTM_STATUS_CH0F(x)                       (((uint32_t)(((uint32_t)(x))<<FTM_STATUS_CH0F_SHIFT))&FTM_STATUS_CH0F_MASK) /**< FTM0_STATUS.CH0F Field                  */
@@ -2909,6 +2921,9 @@ typedef struct FTM_Type {
 #define FTM_SYNC_SYNCHOM_MASK                    (0x8U)                                              /**< FTM0_SYNC.SYNCHOM Mask                  */
 #define FTM_SYNC_SYNCHOM_SHIFT                   (3U)                                                /**< FTM0_SYNC.SYNCHOM Position              */
 #define FTM_SYNC_SYNCHOM(x)                      (((uint32_t)(((uint32_t)(x))<<FTM_SYNC_SYNCHOM_SHIFT))&FTM_SYNC_SYNCHOM_MASK) /**< FTM0_SYNC.SYNCHOM Field                 */
+#define FTM_SYNC_TRIG_MASK                       (0x70U)                                             /**< FTM0_SYNC.TRIG Mask                     */
+#define FTM_SYNC_TRIG_SHIFT                      (4U)                                                /**< FTM0_SYNC.TRIG Position                 */
+#define FTM_SYNC_TRIG(x)                         (((uint32_t)(((uint32_t)(x))<<FTM_SYNC_TRIG_SHIFT))&FTM_SYNC_TRIG_MASK) /**< FTM0_SYNC.TRIG Field                    */
 #define FTM_SYNC_TRIG0_MASK                      (0x10U)                                             /**< FTM0_SYNC.TRIG0 Mask                    */
 #define FTM_SYNC_TRIG0_SHIFT                     (4U)                                                /**< FTM0_SYNC.TRIG0 Position                */
 #define FTM_SYNC_TRIG0(x)                        (((uint32_t)(((uint32_t)(x))<<FTM_SYNC_TRIG0_SHIFT))&FTM_SYNC_TRIG0_MASK) /**< FTM0_SYNC.TRIG0 Field                   */
@@ -2924,6 +2939,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name OUTINIT - Initial State for Channels Output */ /** @{ */
+#define FTM_OUTINIT_CHOI_MASK                    (0xFFU)                                             /**< FTM0_OUTINIT.CHOI Mask                  */
+#define FTM_OUTINIT_CHOI_SHIFT                   (0U)                                                /**< FTM0_OUTINIT.CHOI Position              */
+#define FTM_OUTINIT_CHOI(x)                      (((uint32_t)(((uint32_t)(x))<<FTM_OUTINIT_CHOI_SHIFT))&FTM_OUTINIT_CHOI_MASK) /**< FTM0_OUTINIT.CHOI Field                 */
 #define FTM_OUTINIT_CH0OI_MASK                   (0x1U)                                              /**< FTM0_OUTINIT.CH0OI Mask                 */
 #define FTM_OUTINIT_CH0OI_SHIFT                  (0U)                                                /**< FTM0_OUTINIT.CH0OI Position             */
 #define FTM_OUTINIT_CH0OI(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_OUTINIT_CH0OI_SHIFT))&FTM_OUTINIT_CH0OI_MASK) /**< FTM0_OUTINIT.CH0OI Field                */
@@ -2951,6 +2969,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name OUTMASK - Output Mask */ /** @{ */
+#define FTM_OUTMASK_CHOM_MASK                    (0xFFU)                                             /**< FTM0_OUTMASK.CHOM Mask                  */
+#define FTM_OUTMASK_CHOM_SHIFT                   (0U)                                                /**< FTM0_OUTMASK.CHOM Position              */
+#define FTM_OUTMASK_CHOM(x)                      (((uint32_t)(((uint32_t)(x))<<FTM_OUTMASK_CHOM_SHIFT))&FTM_OUTMASK_CHOM_MASK) /**< FTM0_OUTMASK.CHOM Field                 */
 #define FTM_OUTMASK_CH0OM_MASK                   (0x1U)                                              /**< FTM0_OUTMASK.CH0OM Mask                 */
 #define FTM_OUTMASK_CH0OM_SHIFT                  (0U)                                                /**< FTM0_OUTMASK.CH0OM Position             */
 #define FTM_OUTMASK_CH0OM(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_OUTMASK_CH0OM_SHIFT))&FTM_OUTMASK_CH0OM_MASK) /**< FTM0_OUTMASK.CH0OM Field                */
@@ -2978,6 +2999,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name COMBINE - Function for Linked Channels */ /** @{ */
+#define FTM_COMBINE_COMBINE_MASK                 (0x7FU)                                             /**< FTM0_COMBINE.COMBINE Mask               */
+#define FTM_COMBINE_COMBINE_SHIFT                (0U)                                                /**< FTM0_COMBINE.COMBINE Position           */
+#define FTM_COMBINE_COMBINE(x)                   (((uint32_t)(((uint32_t)(x))<<FTM_COMBINE_COMBINE_SHIFT))&FTM_COMBINE_COMBINE_MASK) /**< FTM0_COMBINE.COMBINE Field              */
 #define FTM_COMBINE_COMBINE0_MASK                (0x1U)                                              /**< FTM0_COMBINE.COMBINE0 Mask              */
 #define FTM_COMBINE_COMBINE0_SHIFT               (0U)                                                /**< FTM0_COMBINE.COMBINE0 Position          */
 #define FTM_COMBINE_COMBINE0(x)                  (((uint32_t)(((uint32_t)(x))<<FTM_COMBINE_COMBINE0_SHIFT))&FTM_COMBINE_COMBINE0_MASK) /**< FTM0_COMBINE.COMBINE0 Field             */
@@ -3074,6 +3098,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name EXTTRIG - FTM External Trigger */ /** @{ */
+#define FTM_EXTTRIG_CHTRIG_MASK                  (0xFFU)                                             /**< FTM0_EXTTRIG.CHTRIG Mask                */
+#define FTM_EXTTRIG_CHTRIG_SHIFT                 (0U)                                                /**< FTM0_EXTTRIG.CHTRIG Position            */
+#define FTM_EXTTRIG_CHTRIG(x)                    (((uint32_t)(((uint32_t)(x))<<FTM_EXTTRIG_CHTRIG_SHIFT))&FTM_EXTTRIG_CHTRIG_MASK) /**< FTM0_EXTTRIG.CHTRIG Field               */
 #define FTM_EXTTRIG_CH2TRIG_MASK                 (0x1U)                                              /**< FTM0_EXTTRIG.CH2TRIG Mask               */
 #define FTM_EXTTRIG_CH2TRIG_SHIFT                (0U)                                                /**< FTM0_EXTTRIG.CH2TRIG Position           */
 #define FTM_EXTTRIG_CH2TRIG(x)                   (((uint32_t)(((uint32_t)(x))<<FTM_EXTTRIG_CH2TRIG_SHIFT))&FTM_EXTTRIG_CH2TRIG_MASK) /**< FTM0_EXTTRIG.CH2TRIG Field              */
@@ -3101,6 +3128,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name POL - Channels Polarity */ /** @{ */
+#define FTM_POL_POL_MASK                         (0xFFU)                                             /**< FTM0_POL.POL Mask                       */
+#define FTM_POL_POL_SHIFT                        (0U)                                                /**< FTM0_POL.POL Position                   */
+#define FTM_POL_POL(x)                           (((uint32_t)(((uint32_t)(x))<<FTM_POL_POL_SHIFT))&FTM_POL_POL_MASK) /**< FTM0_POL.POL Field                      */
 #define FTM_POL_POL0_MASK                        (0x1U)                                              /**< FTM0_POL.POL0 Mask                      */
 #define FTM_POL_POL0_SHIFT                       (0U)                                                /**< FTM0_POL.POL0 Position                  */
 #define FTM_POL_POL0(x)                          (((uint32_t)(((uint32_t)(x))<<FTM_POL_POL0_SHIFT))&FTM_POL_POL0_MASK) /**< FTM0_POL.POL0 Field                     */
@@ -3167,6 +3197,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name FLTCTRL - Fault Control */ /** @{ */
+#define FTM_FLTCTRL_FAULTEN_MASK                 (0xFU)                                              /**< FTM0_FLTCTRL.FAULTEN Mask               */
+#define FTM_FLTCTRL_FAULTEN_SHIFT                (0U)                                                /**< FTM0_FLTCTRL.FAULTEN Position           */
+#define FTM_FLTCTRL_FAULTEN(x)                   (((uint32_t)(((uint32_t)(x))<<FTM_FLTCTRL_FAULTEN_SHIFT))&FTM_FLTCTRL_FAULTEN_MASK) /**< FTM0_FLTCTRL.FAULTEN Field              */
 #define FTM_FLTCTRL_FAULT0EN_MASK                (0x1U)                                              /**< FTM0_FLTCTRL.FAULT0EN Mask              */
 #define FTM_FLTCTRL_FAULT0EN_SHIFT               (0U)                                                /**< FTM0_FLTCTRL.FAULT0EN Position          */
 #define FTM_FLTCTRL_FAULT0EN(x)                  (((uint32_t)(((uint32_t)(x))<<FTM_FLTCTRL_FAULT0EN_SHIFT))&FTM_FLTCTRL_FAULT0EN_MASK) /**< FTM0_FLTCTRL.FAULT0EN Field             */
@@ -3179,6 +3212,9 @@ typedef struct FTM_Type {
 #define FTM_FLTCTRL_FAULT3EN_MASK                (0x8U)                                              /**< FTM0_FLTCTRL.FAULT3EN Mask              */
 #define FTM_FLTCTRL_FAULT3EN_SHIFT               (3U)                                                /**< FTM0_FLTCTRL.FAULT3EN Position          */
 #define FTM_FLTCTRL_FAULT3EN(x)                  (((uint32_t)(((uint32_t)(x))<<FTM_FLTCTRL_FAULT3EN_SHIFT))&FTM_FLTCTRL_FAULT3EN_MASK) /**< FTM0_FLTCTRL.FAULT3EN Field             */
+#define FTM_FLTCTRL_FFLTREN_MASK                 (0xF0U)                                             /**< FTM0_FLTCTRL.FFLTREN Mask               */
+#define FTM_FLTCTRL_FFLTREN_SHIFT                (4U)                                                /**< FTM0_FLTCTRL.FFLTREN Position           */
+#define FTM_FLTCTRL_FFLTREN(x)                   (((uint32_t)(((uint32_t)(x))<<FTM_FLTCTRL_FFLTREN_SHIFT))&FTM_FLTCTRL_FFLTREN_MASK) /**< FTM0_FLTCTRL.FFLTREN Field              */
 #define FTM_FLTCTRL_FFLTR0EN_MASK                (0x10U)                                             /**< FTM0_FLTCTRL.FFLTR0EN Mask              */
 #define FTM_FLTCTRL_FFLTR0EN_SHIFT               (4U)                                                /**< FTM0_FLTCTRL.FFLTR0EN Position          */
 #define FTM_FLTCTRL_FFLTR0EN(x)                  (((uint32_t)(((uint32_t)(x))<<FTM_FLTCTRL_FFLTR0EN_SHIFT))&FTM_FLTCTRL_FFLTR0EN_MASK) /**< FTM0_FLTCTRL.FFLTR0EN Field             */
@@ -3212,6 +3248,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name FLTPOL - FTM Fault Input Polarity */ /** @{ */
+#define FTM_FLTPOL_FLTPOL_MASK                   (0xFU)                                              /**< FTM0_FLTPOL.FLTPOL Mask                 */
+#define FTM_FLTPOL_FLTPOL_SHIFT                  (0U)                                                /**< FTM0_FLTPOL.FLTPOL Position             */
+#define FTM_FLTPOL_FLTPOL(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_FLTPOL_FLTPOL_SHIFT))&FTM_FLTPOL_FLTPOL_MASK) /**< FTM0_FLTPOL.FLTPOL Field                */
 #define FTM_FLTPOL_FLT0POL_MASK                  (0x1U)                                              /**< FTM0_FLTPOL.FLT0POL Mask                */
 #define FTM_FLTPOL_FLT0POL_SHIFT                 (0U)                                                /**< FTM0_FLTPOL.FLT0POL Position            */
 #define FTM_FLTPOL_FLT0POL(x)                    (((uint32_t)(((uint32_t)(x))<<FTM_FLTPOL_FLT0POL_SHIFT))&FTM_FLTPOL_FLT0POL_MASK) /**< FTM0_FLTPOL.FLT0POL Field               */
@@ -3275,6 +3314,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name INVCTRL - FTM Inverting Control */ /** @{ */
+#define FTM_INVCTRL_INVEN_MASK                   (0xFU)                                              /**< FTM0_INVCTRL.INVEN Mask                 */
+#define FTM_INVCTRL_INVEN_SHIFT                  (0U)                                                /**< FTM0_INVCTRL.INVEN Position             */
+#define FTM_INVCTRL_INVEN(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_INVCTRL_INVEN_SHIFT))&FTM_INVCTRL_INVEN_MASK) /**< FTM0_INVCTRL.INVEN Field                */
 #define FTM_INVCTRL_INV0EN_MASK                  (0x1U)                                              /**< FTM0_INVCTRL.INV0EN Mask                */
 #define FTM_INVCTRL_INV0EN_SHIFT                 (0U)                                                /**< FTM0_INVCTRL.INV0EN Position            */
 #define FTM_INVCTRL_INV0EN(x)                    (((uint32_t)(((uint32_t)(x))<<FTM_INVCTRL_INV0EN_SHIFT))&FTM_INVCTRL_INV0EN_MASK) /**< FTM0_INVCTRL.INV0EN Field               */
@@ -3290,6 +3332,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name SWOCTRL - FTM Software Output Control */ /** @{ */
+#define FTM_SWOCTRL_CHOC_MASK                    (0xFFU)                                             /**< FTM0_SWOCTRL.CHOC Mask                  */
+#define FTM_SWOCTRL_CHOC_SHIFT                   (0U)                                                /**< FTM0_SWOCTRL.CHOC Position              */
+#define FTM_SWOCTRL_CHOC(x)                      (((uint32_t)(((uint32_t)(x))<<FTM_SWOCTRL_CHOC_SHIFT))&FTM_SWOCTRL_CHOC_MASK) /**< FTM0_SWOCTRL.CHOC Field                 */
 #define FTM_SWOCTRL_CH0OC_MASK                   (0x1U)                                              /**< FTM0_SWOCTRL.CH0OC Mask                 */
 #define FTM_SWOCTRL_CH0OC_SHIFT                  (0U)                                                /**< FTM0_SWOCTRL.CH0OC Position             */
 #define FTM_SWOCTRL_CH0OC(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_SWOCTRL_CH0OC_SHIFT))&FTM_SWOCTRL_CH0OC_MASK) /**< FTM0_SWOCTRL.CH0OC Field                */
@@ -3314,6 +3359,9 @@ typedef struct FTM_Type {
 #define FTM_SWOCTRL_CH7OC_MASK                   (0x80U)                                             /**< FTM0_SWOCTRL.CH7OC Mask                 */
 #define FTM_SWOCTRL_CH7OC_SHIFT                  (7U)                                                /**< FTM0_SWOCTRL.CH7OC Position             */
 #define FTM_SWOCTRL_CH7OC(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_SWOCTRL_CH7OC_SHIFT))&FTM_SWOCTRL_CH7OC_MASK) /**< FTM0_SWOCTRL.CH7OC Field                */
+#define FTM_SWOCTRL_CHOCV_MASK                   (0xFF00U)                                           /**< FTM0_SWOCTRL.CHOCV Mask                 */
+#define FTM_SWOCTRL_CHOCV_SHIFT                  (8U)                                                /**< FTM0_SWOCTRL.CHOCV Position             */
+#define FTM_SWOCTRL_CHOCV(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_SWOCTRL_CHOCV_SHIFT))&FTM_SWOCTRL_CHOCV_MASK) /**< FTM0_SWOCTRL.CHOCV Field                */
 #define FTM_SWOCTRL_CH0OCV_MASK                  (0x100U)                                            /**< FTM0_SWOCTRL.CH0OCV Mask                */
 #define FTM_SWOCTRL_CH0OCV_SHIFT                 (8U)                                                /**< FTM0_SWOCTRL.CH0OCV Position            */
 #define FTM_SWOCTRL_CH0OCV(x)                    (((uint32_t)(((uint32_t)(x))<<FTM_SWOCTRL_CH0OCV_SHIFT))&FTM_SWOCTRL_CH0OCV_MASK) /**< FTM0_SWOCTRL.CH0OCV Field               */
@@ -3341,6 +3389,9 @@ typedef struct FTM_Type {
 /** @} */
 
 /** @name PWMLOAD - FTM PWM Load */ /** @{ */
+#define FTM_PWMLOAD_CHSEL_MASK                   (0xFFU)                                             /**< FTM0_PWMLOAD.CHSEL Mask                 */
+#define FTM_PWMLOAD_CHSEL_SHIFT                  (0U)                                                /**< FTM0_PWMLOAD.CHSEL Position             */
+#define FTM_PWMLOAD_CHSEL(x)                     (((uint32_t)(((uint32_t)(x))<<FTM_PWMLOAD_CHSEL_SHIFT))&FTM_PWMLOAD_CHSEL_MASK) /**< FTM0_PWMLOAD.CHSEL Field                */
 #define FTM_PWMLOAD_CH0SEL_MASK                  (0x1U)                                              /**< FTM0_PWMLOAD.CH0SEL Mask                */
 #define FTM_PWMLOAD_CH0SEL_SHIFT                 (0U)                                                /**< FTM0_PWMLOAD.CH0SEL Position            */
 #define FTM_PWMLOAD_CH0SEL(x)                    (((uint32_t)(((uint32_t)(x))<<FTM_PWMLOAD_CH0SEL_SHIFT))&FTM_PWMLOAD_CH0SEL_MASK) /**< FTM0_PWMLOAD.CH0SEL Field               */
@@ -3824,12 +3875,13 @@ typedef struct I2C_Type {
 /** @{ */
 
 /* ================================================================================ */
-/* ================           I2S0 (file:I2S0_2CH)                 ================ */
+/* ================           I2S0 (file:I2S0_1CH)                 ================ */
 /* ================================================================================ */
 
 /**
  * @brief Inter-IC Sound / Synchronous Audio Interface
  */
+#define I2S_CHANNEL_COUNT    1          /**< Number of Tx/Rx channels                           */
 /**
  * @struct I2S_Type
  * @brief  C Struct allowing access to I2S registers
@@ -3842,10 +3894,10 @@ typedef struct I2S_Type {
    __IO uint32_t  TCR4;                         /**< 0010: SAI Transmit Configuration 4 Register                        */
    __IO uint32_t  TCR5;                         /**< 0014: SAI Transmit Configuration 5 Register                        */
         uint8_t   RESERVED_0[8];                /**< 0018: 0x8 bytes                                                    */
-   __O  uint32_t  TDR[2];                       /**< 0020: Transmit Data Register                                       */
-        uint8_t   RESERVED_1[24];               /**< 0028: 0x18 bytes                                                   */
-   __I  uint32_t  TFR[2];                       /**< 0040: SAI Transmit FIFO Register                                   */
-        uint8_t   RESERVED_2[24];               /**< 0048: 0x18 bytes                                                   */
+   __O  uint32_t  TDR[I2S_CHANNEL_COUNT];       /**< 0020: Transmit Data Register                                       */
+        uint8_t   RESERVED_1[28];               /**< 0024: 0x1C bytes                                                   */
+   __I  uint32_t  TFR[I2S_CHANNEL_COUNT];       /**< 0040: SAI Transmit FIFO Register                                   */
+        uint8_t   RESERVED_2[28];               /**< 0044: 0x1C bytes                                                   */
    __IO uint32_t  TMR;                          /**< 0060: SAI Transmit Mask Register                                   */
         uint8_t   RESERVED_3[28];               /**< 0064: 0x1C bytes                                                   */
    __IO uint32_t  RCSR;                         /**< 0080: SAI Receive Control Register                                 */
@@ -3855,10 +3907,10 @@ typedef struct I2S_Type {
    __IO uint32_t  RCR4;                         /**< 0090: SAI Receive Configuration 4 Register                         */
    __IO uint32_t  RCR5;                         /**< 0094: SAI Receive Configuration 5 Register                         */
         uint8_t   RESERVED_4[8];                /**< 0098: 0x8 bytes                                                    */
-   __I  uint32_t  RDR[2];                       /**< 00A0: SAI Receive Data Register                                    */
-        uint8_t   RESERVED_5[24];               /**< 00A8: 0x18 bytes                                                   */
-   __I  uint32_t  RFR[2];                       /**< 00C0: SAI Receive FIFO Register                                    */
-        uint8_t   RESERVED_6[24];               /**< 00C8: 0x18 bytes                                                   */
+   __I  uint32_t  RDR[I2S_CHANNEL_COUNT];       /**< 00A0: SAI Receive Data Register                                    */
+        uint8_t   RESERVED_5[28];               /**< 00A4: 0x1C bytes                                                   */
+   __I  uint32_t  RFR[I2S_CHANNEL_COUNT];       /**< 00C0: SAI Receive FIFO Register                                    */
+        uint8_t   RESERVED_6[28];               /**< 00C4: 0x1C bytes                                                   */
    __IO uint32_t  RMR;                          /**< 00E0: SAI Receive Mask Register                                    */
         uint8_t   RESERVED_7[28];               /**< 00E4: 0x1C bytes                                                   */
    __IO uint32_t  MCR;                          /**< 0100: SAI MCLK Control Register                                    */
@@ -3963,10 +4015,10 @@ typedef struct I2S_Type {
 /** @} */
 
 /** @name TCR3 - SAI Transmit Configuration 3 Register */ /** @{ */
-#define I2S_TCR3_WDFL_MASK                       (0x1FU)                                             /**< I2S0_TCR3.WDFL Mask                     */
+#define I2S_TCR3_WDFL_MASK                       (0xFU)                                              /**< I2S0_TCR3.WDFL Mask                     */
 #define I2S_TCR3_WDFL_SHIFT                      (0U)                                                /**< I2S0_TCR3.WDFL Position                 */
 #define I2S_TCR3_WDFL(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TCR3_WDFL_SHIFT))&I2S_TCR3_WDFL_MASK) /**< I2S0_TCR3.WDFL Field                    */
-#define I2S_TCR3_TCE_MASK                        (0x30000U)                                          /**< I2S0_TCR3.TCE Mask                      */
+#define I2S_TCR3_TCE_MASK                        (0x10000U)                                          /**< I2S0_TCR3.TCE Mask                      */
 #define I2S_TCR3_TCE_SHIFT                       (16U)                                               /**< I2S0_TCR3.TCE Position                  */
 #define I2S_TCR3_TCE(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_TCR3_TCE_SHIFT))&I2S_TCR3_TCE_MASK) /**< I2S0_TCR3.TCE Field                     */
 /** @} */
@@ -3987,7 +4039,7 @@ typedef struct I2S_Type {
 #define I2S_TCR4_SYWD_MASK                       (0x1F00U)                                           /**< I2S0_TCR4.SYWD Mask                     */
 #define I2S_TCR4_SYWD_SHIFT                      (8U)                                                /**< I2S0_TCR4.SYWD Position                 */
 #define I2S_TCR4_SYWD(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TCR4_SYWD_SHIFT))&I2S_TCR4_SYWD_MASK) /**< I2S0_TCR4.SYWD Field                    */
-#define I2S_TCR4_FRSZ_MASK                       (0x1F0000U)                                         /**< I2S0_TCR4.FRSZ Mask                     */
+#define I2S_TCR4_FRSZ_MASK                       (0xF0000U)                                          /**< I2S0_TCR4.FRSZ Mask                     */
 #define I2S_TCR4_FRSZ_SHIFT                      (16U)                                               /**< I2S0_TCR4.FRSZ Position                 */
 #define I2S_TCR4_FRSZ(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_TCR4_FRSZ_SHIFT))&I2S_TCR4_FRSZ_MASK) /**< I2S0_TCR4.FRSZ Field                    */
 /** @} */
@@ -4113,10 +4165,10 @@ typedef struct I2S_Type {
 /** @} */
 
 /** @name RCR3 - SAI Receive Configuration 3 Register */ /** @{ */
-#define I2S_RCR3_WDFL_MASK                       (0x1FU)                                             /**< I2S0_RCR3.WDFL Mask                     */
+#define I2S_RCR3_WDFL_MASK                       (0xFU)                                              /**< I2S0_RCR3.WDFL Mask                     */
 #define I2S_RCR3_WDFL_SHIFT                      (0U)                                                /**< I2S0_RCR3.WDFL Position                 */
 #define I2S_RCR3_WDFL(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RCR3_WDFL_SHIFT))&I2S_RCR3_WDFL_MASK) /**< I2S0_RCR3.WDFL Field                    */
-#define I2S_RCR3_RCE_MASK                        (0x30000U)                                          /**< I2S0_RCR3.RCE Mask                      */
+#define I2S_RCR3_RCE_MASK                        (0x10000U)                                          /**< I2S0_RCR3.RCE Mask                      */
 #define I2S_RCR3_RCE_SHIFT                       (16U)                                               /**< I2S0_RCR3.RCE Position                  */
 #define I2S_RCR3_RCE(x)                          (((uint32_t)(((uint32_t)(x))<<I2S_RCR3_RCE_SHIFT))&I2S_RCR3_RCE_MASK) /**< I2S0_RCR3.RCE Field                     */
 /** @} */
@@ -4137,7 +4189,7 @@ typedef struct I2S_Type {
 #define I2S_RCR4_SYWD_MASK                       (0x1F00U)                                           /**< I2S0_RCR4.SYWD Mask                     */
 #define I2S_RCR4_SYWD_SHIFT                      (8U)                                                /**< I2S0_RCR4.SYWD Position                 */
 #define I2S_RCR4_SYWD(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RCR4_SYWD_SHIFT))&I2S_RCR4_SYWD_MASK) /**< I2S0_RCR4.SYWD Field                    */
-#define I2S_RCR4_FRSZ_MASK                       (0x1F0000U)                                         /**< I2S0_RCR4.FRSZ Mask                     */
+#define I2S_RCR4_FRSZ_MASK                       (0xF0000U)                                          /**< I2S0_RCR4.FRSZ Mask                     */
 #define I2S_RCR4_FRSZ_SHIFT                      (16U)                                               /**< I2S0_RCR4.FRSZ Position                 */
 #define I2S_RCR4_FRSZ(x)                         (((uint32_t)(((uint32_t)(x))<<I2S_RCR4_FRSZ_SHIFT))&I2S_RCR4_FRSZ_MASK) /**< I2S0_RCR4.FRSZ Field                    */
 /** @} */
@@ -6252,9 +6304,9 @@ typedef struct SIM_Type {
 #define SIM_SCGC4_UART2_MASK                     (0x1000U)                                           /**< SIM_SCGC4.UART2 Mask                    */
 #define SIM_SCGC4_UART2_SHIFT                    (12U)                                               /**< SIM_SCGC4.UART2 Position                */
 #define SIM_SCGC4_UART2(x)                       (((uint32_t)(((uint32_t)(x))<<SIM_SCGC4_UART2_SHIFT))&SIM_SCGC4_UART2_MASK) /**< SIM_SCGC4.UART2 Field                   */
-#define SIM_SCGC4_USBOTG_MASK                    (0x40000U)                                          /**< SIM_SCGC4.USBOTG Mask                   */
-#define SIM_SCGC4_USBOTG_SHIFT                   (18U)                                               /**< SIM_SCGC4.USBOTG Position               */
-#define SIM_SCGC4_USBOTG(x)                      (((uint32_t)(((uint32_t)(x))<<SIM_SCGC4_USBOTG_SHIFT))&SIM_SCGC4_USBOTG_MASK) /**< SIM_SCGC4.USBOTG Field                  */
+#define SIM_SCGC4_USB0_MASK                      (0x40000U)                                          /**< SIM_SCGC4.USB0 Mask                     */
+#define SIM_SCGC4_USB0_SHIFT                     (18U)                                               /**< SIM_SCGC4.USB0 Position                 */
+#define SIM_SCGC4_USB0(x)                        (((uint32_t)(((uint32_t)(x))<<SIM_SCGC4_USB0_SHIFT))&SIM_SCGC4_USB0_MASK) /**< SIM_SCGC4.USB0 Field                    */
 #define SIM_SCGC4_CMP_MASK                       (0x80000U)                                          /**< SIM_SCGC4.CMP Mask                      */
 #define SIM_SCGC4_CMP_SHIFT                      (19U)                                               /**< SIM_SCGC4.CMP Position                  */
 #define SIM_SCGC4_CMP(x)                         (((uint32_t)(((uint32_t)(x))<<SIM_SCGC4_CMP_SHIFT))&SIM_SCGC4_CMP_MASK) /**< SIM_SCGC4.CMP Field                     */
@@ -6264,9 +6316,9 @@ typedef struct SIM_Type {
 /** @} */
 
 /** @name SCGC5 - System Clock Gating Control Register 5 */ /** @{ */
-#define SIM_SCGC5_LPTMR_MASK                     (0x1U)                                              /**< SIM_SCGC5.LPTMR Mask                    */
-#define SIM_SCGC5_LPTMR_SHIFT                    (0U)                                                /**< SIM_SCGC5.LPTMR Position                */
-#define SIM_SCGC5_LPTMR(x)                       (((uint32_t)(((uint32_t)(x))<<SIM_SCGC5_LPTMR_SHIFT))&SIM_SCGC5_LPTMR_MASK) /**< SIM_SCGC5.LPTMR Field                   */
+#define SIM_SCGC5_LPTMR0_MASK                    (0x1U)                                              /**< SIM_SCGC5.LPTMR0 Mask                   */
+#define SIM_SCGC5_LPTMR0_SHIFT                   (0U)                                                /**< SIM_SCGC5.LPTMR0 Position               */
+#define SIM_SCGC5_LPTMR0(x)                      (((uint32_t)(((uint32_t)(x))<<SIM_SCGC5_LPTMR0_SHIFT))&SIM_SCGC5_LPTMR0_MASK) /**< SIM_SCGC5.LPTMR0 Field                  */
 #define SIM_SCGC5_TSI0_MASK                      (0x20U)                                             /**< SIM_SCGC5.TSI0 Mask                     */
 #define SIM_SCGC5_TSI0_SHIFT                     (5U)                                                /**< SIM_SCGC5.TSI0 Position                 */
 #define SIM_SCGC5_TSI0(x)                        (((uint32_t)(((uint32_t)(x))<<SIM_SCGC5_TSI0_SHIFT))&SIM_SCGC5_TSI0_MASK) /**< SIM_SCGC5.TSI0 Field                    */
@@ -6297,9 +6349,9 @@ typedef struct SIM_Type {
 #define SIM_SCGC6_SPI0_MASK                      (0x1000U)                                           /**< SIM_SCGC6.SPI0 Mask                     */
 #define SIM_SCGC6_SPI0_SHIFT                     (12U)                                               /**< SIM_SCGC6.SPI0 Position                 */
 #define SIM_SCGC6_SPI0(x)                        (((uint32_t)(((uint32_t)(x))<<SIM_SCGC6_SPI0_SHIFT))&SIM_SCGC6_SPI0_MASK) /**< SIM_SCGC6.SPI0 Field                    */
-#define SIM_SCGC6_I2S_MASK                       (0x8000U)                                           /**< SIM_SCGC6.I2S Mask                      */
-#define SIM_SCGC6_I2S_SHIFT                      (15U)                                               /**< SIM_SCGC6.I2S Position                  */
-#define SIM_SCGC6_I2S(x)                         (((uint32_t)(((uint32_t)(x))<<SIM_SCGC6_I2S_SHIFT))&SIM_SCGC6_I2S_MASK) /**< SIM_SCGC6.I2S Field                     */
+#define SIM_SCGC6_I2S0_MASK                      (0x8000U)                                           /**< SIM_SCGC6.I2S0 Mask                     */
+#define SIM_SCGC6_I2S0_SHIFT                     (15U)                                               /**< SIM_SCGC6.I2S0 Position                 */
+#define SIM_SCGC6_I2S0(x)                        (((uint32_t)(((uint32_t)(x))<<SIM_SCGC6_I2S0_SHIFT))&SIM_SCGC6_I2S0_MASK) /**< SIM_SCGC6.I2S0 Field                    */
 #define SIM_SCGC6_CRC_MASK                       (0x40000U)                                          /**< SIM_SCGC6.CRC Mask                      */
 #define SIM_SCGC6_CRC_SHIFT                      (18U)                                               /**< SIM_SCGC6.CRC Position                  */
 #define SIM_SCGC6_CRC(x)                         (((uint32_t)(((uint32_t)(x))<<SIM_SCGC6_CRC_SHIFT))&SIM_SCGC6_CRC_MASK) /**< SIM_SCGC6.CRC Field                     */
@@ -6327,9 +6379,9 @@ typedef struct SIM_Type {
 /** @} */
 
 /** @name SCGC7 - System Clock Gating Control Register 7 */ /** @{ */
-#define SIM_SCGC7_DMA_MASK                       (0x2U)                                              /**< SIM_SCGC7.DMA Mask                      */
-#define SIM_SCGC7_DMA_SHIFT                      (1U)                                                /**< SIM_SCGC7.DMA Position                  */
-#define SIM_SCGC7_DMA(x)                         (((uint32_t)(((uint32_t)(x))<<SIM_SCGC7_DMA_SHIFT))&SIM_SCGC7_DMA_MASK) /**< SIM_SCGC7.DMA Field                     */
+#define SIM_SCGC7_DMA0_MASK                      (0x2U)                                              /**< SIM_SCGC7.DMA0 Mask                     */
+#define SIM_SCGC7_DMA0_SHIFT                     (1U)                                                /**< SIM_SCGC7.DMA0 Position                 */
+#define SIM_SCGC7_DMA0(x)                        (((uint32_t)(((uint32_t)(x))<<SIM_SCGC7_DMA0_SHIFT))&SIM_SCGC7_DMA0_MASK) /**< SIM_SCGC7.DMA0 Field                    */
 /** @} */
 
 /** @name CLKDIV1 - System Clock Divider Register 1 */ /** @{ */

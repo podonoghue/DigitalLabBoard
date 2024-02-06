@@ -7,7 +7,7 @@
  * @date     13 April 2016
  */
 
-#ifndef INCLUDE_USBDM_MCG_H_
+#ifndef INCLUDE_USBDM_MCG_H_ 
 #define INCLUDE_USBDM_MCG_H_
  /*
  * *****************************
@@ -28,15 +28,6 @@ namespace USBDM {
  * @brief Abstraction for Multipurpose Clock Generator
  * @{
  */
-
-/** MCGFFCLK - Fixed frequency clock (input to FLL) */
-extern volatile uint32_t SystemMcgFFClock;
-/** MCGOUTCLK - Primary output from MCG, various sources */
-extern volatile uint32_t SystemMcgOutClock;
-/** MCGFLLCLK - Output of FLL */
-extern volatile uint32_t SystemMcgFllClock;
-/** MCGPLLCLK - Output of PLL */
-extern volatile uint32_t SystemMcgPllClock;
 
 /**
  * Clock configurations
@@ -105,11 +96,6 @@ public:
 };
 
 /**
- * Type definition for MCG interrupt call back
- */
-typedef void (*MCGCallbackFunction)(void);
-
-/**
  * @brief Class representing the MCG
  *
  * <b>Example</b>
@@ -117,9 +103,10 @@ typedef void (*MCGCallbackFunction)(void);
  *    Mcg::initialise();
  * @endcode
  */
-class Mcg {
+class Mcg : public McgInfo {
 
 private:
+#if false
    static ClockChangeCallback *clockChangeCallbackQueue;
 
    static void notifyBeforeClockChange() {
@@ -136,6 +123,7 @@ private:
          p = p->next;
       }
    }
+
 public:
    /**
     * Add callback for clock configuration changes
@@ -146,10 +134,9 @@ public:
       callback.next = clockChangeCallbackQueue;
       clockChangeCallbackQueue = &callback;
    }
+#endif
 
 private:
-   /** Callback function for ISR */
-   static MCGCallbackFunction callback;
 
    /** Hardware instance */
    static constexpr HardwarePtr<MCG_Type> mcg = McgInfo::baseAddress;
@@ -165,15 +152,17 @@ public:
     */
    static const ClockInfo clockInfo[];
 
+   /** Current clock mode (FEI out of reset) */
+   static McgClockMode currentClockMode;
+
    /**
-    * Transition from current clock mode to mode given
+    * Update SystemCoreClock variable
     *
-    * @param[in]  clockInfo Clock mode to transition to
-    *
-    * @return E_NO_ERROR          on success
-    * @return E_CLOCK_INIT_FAILED on failure
+    * Updates the SystemCoreClock variable with current core Clock retrieved from CPU registers.
     */
-   static ErrorCode clockTransition(const ClockInfo &clockInfo);
+   static void SystemCoreClockUpdate(void);
+
+#if true // /MCG/enablePeripheralSupport
 
    /**
     * Write main MCG registers from clockInfo
@@ -189,55 +178,14 @@ public:
    static void writeMainRegs(const ClockInfo &clockInfo, uint8_t bugFix);
 
    /**
-    * Update SystemCoreClock variable
+    * Transition from current clock mode to mode given
     *
-    * Updates the SystemCoreClock variable with current core Clock retrieved from CPU registers.
-    */
-   static void SystemCoreClockUpdate(void);
-
-   /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(McgInfo::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
+    * @param[in]  clockInfo Clock mode to transition to
     *
-    * @param[in]  nvicPriority  Interrupt priority
+    * @return E_NO_ERROR          on success
+    * @return E_CLOCK_INIT_FAILED on failure
     */
-   static void enableNvicInterrupts(NvicPriority nvicPriority) {
-      enableNvicInterrupt(McgInfo::irqNums[0], nvicPriority);
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(McgInfo::irqNums[0]);
-   }
-   /**
-    * MCG interrupt handler -  Calls MCG callback
-    */
-   static void irqHandler() {
-      if (callback != 0) {
-         callback();
-      }
-   }
-
-   /**
-    * Set callback for ISR
-    *
-    * @param[in]  callback The function to call from stub ISR
-    */
-   static void setCallback(MCGCallbackFunction callback) {
-      Mcg::callback = callback;
-   }
-
-   /** Current clock mode (FEI out of reset) */
-   static McgClockMode currentClockMode;
+   static ErrorCode clockTransition(const ClockInfo &clockInfo);
 
    /**
     * Get current clock mode
@@ -267,7 +215,7 @@ public:
    /**
     *  Configure the MCG for given mode
     *
-    *  @param[in]  settingNumber CLock setting number
+    *  @param[in]  settingNumber Clock setting number
     */
    static void configure(ClockConfig settingNumber=ClockConfig_default) {
       clockTransition(clockInfo[settingNumber]);
@@ -280,19 +228,17 @@ public:
       clockTransition(clockInfo[ClockConfig_default]);
    }
 
-   /**
-    * Initialise MCG to default settings.
-    */
-   static void defaultConfigure();
+#endif
 
    /**
-    * Set up the OSC out of reset.
+    * Initialise MCG as part of startup sequence
     */
-   static void initialise() {
-      defaultConfigure();
-   }
+   static void startupConfigure();
 
+// No /MCG/InitMethod methods found
 };
+
+// /MCG/No declarations methods found
 
 /**
  * @}

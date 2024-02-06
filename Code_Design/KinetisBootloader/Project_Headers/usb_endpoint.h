@@ -16,7 +16,29 @@
  *
  * This file is generated automatically.
  * Any manual changes will be lost.
+
+\verbatim
+    Kinetis USB Code
+
+    Copyright (C) 2008-24  Peter O'Donoghue
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+\endverbatim
+
  */
+#if true // /USB0/enablePeripheralSupport
 #include "usb_defs.h"
 #include "derivative.h"
 #include "error.h"
@@ -38,17 +60,18 @@ extern volatile EndpointBdtEntry endPointBdts[];
 static BdtEntry *bdts() { return (BdtEntry *)endPointBdts; }
 
 /** Endpoint state values */
-enum EndpointState {
+enum EndpointState : uint8_t {
    EPIdle = 0,  //!< Idle
    EPDataIn,    //!< Doing a sequence of IN transactions
    EPDataOut,   //!< Doing a sequence of OUT transactions
    EPStatusIn,  //!< Doing an IN transaction as a status handshake
    EPStatusOut, //!< Doing an OUT transaction as a status handshake
    EPStall,     //!< Endpoint is stalled
-   EPComplete,  //!< Used for command protocol - new command available
+   EPComplete,  //!< Used for command protocol - new command available for processing
+   EPBusy,      //!< Busy processing last transfer - send NAK i.e. endpoint not set up
 };
 
-enum EndPointType {
+enum EndPointType : uint8_t {
    EndPointType_Control,
    EndPointType_Bulk,
    EndPointType_Interrupt,
@@ -60,11 +83,11 @@ enum EndPointType {
 class Endpoint {
 
 public:
-   /** End point number */
-   const uint16_t fEndpointNumber;
-
    /**  Size of endpoint (size of maximum transfer)  */
    const uint16_t fEndpointSize;
+
+   /** End point number */
+   const uint8_t fEndpointNumber;
 
    /** Endpoint type */
    const EndPointType fEndPointType;
@@ -131,12 +154,9 @@ protected:
    /**
     *  Dummy callback used to catch use of unset callback
     *
-    * @param [in]  endpointState State of endpoint before completion
-    *
     * @return The endpoint state to set after call-back (EPIdle)
     */
-   static EndpointState unsetHandlerCallback(EndpointState endpointState) {
-      (void)endpointState;
+   static EndpointState unsetHandlerCallback(EndpointState) {
 //      setAndCheckErrorCode(E_NO_HANDLER);
       return EPIdle;
    }
@@ -157,11 +177,11 @@ protected:
       if (size > fEndpointSize) {
          size = fEndpointSize;
       }
-      // No ZLP needed if sending undersize transaction
+      // No ZLP needed if sending undersize transaction (as last transaction in transfer)
       if (size<fEndpointSize) {
-         setNeedZLP(false);
+         fNeedZLP = false;
       }
-      // fDataBuffer may be nullptr to indicate using fDataBuffer directly
+      // fDataPtr may be nullptr to indicate using fDataBuffer directly
       if (fDataPtr != nullptr) {
          // Copy the Transmit data to EP buffer
          safeCopy(fTxDataBuffer, fDataPtr, size);
@@ -309,15 +329,15 @@ public:
     * @param [in] usb            Reference to USB hardware
     */
    constexpr Endpoint (
-         int               endpointNumber,
-         unsigned          endpointSize,
+         uint8_t           endpointNumber,
+         uint16_t          endpointSize,
          EndPointType      endPointType,
          uint8_t           bdtValue,
          uint8_t           txDataBuffer[],
          uint8_t           rxDataBuffer[],
          uint32_t          usb) :
-            fEndpointNumber(endpointNumber),
             fEndpointSize(endpointSize),
+            fEndpointNumber(endpointNumber),
             fEndPointType(endPointType),
             fEpControlValue(bdtValue),
             fBdt(endPointBdts[endpointNumber]),
@@ -333,9 +353,13 @@ public:
     * Initialise endpoint
     *  - Internal state
     *  - BDTs
+    *
+    * @param clearToggle  Clear data toggle on endpoint
     */
-   void initialise() {
-      fDataToggle       = DataToggle_0;
+   void initialise(bool clearToggle) {
+      if (clearToggle) {
+         fDataToggle       = DataToggle_0;
+      }
       fState            = EPIdle;
       fNeedZLP          = false;
       fDataPtr          = nullptr;
@@ -373,7 +397,7 @@ public:
    }
 
    /**
-    * Return end-point state
+    * Return endpoint state
     *
     * @return Endpoint state
     */
@@ -451,15 +475,14 @@ public:
    }
 
    /**
-    *  Indicates that the next IN transaction needs to be terminated
-    *  with a ZLP if transfer size is multiple of endpoint size
-    *
-    *  @param [in]  needZLP True to indicate need for ZLPs.
+    *  Indicates that the <b>next</b> IN transfer needs to be terminated
+    *  with a ZLP if transfer size is multiple of endpoint size.
+    *  This flag is cleared at the end of each transfer i.e. set before transfers as required.
     *
     *  @note This flag is cleared during the transaction
     */
-   void setNeedZLP(bool needZLP=true) {
-      fNeedZLP = needZLP;
+   void setNeedZLP() {
+      fNeedZLP = true;
    }
 
    /**
@@ -517,13 +540,15 @@ public:
    }
 
    /**
-    * Start IN transaction stage [Transmit, device -> host, DATA0/1 sequence]
+    * Start IN transfer [Transmit, device -> host, DATA0/1 sequence].
+    * This will initiate the first of several IN transactions  to transfer the entire buffer contents.
     *
     * @param [in]  state   State to adopt for this phase e.g. EPDataIn, EPStatusIn
     * @param [in]  bufSize Size of buffer to send (may be zero)
-    * @param [in]  bufPtr  Pointer to external buffer (may be NULL to indicate fDatabuffer is being used directly)
+    * @param [in]  bufPtr  Pointer to external buffer.
+    *                      May be nullptr to indicate internal buffer is being used directly (limited to EP size).
     */
-   void startTxStage(EndpointState state, uint16_t bufSize=0, const uint8_t *bufPtr=nullptr) {
+   void startTxTransfer(EndpointState state, uint16_t bufSize=0, const uint8_t *bufPtr=nullptr) {
 
       // Pointer to data
       fDataPtr = (uint8_t*)bufPtr;
@@ -542,13 +567,17 @@ public:
    }
 
    /**
-    * Start an OUT transaction stage [Receive, device <- host, DATA0/1 sequence]
+    * Start an OUT transfer [Receive, device <- host, DATA0/1 sequence].
+    * This will initiate the first of several OUT transactions to transfer data into the buffer.
+    * Transfer is completed when bufSize bytes are received or an individual transaction of occurs with (size < EP size).
+    * Extra data in last transaction will be discarded.
     *
-    *   @param [in]  state   - State to adopt for phase e.g. EPIdle, EPDataOut, EPStatusOut
-    *   @param [in]  bufSize - Size of data to transfer (may be zero)
-    *   @param [in]  bufPtr  - Buffer for data (may be nullptr)
+    * @param [in]  state   State to adopt for phase e.g. EPDataOut, EPStatusOut
+    * @param [in]  bufSize Size of data to transfer (may be zero)
+    * @param [out] bufPtr  Pointer to external buffer.
+    *                      May be nullptr to indicate internal buffer is being used directly (limited to EP size).
     */
-   void startRxStage(EndpointState state, uint16_t bufSize=0, uint8_t *bufPtr=nullptr) {
+   void startRxTransfer(EndpointState state, uint16_t bufSize=0, uint8_t *bufPtr=nullptr) {
       // Count of bytes transferred
       fDataTransferred     = 0;
       // Total bytes to Receive
@@ -562,7 +591,7 @@ public:
    }
 
    /**
-    * Handle OUT [Receive, device <- host, DATA0/1]
+    * Handle OUT token [Receive, device <- host, DATA0/1]
     */
    void handleOutToken() {
       //      console.WRITE("Out(),");
@@ -583,11 +612,11 @@ public:
                   // Just completed a series of OUT transfers on Control endpoint -
                   // Do empty status transaction transmission - no response expected
                   setDataToggle(DataToggle_1);
-                  startTxStage(EPStatusIn);
+                  startTxTransfer(EPStatusIn);
 
                   // Make ready for next SETUP stage
                   setDataToggle(DataToggle_0);
-                  startRxStage(EPStatusIn);
+                  startRxTransfer(EPStatusIn);
                }
                else {
                   // Bulk or interrupt
@@ -604,7 +633,7 @@ public:
          case EPStatusOut:       // Done OUT transaction as a status handshake from host (IN CONTROL transfer)
             // Make ready for SETUP stage
             setDataToggle(DataToggle_0);
-            startRxStage(EPIdle);
+            startRxTransfer(EPIdle);
 
             // Execute callback function after STATUS IN transaction
             fCallback(EPStatusOut);
@@ -724,6 +753,7 @@ uint8_t Endpoint_T<Info, ENDPOINT_NUM, EP_MAXSIZE>::fAllocatedDataBuffer[EP_MAXS
 
 /**
  * Class for generic endpoint with 2 buffers (Tx + Rx)
+ * Used for Control endpoints
  *
  * @tparam Info         Class describing associated USB hardware
  * @tparam ENDPOINT_NUM Endpoint number
@@ -770,8 +800,8 @@ public:
    using Endpoint_T<Info, 0, EP0_SIZE>::fState;
    using Endpoint_T<Info, 0, EP0_SIZE>::startRxTransaction;
    using Endpoint_T<Info, 0, EP0_SIZE>::getFreeBdtReceiveEntry;
-   using Endpoint_T<Info, 0, EP0_SIZE>::startTxStage;
-   using Endpoint_T<Info, 0, EP0_SIZE>::startRxStage;
+   using Endpoint_T<Info, 0, EP0_SIZE>::startTxTransfer;
+   using Endpoint_T<Info, 0, EP0_SIZE>::startRxTransfer;
    using Endpoint_T<Info, 0, EP0_SIZE>::setDataToggle;
 
    /** End point number */
@@ -801,7 +831,7 @@ public:
     */
    void startTxStatus() {
       setDataToggle(DataToggle_1);
-      startTxStage(EPStatusIn);
+      startTxTransfer(EPStatusIn);
    }
 
    /**
@@ -812,7 +842,7 @@ public:
     */
    void startSetupTransaction() {
       setDataToggle(DataToggle_0);
-      startRxStage(EPIdle);
+      startRxTransfer(EPIdle);
    }
 
    /**
@@ -862,9 +892,10 @@ protected:
 
 private:
    // Make private
-   using Endpoint::startRxStage;
+   using Endpoint::startRxTransfer;
    using Endpoint::startRxTransaction;
    using Endpoint::saveRxData;
+   using Endpoint::getRxBuffer;
 
    // Value used to initialise an Endpoint Control Register - Tx
    static constexpr uint8_t fEpControlValue = USB_ENDPT_EPTXEN_MASK|USB_ENDPT_EPHSHK_MASK;
@@ -892,8 +923,9 @@ protected:
 
 private:
    // Make private
-   using Endpoint::startTxStage;
+   using Endpoint::startTxTransfer;
    using Endpoint::startTxTransaction;
+   using Endpoint::getTxBuffer;
 
    // Value used to initialise an Endpoint Control Register - Rx
    static constexpr uint8_t fEpControlValue = USB_ENDPT_EPRXEN_MASK|USB_ENDPT_EPHSHK_MASK;
@@ -913,5 +945,6 @@ public:
  */
 
 }; // end namespace
+#endif // /USB0/enablePeripheralSupport
 
 #endif /* HEADER_USB_ENDPOINT_H */

@@ -17,17 +17,20 @@ __attribute__((__weak__))
 void SystemCoreClockUpdate(void) {
 }
 
-/* These are overridden if actual clock code is provided */
-/* Based on Kinetis internal clock used after reset */
-__attribute__((__weak__))
-uint32_t SystemCoreClock = 20000000;
-__attribute__((__weak__))
-uint32_t SystemBusClock  = 20000000;
+   /**
+    *  System Core Clock
+    *  Clocks the ARM Cortex-M4 core and bus masters
+    */
+   uint32_t SystemCoreClock;
+   
+   /**
+    *  System Bus Clock
+    *  Clocks the bus slaves and peripherals
+    *        - Must be &lt;= Core Clock frequency and an integer divisor
+    */
+   uint32_t SystemBusClock;
+   
 
-#ifdef SIM_CLKDIV1_OUTDIV3_MASK
-__attribute__((__weak__))
-uint32_t SystemFlexbusClock = 20000000;
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,11 +47,6 @@ void clock_initialise() {
 /* This definition is overridden if UART initialisation is provided */
 __attribute__((__weak__))
 void console_initialise() {
-}
-
-/* This definition is overridden if RTC initialisation is provided */
-__attribute__((__weak__))
-void rtc_initialise() {
 }
 
 // Dummy hook routine for when CMSIS is not used.
@@ -96,40 +94,10 @@ void SystemInitLowLevel(void) {
    // Clear Boot ROM flag
    RCM->MR = RCM_MR_BOOTROM(3);
 #endif
-
-//#ifdef WDOG_CS_UPDATE
-//   /* Unlocking Watchdog word */
-//#define WDOG_UPDATE_KEY  (0xD928C520U)
-//
-//   // Disable watch-dog
-//   WDOG->CNT    = WDOG_UPDATE_KEY; // Write the unlock word
-//   WDOG->TOVAL  = -1;              // Setting time-out value
-//   WDOG->CS     =
-//#ifdef WDOG_CS_CMD32EN
-//         WDOG_CS_CMD32EN(1) |    // Enable 32 bit writes
-//#endif
-//         WDOG_CS_EN(0) |         // Disable watch-dog
-//         WDOG_CS_CLK(1) |        // Setting 1-kHz clock source
-//         WDOG_CS_UPDATE(1);      // Allow future update
-//#endif
-
-//#ifdef WDOG_CS1_UPDATE_MASK
-//   /* Unlocking Watchdog sequence words*/
-//#define WDOG_KEY1    (0x20C5)
-//#define WDOG_KEY2    (0x28D9)
-//
-//   /* Disable watch-dog */
-//   WDOG->CNT    = WDOG_KEY1;               // Write the 1st unlock word
-//   WDOG->CNT    = WDOG_KEY2;               // Write the 2nd unlock word
-//   WDOG->TOVAL  = -1;                      // Setting time-out value
-//   WDOG->CS2    = WDOG_CS2_CLK(1);         // Setting 1-kHz clock source
-//   WDOG->CS1    = WDOG_CS1_UPDATE(1);      // Disable watchdog and allow future changes
-//#endif
-
    /*
-    * Initialise watchdog
+    * Disable watchdog
     */
-   USBDM::Wdog::defaultConfigure();
+   USBDM::Wdog::disableWdog();
    
 #if defined(KINETIS_BOOTLOADER_CHECK)
    /**
@@ -148,22 +116,21 @@ void SystemInitLowLevel(void) {
 __attribute__ ((constructor))
 void SystemInit(void) {
    /*
-    * This is generic initialization code
+    * This is generic initialisation code
     * It may not be correct for a specific target
     */
 
 #ifdef PMC_REGSC_ACKISO
-   USBDM::Pmc::releasePins();
+   USBDM::PmcInfo::releaseIsolation();
 #endif
 
    /* Use Clock initialisation - if present */
    clock_initialise();
+   
+   /* Early system startup code for peripherals */
 
    /* Use UART initialisation - if present */
    console_initialise();
-
-   /* Use RTC initialisation - if present */
-   rtc_initialise();
 
 #if defined(__VFP_FP__) && !defined(__SOFTFP__)
 //#warning "Using FP hardware"
@@ -180,4 +147,7 @@ void SystemInit(void) {
          "  ISB                        \n"  // Reset pipeline now the FPU is enabled
    );
 #endif
+/* System startup code for peripherals */
+
+
 }

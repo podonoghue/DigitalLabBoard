@@ -48,7 +48,7 @@
             <property name="name">ProgrammerDialogueSkeleton</property>
             <property name="pos"></property>
             <property name="size">534,287</property>
-            <property name="style">wxDEFAULT_DIALOG_STYLE</property>
+            <property name="style">wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</property>
             <property name="subclass">; ; forward_declare</property>
             <property name="title">CPLD Programmer</property>
             <property name="tooltip"></property>

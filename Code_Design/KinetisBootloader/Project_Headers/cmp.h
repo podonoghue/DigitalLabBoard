@@ -74,13 +74,6 @@ class CmpBase_T : public Info {
 
 protected:
    /**
-    * Type definition for CMP interrupt call back
-    *
-    * @param[in]  status Struct indicating interrupt source and state
-    */
-   typedef typename Info::CallbackFunction CmpCallbackFunction;
-
-   /**
     * Limit index to permitted pin index range
     * Used to prevent noise from static assertion checks that detect a condition already detected in a more useful fashion.
     *
@@ -102,7 +95,7 @@ protected:
    template<int cmpOutput> class CheckOutputIsMapped {
 
       // Check mapping - no need to check existence
-      static constexpr bool Test1 = (Info::info[cmpOutput].gpioBit != UNMAPPED_PCR);
+      static constexpr bool Test1 = (Info::info[cmpOutput].pinIndex != PinIndex::UNMAPPED_PCR);
 
       static_assert(Test1, "CMP output is not mapped to a pin - Modify Configure.usbdm");
 
@@ -118,9 +111,9 @@ protected:
       // Out of bounds value for function index
       static constexpr bool Test1 = (cmpInput>=0) && (cmpInput<(Info::numSignals));
       // Function is not currently mapped to a pin
-      static constexpr bool Test2 = !Test1 || (Info::info[cmpInput].gpioBit != UNMAPPED_PCR);
+      static constexpr bool Test2 = !Test1 || (Info::info[cmpInput].gpioBit != PinIndex::UNMAPPED_PCR);
       // Non-existent function and catch-all. (should be INVALID_PCR)
-      static constexpr bool Test3 = !Test1 || !Test2 || (Info::info[cmpInput].gpioBit >= 0);
+      static constexpr bool Test3 = !Test1 || !Test2 || (Info::info[cmpInput].gpioBit >= PinIndex::MIN_PIN_INDEX);
 
       static_assert(Test1, "Illegal CMP Input - Check Configure.usbdm for available inputs");
       static_assert(Test2, "CMP input is not mapped to a pin - Modify Configure.usbdm");
@@ -141,12 +134,11 @@ protected:
       setAndCheckErrorCode(E_NO_HANDLER);
    }
 
-   /** Callback function for ISR */
-   static typename Info::CallbackFunction sCallback;
-
 public:
    /// Pin mapped to CMP output
    using OutputPin = PcrTable_T<Info, Info::outputPin>;
+
+   using Info::configure;
 
    /**
     * Hardware instance pointer
@@ -155,22 +147,7 @@ public:
     */
    static constexpr HardwarePtr<CMP_Type> cmp = Info::baseAddress;
 
-   /**
-    * IRQ handler
-    */
-   static void irqHandler() {
-      unsigned status = cmp->SCR&(CMP_SCR_CFR_MASK|CMP_SCR_CFF_MASK|CMP_SCR_COUT_MASK);
-
-      // Clear interrupt flags
-      cmp->SCR = cmp->SCR | status;
-
-      // Create status from snapshot
-      CmpStatus cmpStatus{(CmpEventId)(status&(CMP_SCR_CFR_MASK|CMP_SCR_CFF_MASK)),(bool)(status&CMP_SCR_COUT_MASK)};
-
-      // Call handler
-      sCallback(cmpStatus);
-   }
-
+#if false // /CMP/irqHandlingMethod
    /**
     * Wrapper to allow the use of a class member as a callback function
     * @note Only usable with static objects.
@@ -203,8 +180,8 @@ public:
     * @endcode
     */
    template<class T, void(T::*callback)(CmpStatus status), T &object>
-   static CmpCallbackFunction wrapCallback() {
-      static CmpCallbackFunction fn = [](CmpStatus status) {
+   static typename Info::CallbackFunction wrapCallback() {
+      static typename Info::CallbackFunction fn = [](CmpStatus status) {
          (object.*callback)(status);
       };
       return fn;
@@ -242,122 +219,25 @@ public:
     * @endcode
     */
    template<class T, void(T::*callback)(CmpStatus status)>
-   static CmpCallbackFunction wrapCallback(T &object) {
+   static typename Info::CallbackFunction wrapCallback(T &object) {
       static T &obj = object;
-      static CmpCallbackFunction fn = [](CmpStatus status) {
+      static typename Info::CallbackFunction fn = [](CmpStatus status) {
          (obj.*callback)(status);
       };
       return fn;
    }
-
-   /**
-    * Set callback function
-    *
-    * @param[in] callback Callback function to execute on interrupt.\n
-    *                     Use nullptr to remove callback.
-    */
-   static void setCallback(CmpCallbackFunction callback) {
-      static_assert(Info::irqHandlerInstalled, "CMP not configured for interrupts");
-      if (callback == nullptr) {
-         callback = unhandledCallback;
-      }
-      sCallback = callback;
-   }
+#endif
 
 public:
-// Template _mapPinsOption.xml (/CMP0/classInfo)
-
-   /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/CMP0/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void configureAllPins() {
-   
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
-   }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/CMP0/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
-   
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
-   /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/CMP0/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
-    */
-   static void enable() {
-      Info::enableClock();
-      configureAllPins();
-   }
-
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/CMP0/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      disableNvicInterrupts();
-      cmp->CR1 = CMP_CR1_EN(0);
-      disableAllPins();
-      Info::disableClock();
-   }
-// End Template _mapPinsOption.xml
-
-   /**
-    * Configure CMP from values specified in init
-   
-    * @param init Class containing initialisation values
-    */
-   static void configure(const typename Info::Init &init) {
-   
-      enable();
-   
-      cmp->FPR = 0;
-   
-      if constexpr (Info::irqHandlerInstalled) {
-         // Only set call-backs if feature enabled
-         setCallback(init.callback);
-         enableNvicInterrupts(init.irqlevel);
-      }
-   
-      uint8_t fpr = init.fpr;
-   
-      cmp->DACCR = init.daccr;
-      cmp->MUXCR = init.muxcr;
-      cmp->CR0 = init.cr0;
-      cmp->SCR = init.scr;
-      cmp->FPR = fpr;
-      cmp->CR1 = init.cr1;
-   }
-   
-   /**
-    * Configure CMP from default values as specified in Configure.usbdmProject
-    */
-   static void defaultConfigure() {
-   
-      configure(Info::DefaultInitValue);
-   }
-
-
+// /CMP/classInfo not found
+// /CMP/InitMethod not found
    /**
     * Configure all input pins associated with this CMP
     * The pins are set to analogue mode so no PCR settings are active.
     * This function is of use if mapAllPins and mapAllPinsOnEnable are not selected in USBDM configuration.
     */
    static void setInputs() {
-      configureAllPins();
+      Info::configureAllPins();
    }
 
    /**
@@ -439,7 +319,7 @@ public:
          CmpHysteresis  cmpHysteresis  = CmpHysteresis_Level_2,
          CmpPolarity    cmpPolarity    = CmpPolarity_Normal
          ) {
-      enable();
+      Info::enable();
 
       // Initialise hardware
       cmp->CR1   = CmpEnable_Enabled|cmpPower|cmpPolarity;
@@ -447,7 +327,7 @@ public:
       cmp->FPR   = 0;
       cmp->SCR   = CMP_SCR_IER(0)|CMP_SCR_IEF(0);
       cmp->DACCR = (CMP_DACCR_VOSEL_MASK>>1)&CMP_DACCR_VOSEL_MASK;
-      cmp->MUXCR = Info::muxcr;
+      cmp->MUXCR = Info::DefaultInitValue.muxcr;
    }
 
    /**
@@ -471,7 +351,7 @@ public:
     */
    static Seconds convertTicksToSeconds(const Ticks &ticks) {
 
-      return (float)ticks/Cmp0Info::getClockFrequency();
+      return (float)ticks/Info::getClockFrequency();
    }
 
    /**
@@ -483,11 +363,11 @@ public:
     */
    static Ticks convertSecondsToTicks(const Seconds &seconds) {
 
-      uint32_t res = roundf((float)seconds*Cmp0Info::getClockFrequency());
+      uint32_t res = roundf((float)seconds*Info::getClockFrequency());
       if (res >= 256) {
          setErrorCode(E_TOO_LARGE);
       }
-      return res;
+      return Ticks(res);
    }
 
    /**
@@ -654,30 +534,6 @@ public:
    }
 
    /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(Info::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicInterrupts(NvicPriority nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(Info::irqNums[0]);
-   }
-
-   /**
     * Enable/disable edge interrupts
     *
     * @param[in]  cmpEvent Controls edge selection
@@ -813,34 +669,7 @@ protected:
    };
 };
 
-template<class Info> typename Info::CallbackFunction CmpBase_T<Info>::sCallback = CmpBase_T<Info>::unhandledCallback;
-
-// Pin mapping for CMP0
-constexpr Cmp0InputPlus  Cmp0InputPlus_VrefOut     = Cmp0InputPlus_5;     ///< Fixed pin  VREF_OUT(p13)
-constexpr Cmp0InputMinus Cmp0InputMinus_VrefOut    = Cmp0InputMinus_5;    ///< Fixed pin  VREF_OUT(p13)
-constexpr Cmp0InputPlus  Cmp0InputPlus_Bandgap     = Cmp0InputPlus_6;     ///< Fixed pin  BANDGAP(Internal)
-constexpr Cmp0InputMinus Cmp0InputMinus_Bandgap    = Cmp0InputMinus_6;    ///< Fixed pin  BANDGAP(Internal)
-constexpr Cmp0InputPlus  Cmp0InputPlus_CmpDac      = Cmp0InputPlus_7;     ///< Fixed pin  CMP_DAC(Internal)
-constexpr Cmp0InputMinus Cmp0InputMinus_CmpDac     = Cmp0InputMinus_7;    ///< Fixed pin  CMP_DAC(Internal)
-
-// Pin mapping for CMP1
-constexpr Cmp1InputPlus  Cmp1InputPlus_VrefOut     = Cmp1InputPlus_5;     ///< Fixed pin  VREF_OUT(p13)
-constexpr Cmp1InputMinus Cmp1InputMinus_VrefOut    = Cmp1InputMinus_5;    ///< Fixed pin  VREF_OUT(p13)
-constexpr Cmp1InputPlus  Cmp1InputPlus_Bandgap     = Cmp1InputPlus_6;     ///< Fixed pin  BANDGAP(Internal)
-constexpr Cmp1InputMinus Cmp1InputMinus_Bandgap    = Cmp1InputMinus_6;    ///< Fixed pin  BANDGAP(Internal)
-constexpr Cmp1InputPlus  Cmp1InputPlus_CmpDac      = Cmp1InputPlus_7;     ///< Fixed pin  CMP_DAC(Internal)
-constexpr Cmp1InputMinus Cmp1InputMinus_CmpDac     = Cmp1InputMinus_7;    ///< Fixed pin  CMP_DAC(Internal)
-
-/**
-* Class representing CMP0
-*/
-class Cmp0 : public CmpBase_T<Cmp0Info> {};
-
-/**
-* Class representing CMP1
-*/
-class Cmp1 : public CmpBase_T<Cmp1Info> {};
-
+// /CMP/InputMapping None Found
 
 
 

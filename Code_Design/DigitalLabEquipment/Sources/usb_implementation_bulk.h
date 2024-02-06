@@ -206,13 +206,15 @@ public:
 
    /**
     * Initialises all end-points
+    *
+    * @param clearToggles Clear toggles on all end-points
     */
-   static void initialiseEndpoints(void) {
-      epBulkOut.initialise();
+   static void initialiseEndpoints(bool clearToggles) {
+      epBulkOut.initialise(clearToggles);
       addEndpoint(&epBulkOut);
       epBulkOut.setCallback(bulkOutTransactionCallback);
 
-      epBulkIn.initialise();
+      epBulkIn.initialise(clearToggles);
       addEndpoint(&epBulkIn);
       epBulkIn.setCallback(bulkInTransactionCallback);
 

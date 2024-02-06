@@ -1,12 +1,12 @@
 /*
- * Bootloader.h
+ * BootInformation.h
  *
  *  Created on: 4 Jan. 2022
  *      Author: peter
  */
 
-#ifndef SOURCES_BOOTLOADER_H_
-#define SOURCES_BOOTLOADER_H_
+#ifndef SOURCES_BOOTINFORMATION_H_
+#define SOURCES_BOOTINFORMATION_H_
 
 #include <stdint.h>
 
@@ -19,9 +19,6 @@
 // USB messages are packed data in LE (native) format
 #pragma pack(push, 1)
 
-/// Magic number used to reboot into ICP mode
-static constexpr uint32_t MAGIC_NUMBER = 0xA55A1234;
-
 /**
  * Structure of Boot information in Image Flash memory
  */
@@ -32,7 +29,7 @@ struct BootInformation {
    const uint32_t softwareVersion;     ///< Version of this software image
    const uint32_t hardwareVersion;     ///< Identifies the hardware this image is intended for
    const uint32_t reserved[3]{0};      ///<
-   const uint32_t key;
+   const uint32_t key;                 ///< Key indicating valid Information
 
    bool isValid() const {
       return key == KEY_VALUE;
@@ -59,6 +56,7 @@ enum HardwareType : uint32_t {
    HW_SOLDER_STATION_V3  = 4, // MK20DX128VLF5
    HW_LOGIC_BOARD_V4a    = 5, // As for V4 but smaller flash MK20DX32VLF5
    HW_SOLDER_STATION_V4  = 6, // MK20DX256VLH7
+   HW_USBDM_MK22F        = 7  // MK22FN512M12
 };
 
 #if defined(USBDM_ASSERT)
@@ -71,15 +69,16 @@ enum HardwareType : uint32_t {
  *
  * @note return value is a pointer to a STATIC object - do not free
  */
-static inline const char *getHardwareType(uint16_t hardwareVersion) {
+static inline const char *getHardwareType(HardwareType hardwareVersion) {
    static const char *names[] = {
          "Unknown",
-         "HW_LOGIC_BOARD_V2",
-         "HW_LOGIC_BOARD_V3",
-         "HW_LOGIC_BOARD_V4",
-         "HW_SOLDERING_STATION_V3",
-         "HW_LOGIC_BOARD_V4a",
-         "HW_SOLDERING_STATION_V4",
+         "LOGIC_BOARD_V2",
+         "LOGIC_BOARD_V3",
+         "LOGIC_BOARD_V4",
+         "SOLDER_STATION_V3",
+         "LOGIC_BOARD_V4a",
+         "SOLDER_STATION_V4",
+         "USBDM_MK"
    };
    const char *name = "Unknown";
    if (hardwareVersion < (sizeof(names)/sizeof(names[0]))) {
@@ -97,7 +96,7 @@ static inline const char *getHardwareType(uint16_t hardwareVersion) {
  *
  * @note return value is a pointer to a STATIC object - do not free
  */
-static inline const char *getHardwareType(uint16_t hardwareVersion) {
+static inline const char *getHardwareType(HardwareType hardwareVersion) {
    static const char *names[] = {
          "Unknown",
          "Digital Lab Board V2",
@@ -106,6 +105,7 @@ static inline const char *getHardwareType(uint16_t hardwareVersion) {
          "Soldering Station V3",
          "Digital Lab Board V4a",
          "Soldering Station V4",
+         "USBDM MK22F"
    };
    const char *name = "Unknown";
    if (hardwareVersion < (sizeof(names)/sizeof(names[0]))) {
@@ -143,6 +143,9 @@ constexpr const char *getHardwareVersion() {
    if constexpr(version == HW_SOLDER_STATION_V4) {
       return "Soldering station V4";
    }
+   if constexpr(version == HW_USBDM_MK22F) {
+      return "USBDM MK22F";
+   }
    return "Unknown";
 }
 
@@ -151,4 +154,4 @@ static constexpr uint32_t BOOTLOADER_SIZE   = 0x4000;
 
 #pragma pack(pop)
 
-#endif /* SOURCES_BOOTLOADER_H_ */
+#endif /* SOURCES_BOOTINFORMATION_H_ */

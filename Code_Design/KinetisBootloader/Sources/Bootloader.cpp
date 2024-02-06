@@ -14,17 +14,24 @@
 #include "flash.h"
 #include "crc.h"
 #include "BootInformation.h"
+#include "gpio.h"
 
 using namespace USBDM;
 
+/**********************************
+ *  TARGET specific code
+ **********************************/
+
 /** ICP button - checked during boot */
-using IcpButton = GpioA<4,  USBDM::ActiveLow>;
+using IcpButton = GpioA<4>;
 
 /** Debug pin */
-using DebugPin  = GpioD<4,  USBDM::ActiveLow>;
+//using DebugPin  = GpioD<4,  USBDM::ActiveLow>;
 
 /// What hardware this boot loader is built for
 static constexpr HardwareType BOOT_HARDWARE_VERSION  = HW_LOGIC_BOARD_V4;
+
+/**********************************/
 
 /// What the version of the bootloader is
 static constexpr uint32_t     BOOT_SOFTWARE_VERSION  = BOOTLOADER_V4;
@@ -60,14 +67,14 @@ constexpr const FlashImageData getFlashImageData(HardwareType hardwareType) {
 
 constexpr FlashImageData flashImagedata[] = {
       /*                                                 Start 1     Size 1          Start2      Size 2 */
-      /* 0 - Unknown",             - MK20DX128VLF5 */  { 0x004000,   0x0,            0x10000000, 0x0 },
-      /* 1 - Digital Lab Board V2" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
-      /* 2 - Digital Lab Board V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
-      /* 3 - Digital Lab Board V4" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
-      /* 4 - Soldering Station V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x00000000 },
+      /* 0 - Unknown",             - MK20DX128VLF5 */  { 0x004000,   0x0,            0x10000000, 0x0        },
+      /* 1 - Digital Lab Board V2" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x0        },
+      /* 2 - Digital Lab Board V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x0        },
+      /* 3 - Digital Lab Board V4" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x0        },
+      /* 4 - Soldering Station V3" - MK20DX128VLF5 */  { 0x004000,   0x20000-0x4000, 0x10000000, 0x0        },
       /* 5 - Digital Lab Board V4a - MK20DX32VLF5  */  { 0x004000,   0x08000-0x4000, 0x10000000, 0x00008000 }, // Uses Data Flash
-      /* 6 - Soldering Station V4" - MK20DX256VLH7 */  { 0x004000,   0x40000-0x4000, 0x10000000, 0x00000000 }, // Use FlexRAM
-      /* 7 - ??"                   - MK20DX256VLH7 */  { 0x004000,   0x40000-0x4000, 0x10000000, 0x00008000 },
+      /* 6 - Soldering Station V4" - MK20DX256VLH7 */  { 0x004000,   0x40000-0x4000, 0x10000000, 0x0        }, // Use FlexRAM
+      /* 7 - USBDM Interface MK22F - MK22FN512M12  */  { 0x004000,   0x80000-0x4000, 0x10000000, 0x0        },
 };
 
    return flashImagedata[hardwareType];
@@ -119,9 +126,19 @@ static BootInformation *getBootInformation() {
       return bootInfo;
 }
 
-//static bool ifMagicNumberInValid() {
-//   return (getBootInformation()->magicNumber == nullptr) || (*getBootInformation()->magicNumber != MAGIC_NUMBER);
-//}
+/**
+ * Checks if magic number referenced from boot information is valid.
+ *
+ * @return true if valid
+ */
+static bool isMagicNumberValid() {
+
+   auto bootInfo = getBootInformation();
+
+   return (bootInfo != nullptr) &&
+          (bootInfo->magicNumber != nullptr) &&
+          (*(bootInfo->magicNumber) == ~bootInfo->key);
+}
 
 /**
  * Calculate Flash CRC
@@ -212,9 +229,6 @@ static void resetSystem() {
    }
 }
 
-volatile bool icpButtonNotPressed;
-volatile bool flashValid;
-
 /**
  * Boot into user program mode if:
  *  - Flash image is valid and
@@ -226,17 +240,19 @@ volatile bool flashValid;
  */
 void checkICP() {
 
-   // Enable pull-up and wait a while
+   // Enable pull-up
    IcpButton::setInput(PinPull_Up);
 
+   //  Wait a while
    for(unsigned count=0; count++<1000; count++) {
       __asm__("nop");
    }
 
-   icpButtonNotPressed = IcpButton::isReleased();
-   flashValid          = isFlashValid();
+   bool icpButtonReleased = IcpButton::isHigh();
+   bool flashValid        = isFlashValid();
+   bool magicNumberValid  = isMagicNumberValid();
 
-   if (icpButtonNotPressed && flashValid) {
+   if (!magicNumberValid && icpButtonReleased && flashValid) {
       callFlashImage();
    }
 }
@@ -254,7 +270,7 @@ void pollUsb() {
    static UsbState usbState = UsbStartUp;
 
    // Call-back to record USB user events
-   static auto cb = [](const UsbImplementation::UserEvent) {
+   static auto cb = [](const Usb0::UserEvent) {
       // Restart USB transfers on reset etc.
       usbState = UsbIdle;
       return E_NO_ERROR;
@@ -264,19 +280,26 @@ void pollUsb() {
       // Start USB
       console.WRITELN("UsbStartUp");
       UsbImplementation::initialise();
-      UsbImplementation::setUserCallback(cb);
+      Usb0::setUserCallback(cb);
       checkError();
       usbState = UsbIdle;
       return;
    }
    // Check for USB connection
    if (!UsbImplementation::isConfigured()) {
-      console.WRITELN("Not configured");
+#ifdef DEBUG_BUILD
+      static unsigned count = 0;
+      if (count++==1'000'000) {
+         console.WRITELN("Not configured...");
+         count = 0;
+      }
+
+#endif
       // No connection
       return;
    }
 
-   int size;
+   uint16_t size;
 
    if (usbState != UsbWaiting) {
       // UsbIdle
@@ -289,8 +312,8 @@ void pollUsb() {
    // UsbWaiting
 
    // Check if we have received a message
-   size = Usb0::pollReceiveBulkData();
-   if (size < 0) {
+   ErrorCode rc = Usb0::pollReceiveBulkData(size);
+   if (size == 0) {
       // No message - USB still ready
       return;
    }
@@ -402,7 +425,7 @@ void pollUsb() {
    } while (false);
 
    // Send response
-   ErrorCode rc = Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
+   rc = Usb0::sendBulkData(responseSize, (uint8_t *)&response, 1000);
    if (rc != 0) {
       console.WRITE("sendBulkData() failed, reason = ").WRITELN(getErrorMessage(rc));
    }
@@ -410,8 +433,13 @@ void pollUsb() {
 }
 
 int main() {
-//   console.writeln("icpButtonNotPressed  = ", icpButtonNotPressed);
-//   console.writeln("flashValid = ", flashValid);
+
+#ifdef DEBUG_BUILD
+   console.writeln();
+   console.writeln("icpButtonReleased = ", IcpButton::isHigh());
+   console.writeln("flashValid        = ", isFlashValid());
+   console.writeln("magicNumberValid  = ", isMagicNumberValid());
+#endif
 
    // Check for error in start-up
    checkError();

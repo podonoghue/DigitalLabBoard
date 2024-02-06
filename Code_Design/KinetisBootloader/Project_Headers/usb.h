@@ -5,15 +5,36 @@
  * @version  V4.12.1.210
  * @date     13 April 2016
  *      Author: podonoghue
- */
+\verbatim
+    Kinetis USB Code
 
-/**
- * Terminology (from USB Specification)
+    Copyright (C) 2008-24  Peter O'Donoghue
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+\endverbatim
+
+ * <H2> Terminology (from USB Specification) </H2>
  *
  * Packet
- * - A bundle of data organised in a group for transmission. Packets typically
- * contain three elements: control information (e.g., source, destination, and
- * length), the data to be transferred, and error detection and correction bits.
+ * - A bundle of data organised in a group for transmission. \n
+ *   Packets typically contain three elements:
+ *    - Control information (e.g., source, destination, and length)
+ *    - Data to be transferred
+ *    - Error detection and correction bits.
+ *
+\verbatim
  *      8       7         4        5
  *   +-----+---------+----------+------+
  *   | PID | Address | Endpoint | CRC5 | Token packets : IN, OUT, SETUP
@@ -30,6 +51,7 @@
  *   +-----+
  *   | PID | Handshake packet : ACK, NAK
  *   +-----+
+\endverbatim
  *
  * Phase - transaction has three phases.
  *  - Token packet
@@ -38,28 +60,35 @@
  *
  * Transaction
  *  - The delivery of service to an endpoint; consists of a token packet, optional data
- * packet, and optional handshake packet. Specific packets are allowed/required
- * based on the transaction type.
+ *    packet, and optional handshake packet.
+ *  -  Specific packets are allowed/required based on the transaction type.
  *
  * Transfer
  * - One or more transactions to move information between a software client
  *   and its function.
  *
- * Bulk Reads and Writes
+ * Bulk Read and Write transfers
  * - Consist of a series of either OUT or IN transactions
  * - Each transaction includes all three phases.
+ * - If needed, the length of transfer is agreed between sender and receiver and/or a
+ *   Zero-Length-Packet (ZLP) is used to indicate the (early) end of a transfer.
+ *
+\verbatim
  *   +--------+  +--------+  +--------+ // +--------+
  *   | OUT(0) |  | OUT(1) |  | OUT(0) | // |OUT(0/1)|
  *   +--------+  +--------+  +--------+ // +--------+
  *   +--------+  +--------+  +--------+ // +--------+
  *   |  IN(0) |  |  IN(1) |  |  IN(0) | // | IN(0/1)|
  *   +--------+  +--------+  +--------+ // +--------+
+\endverbatim
  *
- * Control Setup Reads and Writes
+ * Control Setup Read and Write transfers
  * - Consists of 3 stages
- *   SETUP  stage (1 SETUP transaction),
- *   DATA   stage (0 or more IN/OUT transactions)
- *   STATUS stage (1 IN/OUT transaction opposite to that of DATA stage or IN if no DATA stage)
+ *   - SETUP  stage (1 SETUP transaction),
+ *   - DATA   stage (0 or more IN/OUT transactions)
+ *   - STATUS stage (1 IN/OUT transaction opposite to that of DATA stage or IN if no DATA stage)
+ *
+\verbatim
  *   +--------+  +--------+  +--------+ // +--------+  +--------+
  *   |SETUP(0)|  | OUT(1) |  | OUT(0) | // |OUT(0/1)|  |  IN(1) |
  *   +--------+  +--------+  +--------+ // +--------+  +--------+
@@ -69,6 +98,7 @@
  *   +--------+  +--------+
  *   |SETUP(0)|  |  IN(1) |
  *   +--------+  +--------+
+\endverbatim
  */
 
 #ifndef HEADER_USB_H
@@ -81,12 +111,15 @@
  * This file is generated automatically.
  * Any manual changes will be lost.
  */
+#if true // /USB0/enablePeripheralSupport
+
 #include <cstring>
 #include "pin_mapping.h"
 #include "usb_defs.h"
 #include "utilities.h"
 #include "usb_endpoint.h"
 #include "stringFormatter.h"
+
 
 namespace USBDM {
 
@@ -159,6 +192,15 @@ public:
     */
    typedef ErrorCode (*SetupCallbackFunction)(const SetupPacket &setup);
 
+   /**
+    * Get name of User event
+    *
+    * @param[in]  userEvent
+    *
+    * @return Pointer to static string
+    */
+   static const char *getUserEventName(UserEvent userEvent);
+
 protected:
    /**
     * Dummy callback used to catch use of unset required callback
@@ -198,7 +240,7 @@ protected:
    static const char *getTokenName(unsigned token);
 
    /**
-    * Get name of USB end-point state
+    * Get name of USB endpoint state
     *
     * @param[in]  state End-point state
     *
@@ -224,7 +266,7 @@ protected:
    static void reportBdt(const char *name, BdtEntry *bdt);
 
    /**
-    * Report contents of LineCodingStructure
+    * Report line code structure values
     *
     * @param[in] lineCodingStructure
     */
@@ -332,80 +374,6 @@ protected:
 
 protected:
 
-// Template _mapPinsOption_on.xml (/USB0/classInfo)
-
-   /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/USB0/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void configureAllPins() {
-
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
-   }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/USB0/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
-
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
-   /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/USB0/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
-    */
-   static void enable() {
-      Info::enableClock();
-      configureAllPins();
-   }
-
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/USB0/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      disableNvicInterrupts();
-
-      disableAllPins();
-      Info::disableClock();
-   }
-// End Template _mapPinsOption_on.xml
-
-   /**
-    * Enable interrupts in NVIC
-    */
-   static void enableNvicInterrupts() {
-      NVIC_EnableIRQ(Info::irqNums[0]);
-   }
-
-   /**
-    * Enable and set priority of interrupts in NVIC
-    * Any pending NVIC interrupts are first cleared.
-    *
-    * @param[in]  nvicPriority  Interrupt priority
-    */
-   static void enableNvicInterrupts(NvicPriority nvicPriority) {
-      enableNvicInterrupt(Info::irqNums[0], nvicPriority);
-   }
-
-   /**
-    * Disable interrupts in NVIC
-    */
-   static void disableNvicInterrupts() {
-      NVIC_DisableIRQ(Info::irqNums[0]);
-   }
-
    /**
     * Enable/disable interrupts
     *
@@ -455,7 +423,7 @@ protected:
    /**
     * Adds an endpoint.
     *
-    * @param[in]  endpoint The end-point to add
+    * @param[in]  endpoint The endpoint to add
     */
    static void addEndpoint(Endpoint *endpoint);
 
@@ -520,8 +488,10 @@ protected:
          bufSize = (uint8_t)fEp0SetupBuffer.wLength;
       }
       // If short response we may need ZLP
-      fControlEndpoint.setNeedZLP(bufSize < fEp0SetupBuffer.wLength);
-      fControlEndpoint.startTxStage(EPDataIn, bufSize, bufPtr);
+      if (bufSize < fEp0SetupBuffer.wLength) {
+         fControlEndpoint.setNeedZLP();
+      }
+      fControlEndpoint.startTxTransfer(EPDataIn, bufSize, bufPtr);
    }
 
    /**
@@ -581,9 +551,11 @@ protected:
    }
 
    /**
-    * Initialises EP0 and clears other end-points
+    * Initialises EP0 and clears other endpoints
+    *
+    * @param clearToggles Clear Toggles on all endpoints
     */
-   static void initialiseEndpoints(void);
+   static void initialiseEndpoints(bool clearToggles);
 
    /**
     * Handles SETUP Packet
@@ -591,13 +563,13 @@ protected:
    static void handleSetupToken();
 
    /**
-    * Handler for Token Complete USB interrupt for EP0\n
-    * Handles fControlEndpoint [SETUP, IN & OUT]
+    * Handler for Token Complete USB interrupt for all endpoints\n
+    * - SETUP passed to handleSetupToken()
+    * - IN & OUT passed to appropriate endpoint class
     *
-    * @return true indicates token has been processed.\n
-    * false token still needs processing
+    * @param usbStat USB Status value from USB hardware
     */
-   static bool handleTokenComplete(UsbStat usbStat);
+   static void handleTokenComplete(UsbStat usbStat);
 
    /**
     * Handler for USB Bus reset\n
@@ -949,32 +921,31 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetupToken() {
 }
 
 /**
- * Handler for Token Complete USB interrupt for EP0\n
- * Handles fControlEndpoint [SETUP, IN & OUT]
+ * Handler for Token Complete USB interrupt for all endpoints\n
+ * - SETUP passed to handleSetupToken()
+ * - IN & OUT passed to appropriate endpoint class
  *
  * @param usbStat USB Status value from USB hardware
- *
- * @return true   Token has been processed (control endpoint).\n
- * @return false  Token still needs processing (data endpoint).
  */
 template<class Info, int EP0_SIZE>
-bool UsbBase_T<Info, EP0_SIZE>::handleTokenComplete(UsbStat usbStat) {
+void UsbBase_T<Info, EP0_SIZE>::handleTokenComplete(UsbStat usbStat) {
 
    // Endpoint number
    uint8_t endPoint = usbStat.endp;
+   Endpoint &currentEp = *fEndPoints[endPoint];
+
    fEndPoints[endPoint]->flipOddEven(usbStat);
 
-   if (endPoint != fControlEndpoint.fEndpointNumber) {
-      // Indicate wasn't processed
-      return false;
-   }
+//   if (endPoint != fControlEndpoint.fEndpointNumber) {
+//      // Indicate wasn't processed
+//      return false;
+//   }
    // console.WRITE("Tc-", fControlEndpoint.getStateName(), ",");
    // console.WRITE("Stat(", usbStat>>4,Radix_16, usbStat&(1<<3)?",Tx,":",Rx,", usbStat&(1<<2)?"Odd,":"Even,", "),");
 
    // Relevant BDT
    volatile BdtEntry *bdt = &bdts()[usbStat.raw>>2];
 
-   // Control - Accept SETUP, IN or OUT token
 #if 0
    if (bdt->u.result.tok_pid == SETUPToken) {
       console.WRITELN("\n=====");
@@ -987,30 +958,33 @@ bool UsbBase_T<Info, EP0_SIZE>::handleTokenComplete(UsbStat usbStat) {
       WRITE(bdt->u.result.data0_1?", DATA1":", DATA0").
       WRITELN((usbStat&USB_STAT_ODD_MASK)?", Odd":", Even");
 #endif
+
+//   const char *epState = currentEp.getStateName();
+
+   // Accept SETUP, IN or OUT tokens
    switch (bdt->result.tok_pid) {
       case SETUPToken:
-//         console.WRITELN(fControlEndpoint.getStateName(), " Set");
+//         console.WRITELN(endPoint, " : ", epState, " Set");
          handleSetupToken();
          break;
       case INToken:
-         fControlEndpoint.handleInToken();
-//          console.WRITELN(fControlEndpoint.getStateName(), " In");
+         currentEp.handleInToken();
+//          console.WRITELN(endPoint, " : ",  epState, " In");
          break;
       case OUTToken:
-         fControlEndpoint.handleOutToken();
-//          console.WRITELN(fControlEndpoint.getStateName(), " Out");
+         currentEp.handleOutToken();
+//          console.WRITELN(endPoint, " : ",  epState, " Out");
          break;
       default:
-         console.WRITELN("Unexpected token on EP0 = ", getTokenName(bdt->result.tok_pid));
+         console.WRITELN("Unexpected token on EP #", endPoint, "-", getTokenName(bdt->result.tok_pid));
          break;
    }
-   // Indicate processed
-   return true;
 }
 
 // Must have handler installed in USBDM configuration
 static_assert(Usb0Info::irqHandlerInstalled);
 
+#if 1
 /**
  * Handler for USB Bus reset\n
  * Re-initialises the interface
@@ -1023,7 +997,7 @@ void UsbBase_T<Info, EP0_SIZE>::handleUSBReset() {
    setInterruptMask(0x00);
    setErrorInterruptMask(0x00);
 
-   // Disable end-points
+   // Disable endpoints
    for (unsigned i=0; i<(sizeof(fUsb->ENDPOINT)/sizeof(fUsb->ENDPOINT[0])); i++) {
       fUsb->ENDPOINT[i].ENDPT = 0;
    }
@@ -1037,10 +1011,10 @@ void UsbBase_T<Info, EP0_SIZE>::handleUSBReset() {
    // Set initial USB state
    setUSBdefaultState();
 
-   // Initialise control end-point
-   initialiseEndpoints();
+   // Initialise control endpoint
+   initialiseEndpoints(true);
    UsbImplementation::clearPinPongToggle();
-   UsbImplementation::initialiseEndpoints();
+   UsbImplementation::initialiseEndpoints(true);
 
    // Enable various interrupts
    setInterruptMask(USB_INTMASKS|USB_INTEN_ERROREN_MASK);
@@ -1101,10 +1075,10 @@ void UsbBase_T<Info, EP0_SIZE>::handleUSBResume() {
    // Notify user
    handleUserCallback(UserEvent_Resume);
 
-   // Initialise all end-points
-   initialiseEndpoints();
+   // Initialise all endpoints
+   initialiseEndpoints(false);
    UsbImplementation::clearPinPongToggle();
-   UsbImplementation::initialiseEndpoints();
+   UsbImplementation::initialiseEndpoints(false);
 
    // Enable the transmit or receive of packets
    fUsb->CTL = USB_CTL_USBENSOFEN_MASK;
@@ -1131,10 +1105,10 @@ EndpointState UsbBase_T<Info, EP0_SIZE>::ep0DummyTransactionCallback(EndpointSta
  */
 template<class Info, int EP0_SIZE>
 void UsbBase_T<Info, EP0_SIZE>::initialise() {
-   enable();
+   Info::enable();
 
    // Make sure no interrupt during setup
-   disableNvicInterrupts();
+   Info::disableNvicInterrupts();
 
    fUsb->OTGISTAT = 0;
    fUsb->OTGICR   = 0;
@@ -1162,10 +1136,11 @@ void UsbBase_T<Info, EP0_SIZE>::initialise() {
 
 #ifdef USB_CLK_RECOVER_IRC_EN_IRC_EN
    // IRC clock enable
-   fUsb->CLK_RECOVER_IRC_EN = Usb0Info::clk_recovery_irc_en;
+   fUsb->CLK_RECOVER_IRC_EN = Usb0Info::DefaultClockRecovery.clk_recover_irc_en;
 
    // Clock recovery options
-   fUsb->CLK_RECOVER_CTRL = Usb0Info::clk_recovery_ctrl;
+   fUsb->CLK_RECOVER_CTRL = Usb0Info::DefaultClockRecovery.clk_recover_ctrl;
+
 #endif
 
 #if 0
@@ -1208,17 +1183,17 @@ void UsbBase_T<Info, EP0_SIZE>::initialise() {
    // Set initial USB state
    setUSBdefaultState();
 
-   // Initialise control end-point
-   initialiseEndpoints();
+   // Initialise control endpoint
+   initialiseEndpoints(true);
 
    // Enable USB interrupts
-   enableNvicInterrupts(NvicPriority_Normal);
+   Info::enableNvicInterrupts(NvicPriority_Normal);
 }
 
 /**
  * Adds an endpoint.
  *
- * @param[in]  endpoint The end-point to add
+ * @param[in]  endpoint The endpoint to add
  */
 template<class Info, int EP0_SIZE>
 void UsbBase_T<Info, EP0_SIZE>::addEndpoint(Endpoint *endpoint) {
@@ -1226,11 +1201,12 @@ void UsbBase_T<Info, EP0_SIZE>::addEndpoint(Endpoint *endpoint) {
 }
 
 /**
- * Initialise control end-point.\n
- * Clears other end-points
+ * Initialises EP0 and clears other endpoints
+ *
+ * @param clearToggles Clear Toggles on all endpoints
  */
 template<class Info, int EP0_SIZE>
-void UsbBase_T<Info, EP0_SIZE>::initialiseEndpoints() {
+void UsbBase_T<Info, EP0_SIZE>::initialiseEndpoints(bool clearToggles) {
 
    //   console.WRITELN("initialiseEndpoints()");
 
@@ -1244,7 +1220,7 @@ void UsbBase_T<Info, EP0_SIZE>::initialiseEndpoints() {
    addEndpoint(&fControlEndpoint);
 
    fControlEndpoint.clearPinPongToggle();
-   fControlEndpoint.initialise();
+   fControlEndpoint.initialise(clearToggles);
    fControlEndpoint.setCallback(ep0DummyTransactionCallback);
 
    // Set up to receive SETUP transaction
@@ -1268,9 +1244,6 @@ void UsbBase_T<Info, EP0_SIZE>::handleGetStatus() {
    uint8_t epNum;
 
    switch(fEp0SetupBuffer.bmRequestType) {
-      default:
-         break;
-
       case REQUEST_TYPE(UsbRequestDirection_IN, UsbRequestType_STANDARD, UsbRequestRecipient_DEVICE) : // Device Status
       dataPtr = (uint8_t *) &fDeviceStatus;
       size    = sizeof(fDeviceStatus);
@@ -1462,13 +1435,13 @@ void UsbBase_T<Info, EP0_SIZE>::handleGetDescriptor() {
             StringFormatter sf(utf8Buff, sizeof(utf8Buff));
             sf.setPadding(Padding_LeadingZeroes).setWidth(6).write(SERIAL_NO).write(uid, Radix_16).write('\0');
 
-            // Use end-point internal buffer directly - may result in truncation
+            // Use endpoint internal buffer directly - may result in truncation
             dataPtr = fControlEndpoint.getTxBuffer();
             utf8ToStringDescriptor(fControlEndpoint.getTxBuffer(), (uint8_t *)utf8Buff, fControlEndpoint.BUFFER_SIZE);
          }
 #endif
          else {
-            // Use end-point internal buffer directly - may result in truncation
+            // Use endpoint internal buffer directly - may result in truncation
             dataPtr = fControlEndpoint.getTxBuffer();
             utf8ToStringDescriptor(fControlEndpoint.getTxBuffer(), UsbImplementation::stringDescriptors[descriptorIndex], fControlEndpoint.BUFFER_SIZE);
          }
@@ -1501,9 +1474,9 @@ void UsbBase_T<Info, EP0_SIZE>::handleSetConfiguration() {
    }
    setUSBconfiguredState(fEp0SetupBuffer.wValue.lo());
 
-   // Initialise non-control end-points
+   // Initialise non-control endpoints
 //   console.WRITELN("RxOdd", (bool)UsbImplementation::epBulkOut.fRxOdd);
-   UsbImplementation::initialiseEndpoints();
+   UsbImplementation::initialiseEndpoints(true);
    fUserCallbackFunction(UserEvent::UserEvent_Configure);
 
    // Tx empty Status transaction
@@ -1567,16 +1540,7 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
          // Get endpoint status
          UsbStat usbStat = (UsbStat)fUsb->STAT;
 //         console.WRITELN("St ", usbStat.endp, ',', (unsigned)usbStat.tx, ',', (unsigned)usbStat.odd);
-         // Token complete interrupt
-         if (usbStat.endp == fControlEndpoint.fEndpointNumber) {
-            handleTokenComplete(usbStat);
-         }
-         else {
-            // Pass to extension routine
-//            console.WRITE("(", usbStat.endp, usbStat.tx?",T,":",R,", usbStat.odd?"O,":"E,", "),");
-//            console.WRITELN(UsbImplementation::epBulkOut.getStateName());
-            UsbImplementation::handleTokenComplete(usbStat);
-         }
+         handleTokenComplete(usbStat);
       }
       if ((pendingInterruptFlags&USB_ISTAT_RESUME_MASK) != 0) {
          // Resume signaled on Bus
@@ -1598,12 +1562,18 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
       }
       if ((pendingInterruptFlags&USB_ISTAT_ERROR_MASK) != 0) {
          // Any Error
-         console.WRITELN("Error = 0b", fUsb->ERRSTAT, Radix_2);
+         console.WRITELN("ERRSTAT = 0b", fUsb->ERRSTAT, Radix_2);
          fUsb->ERRSTAT = 0xFF;
       }
       fUsb->ISTAT = pendingInterruptFlags;
    } while(true);
 }
+#else
+template<class Info, int EP0_SIZE>
+void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
+}
+#endif
+
 
 /**
  * End USB_Group
@@ -1611,5 +1581,6 @@ void UsbBase_T<Info, EP0_SIZE>::irqHandler() {
  */
 
 } // End namespace USBDM
+#endif // /USB0/enablePeripheralSupport
 
 #endif /* HEADER_USB_H */

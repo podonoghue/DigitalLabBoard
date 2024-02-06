@@ -18,6 +18,7 @@
  * Any manual changes will be lost.
  */
 #include "pin_mapping.h"
+#include "gpio.h"
 
 #include "dma.h"
 
@@ -86,7 +87,7 @@ protected:
     */
    CallbackFunction callback = unhandledCallback;
 
-#if false||false||false||false||false||false
+#if false
    /**
     * Callback function (trampoline)
     */
@@ -110,7 +111,7 @@ protected:
     */
    Spi(unsigned instanceNum, uint32_t baseAddress) :
       spi(baseAddress), pushrMask(0), pushrMaskFinal(0) {
-#if false||false||false||false||false||false
+#if false
       irqInformation[instanceNum].This = this;
 #else
       (void)instanceNum;
@@ -151,7 +152,7 @@ protected:
     *
     * Note: Determines bestPrescaler and bestDivider for the smallest delay that is not less than delay.
     */
-   static void calculateDelay(float clockFrequency, float delay, int &bestPrescale, int &bestDivider);
+   static void calculateDelay(uint32_t clockFrequency, uint32_t delay_ns, int &bestPrescale, int &bestDivider);
 
    /**
     * Calculate communication speed factors for SPI
@@ -163,37 +164,7 @@ protected:
     *
     * Note: Chooses the highest speed that is not greater than frequency.
     */
-   static uint32_t calculateDividers(uint32_t clockFrequency, Hertz frequency);
-
-   /**
-    * Calculate CTAR timing related values
-    *
-    * @param[in]  clockFrequency Clock frequency of SPI in Hz
-    * @param[in]  frequency      Communication frequency in Hz
-    * @param[in]  cssck          PCS assertion to SCK Delay Scaler
-    * @param[in]  asc            SCK to PCS negation delay
-    * @param[in]  dt             PCS negation to PCS assertion delay between transfers
-    *
-    * @return Combined masks for CTAR (BR, PBR, PCSSCK, CSSCK, PDT, DT, PCSSCK and CSSCK)
-    */
-   static uint32_t calculateCtarTiming(uint32_t clockFrequency, uint32_t frequency, float cssck, float asc, float dt) {
-
-      int bestPrescale, bestDivider;
-      uint32_t ctarValue;
-
-      ctarValue = calculateDividers(clockFrequency, frequency);
-
-      calculateDelay(clockFrequency, cssck, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PCSSCK(bestPrescale)|SPI_CTAR_CSSCK(bestDivider);
-
-      calculateDelay(clockFrequency, asc, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PASC(bestPrescale)|SPI_CTAR_ASC(bestDivider);
-
-      calculateDelay(clockFrequency, dt, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PDT(bestPrescale)|SPI_CTAR_DT(bestDivider);
-
-      return ctarValue;
-   }
+   static uint32_t calculateDividers(uint32_t clockFrequency, uint32_t frequency);
 
    /**
     * Get the frequency of the input clock to the SPI
@@ -323,46 +294,6 @@ protected:
    virtual void disable() = 0;
 
    /**
-    * Calculate communication speed from SPI clock frequency and speed factors
-    *
-    * @param[in]  clockFrequency  Clock frequency of SPI in Hz
-    * @param[in]  spiCtarValue    Configuration providing SPI_CTAR_BR, SPI_CTAR_PBR fields
-    *
-    * @return Clock frequency of SPI in Hz for these factors
-    */
-   static uint32_t calculateSpeed(uint32_t clockFrequency, uint32_t spiCtarValue);
-
-   /**
-    * Calculate CTAR timing related values \n
-    * Uses default delays
-    *
-    * @param[in]  clockFrequency Clock frequency of SPI in Hz
-    * @param[in]  frequency      Communication frequency in Hz
-    *
-    * @return Combined masks for CTAR (BR, PBR, PCSSCK, CSSCK, PDT, DT, PCSSCK and CSSCK)
-    */
-   static uint32_t calculateCtarTiming(uint32_t clockFrequency, Hertz frequency) {
-
-      int bestPrescale, bestDivider;
-      uint32_t ctarValue;
-
-      float SPI_PADDING2 = 1/(5.0*clockFrequency);
-
-      ctarValue = calculateDividers(clockFrequency, frequency);
-
-      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PCSSCK(bestPrescale)|SPI_CTAR_CSSCK(bestDivider);
-
-      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PASC(bestPrescale)|SPI_CTAR_ASC(bestDivider);
-
-      calculateDelay(clockFrequency, SPI_PADDING2, bestPrescale, bestDivider);
-      ctarValue |= SPI_CTAR_PDT(bestPrescale)|SPI_CTAR_DT(bestDivider);
-
-      return ctarValue;
-   }
-
-   /**
     * Sets communication speed for SPI
     *
     * @param[in]  frequency      Communication frequency in Hz
@@ -408,27 +339,70 @@ protected:
    }
 
    /**
-    * Set Peripheral Chip Select Polarity
+    * Set Polarity for PCS signals
     *
-    * @param spiPeripheralSelectPolarity Mask to select the polarity of Peripheral Chip Select Lines (PCSx)
+    * @param spiPcsActiveLow Mask to select the polarity of Peripheral Chip Select Lines (PCSx)
+    *        Selected PCS signals will be active-low i.e. PCS will go low when accessing the peripheral
     *
     * The mask would be created by ORing together the <b>active-low</b> PCS selection values
     * Examples:
     * @code
     *    // Set PCS0 and PCS3 active-low and all others active-high
-    *    setPcsIdleLevels(SpiPeripheralSelectPolarity_Pcs0_ActiveLow|SpiPeripheralSelectPolarity_Pcs3_ActiveLow)
+    *    setPcsIdleLevels(SpiPcsPolarity_Pcs0_ActiveLow|SpiPcsPolarity_Pcs3_ActiveLow)
     *
     *    // Set all PCSx to active high (the most common situation)
-    *    setPcsIdleLevels(SpiPeripheralSelectPolarity_All_ActiveHigh)
+    *    setPcsIdleLevels(SpiPcsPolarity_All_ActiveHigh)
     * @endcode
     */
-    void setPcsPolarity(SpiPeripheralSelectPolarity spiPeripheralSelectPolarity) {
-      spi->MCR = (spi->MCR&~SPI_MCR_PCSIS_MASK) | spiPeripheralSelectPolarity;
+    void setPcsPolarity(SpiPcsActiveLow spiPcsActiveLow) {
+      spi->MCR = (spi->MCR&~SPI_MCR_PCSIS_MASK) | spiPcsActiveLow;
    }
 
 
 
 public:
+   /**
+    * Calculate communication speed from SPI clock frequency and speed factors
+    *
+    * @param[in]  clockFrequency  Clock frequency of SPI in Hz
+    * @param[in]  spiCtarValue    Configuration providing SPI_CTAR_BR, SPI_CTAR_PBR fields
+    *
+    * @return Clock frequency of SPI in Hz for these factors
+    */
+    
+   static uint32_t calculateSpeed(uint32_t clockFrequency, uint32_t spiCtarValue);
+   /**
+    * Calculate CTAR timing related values \n
+    * Uses default delays
+    *
+    * @param[in]  clockFrequency Clock frequency of SPI in Hz
+    * @param[in]  frequency      Communication frequency in Hz
+    *
+    * @return Combined masks for CTAR (BR, PBR, PCSSCK, CSSCK, PDT, DT, PCSSCK and CSSCK)
+    */
+    
+   static uint32_t calculateCtarTiming(uint32_t clockFrequency, uint32_t frequency) {
+
+      int bestPrescale, bestDivider;
+      uint32_t ctarValue;
+
+      // These do a rounding division while maintaining maximum resolution
+      const uint32_t clockPeriodDiv5_ns = (200'000'000+(clockFrequency/2))/clockFrequency;
+
+      ctarValue = calculateDividers(clockFrequency, frequency);
+
+      calculateDelay(clockFrequency, clockPeriodDiv5_ns, bestPrescale, bestDivider);
+      ctarValue |= SPI_CTAR_PCSSCK(bestPrescale)|SPI_CTAR_CSSCK(bestDivider);
+
+      calculateDelay(clockFrequency, clockPeriodDiv5_ns, bestPrescale, bestDivider);
+      ctarValue |= SPI_CTAR_PASC(bestPrescale)|SPI_CTAR_ASC(bestDivider);
+
+      calculateDelay(clockFrequency, 5*clockPeriodDiv5_ns, bestPrescale, bestDivider);
+      ctarValue |= SPI_CTAR_PDT(bestPrescale)|SPI_CTAR_DT(bestDivider);
+
+      return ctarValue;
+   }
+
 /* Template /SPI/InitMethod - start */
    
    /**
@@ -930,7 +904,7 @@ public:
       return status;
    }
 
-#if false||false||false||false||false||false
+#if false
    /**
     * Set Callback function\n
     *
@@ -947,7 +921,7 @@ public:
 #endif
 };
 
-#if false||false||false||false||false||false
+#if false
 /**
  * Class to handle SPI DMA operations
  * It will create the required buffer to format data for the DMA transfer.
@@ -1401,7 +1375,7 @@ public:
       return status;
    }
 
-#if false||false||false||false||false||false
+#if false
    /**
     * IRQ handler
     */
@@ -1533,93 +1507,18 @@ public:
    using soutGpio = GpioTable_T<Info, 2, ActiveHigh>;
 
    /**
-    * Class to hide static functions
-    * This allows virtual functions with the same name
-    */
-   class Private {
-   public:
-
-   // Template _mapPinsOption_on.xml (/SPI0/classInfo)
-
-   /**
-    * Configures all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/SPI0/_base_name, def=null, mod=null
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void configureAllPins() {
-   
-      // Configure pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::initPCRs();
-      }
-   }
-
-   /**
-    * Disabled all mapped pins associated with ---Symbol not found or format incorrect for substitution  => key=/SPI0/_base_name, def=null, mod=null
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    *
-    * @note Locked pins will be unaffected
-    */
-   static void disableAllPins() {
-   
-      // Disable pins if selected and not already locked
-      if constexpr (Info::mapPinsOnEnable && !(MapAllPinsOnStartup || ForceLockedPins)) {
-         Info::clearPCRs();
-      }
-   }
-
-   /**
-    * Basic enable of ---Symbol not found or format incorrect for substitution  => key=/SPI0/_base_name, def=null, mod=null
-    * Includes enabling clock and configuring all mapped pins if mapPinsOnEnable is selected in configuration
-    */
-   static void enable() {
-      Info::enableClock();
-      configureAllPins();
-   }
-
-   /**
-    * Disables the clock to ---Symbol not found or format incorrect for substitution  => key=/SPI0/_base_name, def=null, mod=null and all mapped pins
-    */
-   static void disable() {
-      disableNvicInterrupts();
-      
-      disableAllPins();
-      Info::disableClock();
-   }
-// End Template _mapPinsOption_on.xml
-
-   };
-
-   /**
-    * Configures all mapped pins associated with SPI
-    */
-   static void configureAllPins() {
-      Private::configureAllPins();
-   }
-
-   /**
-    * Disabled all mapped pins associated with SPI
-    *
-    * @note Only the lower 16-bits of the PCR registers are modified
-    */
-   static void disableAllPins() {
-      Private::disableAllPins();
-   }
-
-   /**
     * Basic enable of SPI
     * Includes enabling clock and configuring all pins if mapPinsOnEnable is selected in configuration
     */
    virtual void enable() override {
-      Private::enable();
+      Info::enable();
    }
 
    /**
-    * Disables the clock to SPI and all mappable pins
+    * Disables the clock to SPI and disable all mappable pins
     */
    virtual void disable() override {
-      Private::disable();
+      Info::disable();
    }
 
    /**
@@ -1627,7 +1526,7 @@ public:
     *
     * @return Frequency on Hz
     */
-   virtual uint32_t getSpiInputClockFrequency() {
+   virtual uint32_t getSpiInputClockFrequency() override {
       return Info::getClockFrequency();
    }
 
@@ -1647,9 +1546,9 @@ public:
    SpiBase_T() : Spi(Info::instance, Info::baseAddress) {
 
       // Check pin assignments
-      static_assert(Info::info[Info::sckPin].gpioBit != UNMAPPED_PCR, "SPIx_SCK has not been assigned to a pin - Modify Configure.usbdm");
-      static_assert(Info::info[Info::sinPin].gpioBit != UNMAPPED_PCR, "SPIx_SIN has not been assigned to a pin - Modify Configure.usbdm");
-      static_assert(Info::info[Info::soutPin].gpioBit != UNMAPPED_PCR, "SPIx_SOUT has not been assigned to a pin - Modify Configure.usbdm");
+      static_assert(Info::info[Info::sckPin].gpioBit  != PinIndex::UNMAPPED_PCR, "SPIx_SCK has not been assigned to a pin - Modify Configure.usbdm");
+      static_assert(Info::info[Info::sinPin].gpioBit  != PinIndex::UNMAPPED_PCR, "SPIx_SIN has not been assigned to a pin - Modify Configure.usbdm");
+      static_assert(Info::info[Info::soutPin].gpioBit != PinIndex::UNMAPPED_PCR, "SPIx_SOUT has not been assigned to a pin - Modify Configure.usbdm");
 
       configure(Info::DefaultInitValue);
    }
@@ -1660,9 +1559,9 @@ public:
    SpiBase_T(const typename SpiBasicInfo::Init &init) : Spi(Info::instance, Info::baseAddress) {
 
       // Check pin assignments
-      static_assert(Info::info[Info::sckPin].gpioBit != UNMAPPED_PCR, "SPIx_SCK has not been assigned to a pin - Modify Configure.usbdm");
-      static_assert(Info::info[Info::sinPin].gpioBit != UNMAPPED_PCR, "SPIx_SIN has not been assigned to a pin - Modify Configure.usbdm");
-      static_assert(Info::info[Info::soutPin].gpioBit != UNMAPPED_PCR, "SPIx_SOUT has not been assigned to a pin - Modify Configure.usbdm");
+      static_assert(Info::info[Info::sckPin].pinIndex  != PinIndex::UNMAPPED_PCR, "SPIx_SCK has not been assigned to a pin - Modify Configure.usbdm");
+      static_assert(Info::info[Info::sinPin].pinIndex  != PinIndex::UNMAPPED_PCR, "SPIx_SIN has not been assigned to a pin - Modify Configure.usbdm");
+      static_assert(Info::info[Info::soutPin].pinIndex != PinIndex::UNMAPPED_PCR, "SPIx_SOUT has not been assigned to a pin - Modify Configure.usbdm");
 
       configure(init);
    }
@@ -1673,7 +1572,7 @@ public:
    ~SpiBase_T() override {
    }
 
-#if false||false||false||false||false||false
+#if false
 
    static unsigned dmaComplete;
    static uint32_t dmaErrorCode;
@@ -1826,7 +1725,7 @@ public:
 
 };
 
-#if false||false||false||false||false||false
+#if false
 template<class Info>
 unsigned SpiBase_T<Info>::dmaComplete = false;
 
@@ -1838,7 +1737,7 @@ uint32_t SpiBase_T<Info>::dmaErrorCode = 0;
 #endif
 
 // SPI0 mappings
-
+// No user mappings found for SPI0
    /**
     * Class representing SPI0 interface
     *

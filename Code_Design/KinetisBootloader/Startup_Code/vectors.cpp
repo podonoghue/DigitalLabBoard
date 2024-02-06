@@ -18,6 +18,8 @@
 #include "usb.h"
 
 
+using namespace USBDM;
+
 /*
  * Vector table related
  */
@@ -182,11 +184,11 @@ void SVC_Handler(void)                        WEAK_DEFAULT_HANDLER;
 void DebugMon_Handler(void)                   WEAK_DEFAULT_HANDLER;
 void PendSV_Handler(void)                     WEAK_DEFAULT_HANDLER;
 void SysTick_Handler(void)                    WEAK_DEFAULT_HANDLER;
-void DMA0_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
-void DMA1_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
-void DMA2_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
-void DMA3_IRQHandler(void)                    WEAK_DEFAULT_HANDLER;
-void DMA_Error_IRQHandler(void)               WEAK_DEFAULT_HANDLER;
+void DMA0_CH0_IRQHandler(void)                WEAK_DEFAULT_HANDLER;
+void DMA0_CH1_IRQHandler(void)                WEAK_DEFAULT_HANDLER;
+void DMA0_CH2_IRQHandler(void)                WEAK_DEFAULT_HANDLER;
+void DMA0_CH3_IRQHandler(void)                WEAK_DEFAULT_HANDLER;
+void DMA0_Error_IRQHandler(void)              WEAK_DEFAULT_HANDLER;
 void FTF_Command_IRQHandler(void)             WEAK_DEFAULT_HANDLER;
 void FTF_ReadCollision_IRQHandler(void)       WEAK_DEFAULT_HANDLER;
 void PMC_IRQHandler(void)                     WEAK_DEFAULT_HANDLER;
@@ -256,11 +258,11 @@ VectorTable const __vector_table = {
       SysTick_Handler,                         /*   15,   -1  System Tick Timer                                                                */
 
                                                /* External Interrupts */
-      DMA0_IRQHandler,                         /*   16,    0  Direct memory access controller                                                  */
-      DMA1_IRQHandler,                         /*   17,    1  Direct memory access controller                                                  */
-      DMA2_IRQHandler,                         /*   18,    2  Direct memory access controller                                                  */
-      DMA3_IRQHandler,                         /*   19,    3  Direct memory access controller                                                  */
-      DMA_Error_IRQHandler,                    /*   20,    4  DMA error interrupt                                                              */
+      DMA0_CH0_IRQHandler,                     /*   16,    0  Direct memory access controller                                                  */
+      DMA0_CH1_IRQHandler,                     /*   17,    1  Direct memory access controller                                                  */
+      DMA0_CH2_IRQHandler,                     /*   18,    2  Direct memory access controller                                                  */
+      DMA0_CH3_IRQHandler,                     /*   19,    3  Direct memory access controller                                                  */
+      DMA0_Error_IRQHandler,                   /*   20,    4  DMA error interrupt                                                              */
       Default_Handler,                         /*   21,    5                                                                                   */
       FTF_Command_IRQHandler,                  /*   22,    6  Flash Memory Interface                                                           */
       FTF_ReadCollision_IRQHandler,            /*   23,    7  Flash Memory Interface                                                           */
@@ -291,7 +293,7 @@ VectorTable const __vector_table = {
       PIT2_IRQHandler,                         /*   48,   32  Periodic Interrupt Timer                                                         */
       PIT3_IRQHandler,                         /*   49,   33  Periodic Interrupt Timer                                                         */
       PDB0_IRQHandler,                         /*   50,   34  Programmable Delay Block                                                         */
-      USBDM::Usb0::irqHandler,                 /*   51,   35  Universal Serial Bus                                                             */
+      Usb0::irqHandler,                        /*   51,   35  Universal Serial Bus                                                             */
       USBDCD0_IRQHandler,                      /*   52,   36  USB Device Charger Detection                                                     */
       TSI0_IRQHandler,                         /*   53,   37  Touch Sense Interface                                                            */
       MCG_IRQHandler,                          /*   54,   38  Multipurpose Clock Generator                                                     */
